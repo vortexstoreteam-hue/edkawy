@@ -1,9 +1,11 @@
 import { createRoot } from 'react-dom/client';
+import { registerSW } from 'virtual:pwa-register';
 import App from './App.tsx';
 import './index.css';
 import { logAppVersion } from './utils/version';
 
 logAppVersion();
+registerSW({ immediate: true });
 
 // Tier-1 Google Maps Platform Demo Key Quota & Auth Failure Detection
 (window as unknown as { gm_authFailure?: () => void }).gm_authFailure = () => {

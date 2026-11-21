@@ -59,6 +59,7 @@ import { ConfirmActionModal } from './ConfirmActionModal';
 import { DeviceImageInput } from './DeviceImageInput';
 import { EdkuLocationPickerMap } from './EdkuGoogleMaps';
 import { EmptyState } from './EmptyState';
+import { PWAInstallButton } from './PWAInstallButton';
 import { ResilientImage } from './ResilientImage';
 import { CustomerSupportSection } from './SupportSystemViews';
 import {
@@ -178,6 +179,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
   const [topupReference, setTopupReference] = useState('');
   const [topupReceiptImage, setTopupReceiptImage] = useState('');
   const [isSubmittingTopup, setIsSubmittingTopup] = useState(false);
+  const [copiedTransferNum, setCopiedTransferNum] = useState<'vodafone' | 'instapay' | null>(null);
   const [copiedReferralLink, setCopiedReferralLink] = useState(false);
 
   const [isRedeemingPoints, setIsRedeemingPoints] = useState(false);
@@ -529,6 +531,13 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
   const handleSubmitWalletTopup = async (e: React.FormEvent) => {
     e.preventDefault();
     setFeedbackMsg(null);
+    if (!topupReceiptImage.trim()) {
+      setFeedbackMsg({
+        type: 'error',
+        text: 'يرجى رفع صورة إيصال التحويل أولاً — رفع الإيصال إجباري.',
+      });
+      return;
+    }
     setIsSubmittingTopup(true);
     try {
       await createWalletTopupRequestInFirestore(
@@ -542,7 +551,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
           method: topupMethod,
           senderPhone: topupSenderPhone,
           referenceNumber: topupReference,
-          receiptImageUrl: topupReceiptImage || undefined,
+          receiptImageUrl: topupReceiptImage,
         }
       );
       setTopupSenderPhone('');
@@ -1362,6 +1371,92 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 ))}
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div
+                  className={`rounded-2xl border p-4 flex items-center justify-between gap-3 transition-colors ${
+                    topupMethod === 'vodafone_cash'
+                      ? 'bg-[#FF6B00]/10 border-[#FF6B00]'
+                      : 'bg-[#0F172A] border-[#334155]'
+                  }`}
+                >
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-[#94A3B8]">
+                      رقم التحويل — فودافون كاش
+                    </p>
+                    <p
+                      dir="ltr"
+                      className="text-base font-mono font-extrabold text-[#F8FAFC] tabular-nums"
+                    >
+                      01032874716
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTopupMethod('vodafone_cash');
+                      void navigator.clipboard?.writeText('01032874716');
+                      setCopiedTransferNum('vodafone');
+                      window.setTimeout(() => setCopiedTransferNum(null), 2000);
+                    }}
+                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    {copiedTransferNum === 'vodafone' ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>تم النسخ</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-[#FF6B00]" />
+                        <span>نسخ</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div
+                  className={`rounded-2xl border p-4 flex items-center justify-between gap-3 transition-colors ${
+                    topupMethod === 'instapay'
+                      ? 'bg-[#FF6B00]/10 border-[#FF6B00]'
+                      : 'bg-[#0F172A] border-[#334155]'
+                  }`}
+                >
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-[#94A3B8]">
+                      رقم التحويل — إنستاباي (InstaPay)
+                    </p>
+                    <p
+                      dir="ltr"
+                      className="text-base font-mono font-extrabold text-[#F8FAFC] tabular-nums"
+                    >
+                      01226522676
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTopupMethod('instapay');
+                      void navigator.clipboard?.writeText('01226522676');
+                      setCopiedTransferNum('instapay');
+                      window.setTimeout(() => setCopiedTransferNum(null), 2000);
+                    }}
+                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    {copiedTransferNum === 'instapay' ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>تم النسخ</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-[#FF6B00]" />
+                        <span>نسخ</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#F8FAFC] mb-1.5">
@@ -1411,12 +1506,12 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
               </div>
 
               <DeviceImageInput
-                label="صورة إيصال التحويل (اختياري)"
+                label="صورة إيصال التحويل (إجباري)"
                 value={topupReceiptImage}
                 onChange={setTopupReceiptImage}
-                required={false}
+                required={true}
                 aspectClassName="h-32"
-                helperText="أرفق لقطة شاشة لإيصال التحويل لتسريع المراجعة"
+                helperText="رفع صورة إيصال التحويل إجباري لتأكيد ومراجعة طلب الشحن"
               />
 
               <button
@@ -1911,6 +2006,9 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
           </section>
         )}
       </div>
+
+      {/* Install PWA Card */}
+      <PWAInstallButton variant="card" />
 
       {/* Google Play Store Rating Card */}
       <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

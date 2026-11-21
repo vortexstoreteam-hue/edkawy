@@ -11388,7 +11388,7 @@ export function buildInvitationRegistrationUrl(
   referralCode?: string
 ): string {
   const origin = resolvePublicAppOrigin();
-  const url = new URL('/register', origin);
+  const url = new URL('/', origin);
   url.searchParams.set('token', token);
   url.searchParams.set('type', userType);
   if (referralCode && referralCode.trim()) {
@@ -13958,6 +13958,9 @@ export async function createWalletTopupRequestInFirestore(
     throw new Error('يرجى إدخال رقم العملية المرجعي للتحويل.');
   }
   const cleanReceipt = sanitizeOptionalImage(input.receiptImageUrl);
+  if (!cleanReceipt) {
+    throw new Error('يرجى رفع صورة إيصال التحويل أولاً — رفع الإيصال إجباري.');
+  }
   await waitForFirestoreWarmup();
 
   const reqRef = doc(collection(db, 'wallet_topup_requests'));
@@ -13971,7 +13974,7 @@ export async function createWalletTopupRequestInFirestore(
       method: input.method === 'instapay' ? 'instapay' : 'vodafone_cash',
       senderPhone,
       referenceNumber,
-      ...(cleanReceipt ? { receiptImageUrl: cleanReceipt } : {}),
+      receiptImageUrl: cleanReceipt,
       status: 'pending',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),

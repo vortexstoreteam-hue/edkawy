@@ -1691,7 +1691,7 @@
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "userId", "userName", "userPhone", "amount", "method", "senderPhone", "referenceNumber", "status", "createdAt", "updatedAt"]
+      "required": ["id", "userId", "userName", "userPhone", "amount", "method", "senderPhone", "referenceNumber", "receiptImageUrl", "status", "createdAt", "updatedAt"]
     },
     "WalletTransaction": {
       "title": "WalletTransaction",

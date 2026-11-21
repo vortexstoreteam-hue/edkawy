@@ -795,7 +795,7 @@ async function startServer() {
       }
 
       const refParam = referralCode ? `&ref=${encodeURIComponent(referralCode)}` : '';
-      const inviteUrl = `${clientOrigin}/register?token=${encodeURIComponent(token)}&type=${encodeURIComponent(userType)}${refParam}`;
+      const inviteUrl = `${clientOrigin}/?token=${encodeURIComponent(token)}&type=${encodeURIComponent(userType)}${refParam}`;
 
       const mailRes = await sendInvitationEmailViaSmtp({
         recipientEmail: email,

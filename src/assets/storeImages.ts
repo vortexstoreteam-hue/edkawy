@@ -76,7 +76,7 @@ export const HERO_CAROUSEL_SLIDES: readonly HeroCarouselSlide[] = [
     kicker: 'توصيل إدكو المعتمد · يبدأ من 15 ج.م',
     title: 'كل احتياجات بيتك في إدكو بتطبيق واحد',
     subtitle:
-      'مطاعم وبحريات، أكل بيتي أصيل، مستحضرات تجميل، ملابس، وأدوات منزلية بتسعير توصيل جغرافي عادل.',
+      'مطاعم وبحريات، أكل بيتي أصيل، سوبر ماركت، صيدليات، ومستحضرات تجميل بتسعير توصيل جغرافي عادل.',
     ctaLabel: 'تصفح المتاجر المفتوحة',
     targetCategory: 'الكل',
     imageUrl: '/src/assets/images/hero_edku_seafood_spread_1793116651259.jpg',
@@ -90,16 +90,6 @@ export const HERO_CAROUSEL_SLIDES: readonly HeroCarouselSlide[] = [
     ctaLabel: 'استكشف الأكل البيتي',
     targetCategory: 'أكل بيتي',
     imageUrl: '/src/assets/images/store_home_food_egyptian_1793790215287.jpg',
-  },
-  {
-    id: 'slide_fashion_beauty',
-    kicker: 'أزياء وعناية شخصية · مقاسات وألوان ذكية',
-    title: 'ملابس ومستحضرات تجميل وأدوات منزلية',
-    subtitle:
-      'اختار المقاس واللون أو الدرجة المناسبة بسهولة واستلم طلبك في نفس اليوم داخل إدكو.',
-    ctaLabel: 'تسوق الملابس والتجميل',
-    targetCategory: 'ملابس',
-    imageUrl: '/src/assets/images/store_clothing_fashion_1793790217225.jpg',
   },
 ] as const;
 

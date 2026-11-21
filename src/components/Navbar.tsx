@@ -1,6 +1,7 @@
 import { Bell, User as UserIcon } from 'lucide-react';
 import { ActiveView, PortalRole } from '../types/edkawi';
 import { AdkawyLogo } from './AdkawyLogo';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface NavbarProps {
   activePortal: PortalRole;
@@ -154,6 +155,7 @@ export function Navbar({
         )}
 
         <div className="flex items-center gap-2 shrink-0">
+          <PWAInstallButton variant="compact" />
           {isAuthenticated && activePortal === 'customer' && (
             <button
               type="button"

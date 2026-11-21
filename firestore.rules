@@ -4525,6 +4525,7 @@ service cloud.firestore {
         'method',
         'senderPhone',
         'referenceNumber',
+        'receiptImageUrl',
         'status',
         'createdAt',
         'updatedAt'
@@ -4553,7 +4554,7 @@ service cloud.firestore {
       data.method is string && data.method in ['vodafone_cash', 'instapay'] &&
       data.senderPhone is string && data.senderPhone.size() >= 4 && data.senderPhone.size() <= 40 &&
       data.referenceNumber is string && data.referenceNumber.size() >= 2 && data.referenceNumber.size() <= 80 &&
-      (!('receiptImageUrl' in data) || isValidUploadedImage(data.receiptImageUrl)) &&
+      isValidUploadedImage(data.receiptImageUrl) &&
       data.status is string && data.status in ['pending', 'approved', 'rejected'] &&
       (!('adminNote' in data) || (data.adminNote is string && data.adminNote.size() <= 240)) &&
       (!('processedBy' in data) || isBoundedId(data.processedBy)) &&

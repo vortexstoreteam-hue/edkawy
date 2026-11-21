@@ -170,28 +170,12 @@ export const DEFAULT_SUPER_APP_CATEGORIES: readonly SuperAppCategoryRecord[] = [
     sortOrder: 7,
   },
   {
-    id: 'household',
-    name: 'أدوات منزلية',
-    storeCategory: 'أدوات منزلية',
-    icon: 'Home',
-    isActive: true,
-    sortOrder: 8,
-  },
-  {
-    id: 'clothing',
-    name: 'ملابس',
-    storeCategory: 'ملابس',
-    icon: 'Shirt',
-    isActive: true,
-    sortOrder: 9,
-  },
-  {
     id: 'gifts',
     name: 'هدايا وإكسسوارات',
     storeCategory: 'هدايا وإكسسوارات',
     icon: 'Gift',
     isActive: true,
-    sortOrder: 10,
+    sortOrder: 8,
   },
 ] as const;
 

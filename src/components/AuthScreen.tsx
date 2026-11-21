@@ -20,6 +20,7 @@ import {
   Store,
   User as UserIcon,
 } from 'lucide-react';
+import { HERO_EDKU_IMAGE } from '../assets/storeImages';
 import { EDKU_CITY_CENTER } from '../data/edkuSeedStores';
 import {
   formatFirebaseAuthError,
@@ -59,6 +60,7 @@ import {
 } from '../utils/orderLogic';
 import { AdkawyLogo } from './AdkawyLogo';
 import { EdkuLocationPickerMap } from './EdkuGoogleMaps';
+import { ResilientImage } from './ResilientImage';
 
 interface AuthScreenProps {
   onAuthTransitionStart: () => void;
@@ -674,48 +676,52 @@ export function AuthScreen({
   return (
     <div
       dir="rtl"
-      className="min-h-[calc(100dvh-4rem)] bg-gradient-to-b from-[#0F172A] via-[#162033] to-[#0F172A] p-6 flex flex-col items-center justify-center edkawi-page-enter"
+      className="min-h-[calc(100dvh-4rem)] bg-gradient-to-b from-[#0F172A] via-[#162033] to-[#0F172A] p-4 sm:p-6 flex items-center justify-center edkawi-page-enter"
     >
-      <div className="w-full max-w-md space-y-6">
-        {/* Centered Brand Logo */}
-        <div className="flex flex-col items-center text-center">
-          <AdkawyLogo variant="stacked" />
-        </div>
-
-        {/* Sleek Single Dark Card */}
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        {/* Right Column (RTL): Login & Registration Card */}
         <section
           aria-labelledby="unified-login-heading"
-          className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 space-y-5 shadow-2xl"
+          className="lg:order-1 rounded-2xl bg-[#1E293B] border border-[#334155] p-6 space-y-5 shadow-2xl flex flex-col justify-between"
         >
-          <div className="text-center space-y-1.5">
-            <h1
-              id="unified-login-heading"
-              className="text-2xl font-bold text-[#F8FAFC]"
-            >
-              {inviteToken
-                ? 'إتمام التسجيل عبر الدعوة'
-                : step === 'admin_otp'
-                ? 'التحقق الأمني للإدارة'
-                : step === 'customer_email_otp'
-                ? 'تفعيل البريد الإلكتروني'
-                : step === 'reset_password'
-                ? 'استعادة كلمة المرور'
-                : authMode === 'register_customer'
-                ? 'إنشاء حساب جديد'
-                : 'تسجيل الدخول'}
-            </h1>
-            <p className="text-sm text-[#94A3B8]">
-              {inviteToken
-                ? 'أكمل بياناتك لتفعيل حسابك على إدكاوي'
-                : step === 'admin_otp'
-                ? 'أدخل كود التحقق المكون من ٦ أرقام'
-                : step === 'customer_email_otp'
-                ? 'أدخل كود التفعيل المرسل لبريدك'
-                : step === 'reset_password'
-                ? 'أدخل بريدك لإرسال رابط الاستعادة'
-                : 'منصة إدكو السريعة للمطاعم والصيدليات'}
-            </p>
-          </div>
+          <div className="space-y-5">
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#334155]">
+              <div className="space-y-1.5 text-center sm:text-right">
+                <p className="text-xs font-bold text-[#FF6B00]">
+                  مدينة إدكو · محافظة البحيرة
+                </p>
+                <h1
+                  id="unified-login-heading"
+                  className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC] leading-snug"
+                >
+                  {inviteToken
+                    ? 'إتمام التسجيل عبر الدعوة'
+                    : step === 'admin_otp'
+                    ? 'التحقق الأمني للإدارة'
+                    : step === 'customer_email_otp'
+                    ? 'تفعيل البريد الإلكتروني'
+                    : step === 'reset_password'
+                    ? 'استعادة كلمة المرور'
+                    : authMode === 'register_customer'
+                    ? 'إنشاء حساب جديد في إدكاوي'
+                    : 'مرحباً بك في تطبيق إدكاوي للتوصيل'}
+                </h1>
+                <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
+                  {inviteToken
+                    ? 'أكمل بياناتك لتفعيل حسابك على إدكاوي'
+                    : step === 'admin_otp'
+                    ? 'أدخل كود التحقق المكون من ٦ أرقام'
+                    : step === 'customer_email_otp'
+                    ? 'أدخل كود التفعيل المرسل لبريدك'
+                    : step === 'reset_password'
+                    ? 'أدخل بريدك لإرسال رابط الاستعادة'
+                    : 'سجّل دخولك لتصفح المتاجر وقوائم المنتجات وإتمام طلبك وتتبع حالته مباشرة عبر Firebase.'}
+                </p>
+              </div>
+              <div className="shrink-0 flex justify-center">
+                <AdkawyLogo variant="stacked" />
+              </div>
+            </div>
 
           {activeRefCode && !inviteToken && authMode === 'register_customer' && (
             <div
@@ -1418,7 +1424,7 @@ export function AuthScreen({
                       : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
-                  حساب جديد
+                  إنشاء حساب جديد
                 </button>
               </div>
 
@@ -1645,23 +1651,23 @@ export function AuthScreen({
               <div className="relative flex items-center py-1">
                 <div className="flex-grow border-t border-[#334155]" />
                 <span className="shrink-0 mx-3 text-xs font-semibold text-[#94A3B8]">
-                  أو
+                  أو الدخول السريع
                 </span>
                 <div className="flex-grow border-t border-[#334155]" />
               </div>
 
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   disabled={busyMode !== null}
                   onClick={handleGoogleCustomerLogin}
-                  className="w-full min-h-[48px] py-3 px-6 rounded-2xl bg-[#0F172A] hover:bg-[#0F172A]/80 active:scale-[0.98] disabled:opacity-60 border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2.5 cursor-pointer whitespace-nowrap shrink-0"
+                  className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-[#0F172A] hover:bg-[#0F172A]/80 active:scale-[0.98] disabled:opacity-60 border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <GoogleBrandMark />
                   <span>
                     {busyMode === 'google'
                       ? 'جارٍ الاتصال...'
-                      : 'الدخول باستخدام Google'}
+                      : 'المتابعة بحساب Google'}
                   </span>
                 </button>
 
@@ -1670,7 +1676,7 @@ export function AuthScreen({
                     type="button"
                     disabled={busyMode !== null}
                     onClick={handleAnonymousCustomerEntry}
-                    className="w-full min-h-[48px] py-3 px-6 rounded-2xl bg-[#0F172A] hover:border-[#FF6B00] border border-[#334155] active:scale-[0.98] disabled:opacity-60 text-[#F8FAFC] font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2.5 cursor-pointer whitespace-nowrap shrink-0"
+                    className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-[#0F172A] hover:border-[#FF6B00] border border-[#334155] active:scale-[0.98] disabled:opacity-60 text-[#F8FAFC] font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <ShoppingBag
                       className="w-4 h-4 text-[#FF6B00] shrink-0"
@@ -1679,42 +1685,70 @@ export function AuthScreen({
                     <span>
                       {busyMode === 'customer'
                         ? 'جارٍ الفتح...'
-                        : 'تصفح المتاجر كضيف'}
+                        : 'دخول كزائر (مجهول)'}
                     </span>
                   </button>
                 )}
               </div>
             </div>
           )}
+          </div>
 
-          {onOpenLegalModal && (
-            <div className="pt-4 border-t border-[#334155] flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs font-semibold text-[#94A3B8]">
-              <button
-                type="button"
-                onClick={() => onOpenLegalModal('terms')}
-                className="text-[#FF6B00] hover:underline cursor-pointer"
-              >
-                الشروط والأحكام
-              </button>
-              <span>·</span>
-              <button
-                type="button"
-                onClick={() => onOpenLegalModal('privacy')}
-                className="text-[#FF6B00] hover:underline cursor-pointer"
-              >
-                سياسة الخصوصية
-              </button>
-              <span>·</span>
-              <button
-                type="button"
-                onClick={() => onOpenLegalModal('pharmacy')}
-                className="text-[#FF6B00] hover:underline cursor-pointer"
-              >
-                الصيدليات
-              </button>
-            </div>
-          )}
+          <div className="pt-4 border-t border-[#334155] flex flex-wrap items-center justify-between gap-3 text-xs font-semibold text-[#94A3B8]">
+            <span>متصل بقاعدة بيانات Cloud Firestore الحقيقية</span>
+            {onOpenLegalModal && (
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalModal('terms')}
+                  className="text-[#FF6B00] hover:underline cursor-pointer"
+                >
+                  الشروط والأحكام
+                </button>
+                <span>·</span>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalModal('privacy')}
+                  className="text-[#FF6B00] hover:underline cursor-pointer"
+                >
+                  الخصوصية
+                </button>
+                <span>·</span>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalModal('pharmacy')}
+                  className="text-[#FF6B00] hover:underline cursor-pointer"
+                >
+                  الصيدليات
+                </button>
+              </div>
+            )}
+          </div>
         </section>
+
+        {/* Left Column (RTL): Edku Visual Showcase Card */}
+        <aside
+          aria-label="إدكاوي لخدمات التوصيل في مدينة إدكو"
+          className="lg:order-2 relative rounded-2xl border border-[#334155] bg-[#1E293B] overflow-hidden min-h-[260px] lg:min-h-[620px] flex flex-col justify-end shadow-2xl"
+        >
+          <ResilientImage
+            src={HERO_EDKU_IMAGE}
+            alt="أسماك ومأكولات إدكو الطازجة"
+            fallbackLabel="إدكاوي — مدينة إدكو"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="relative z-10 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/80 to-transparent p-6 pt-24 space-y-2.5">
+            <p className="text-xs font-bold text-[#FF6B00]">
+              شارع البحر · حي المحطة · المعدية · كوبري شربت
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC] leading-tight">
+              كل مطاعم ومتاجر إدكو تصلك حتى باب المنزل
+            </h2>
+            <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
+              تصفح قوائم المنتجات، أضف للسلة بضغطة واحدة، واختر الدفع كاش أو من المحفظة مع تتبع لحظي لحالة طلبك.
+            </p>
+          </div>
+        </aside>
       </div>
     </div>
   );

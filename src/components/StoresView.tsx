@@ -14,7 +14,6 @@ import {
   Flame,
   Gift,
   Heart,
-  Home,
   LayoutGrid,
   Lock,
   MapPin,
@@ -24,7 +23,6 @@ import {
   Radio,
   RefreshCw,
   Search,
-  Shirt,
   ShoppingBasket,
   Sparkles,
   Star,
@@ -152,19 +150,27 @@ export function StoresView({
     }
   };
 
+  const hiddenHomeCategories = useMemo(
+    () => new Set<StoreCategory>(['أدوات منزلية', 'ملابس']),
+    []
+  );
+
   const availableCategoryTabs: readonly StoreCategory[] = useMemo(() => {
     if (dynamicCategories && dynamicCategories.length > 0) {
       return Array.from(
         new Set(
           [...dynamicCategories]
-            .filter((c) => c.isActive !== false)
+            .filter(
+              (c) =>
+                c.isActive !== false && !hiddenHomeCategories.has(c.storeCategory)
+            )
             .sort((a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99))
             .map((c) => c.storeCategory)
         )
       );
     }
-    return STORE_CATEGORIES;
-  }, [dynamicCategories]);
+    return STORE_CATEGORIES.filter((c) => !hiddenHomeCategories.has(c));
+  }, [dynamicCategories, hiddenHomeCategories]);
 
   useEffect(() => {
     if (
@@ -227,6 +233,7 @@ export function StoresView({
       store: StoreRecord;
     }> = [];
     for (const store of stores) {
+      if (hiddenHomeCategories.has(store.category)) continue;
       if (
         store.name.toLowerCase().includes(q) ||
         store.category.toLowerCase().includes(q) ||
@@ -880,9 +887,10 @@ export function StoresView({
         </div>
 
         {/* Circular Category Icons inside Light-Navy Circles with Orange Icons */}
-        <div className="flex items-center gap-4 overflow-x-auto py-2 px-1 no-scrollbar">
+        <div className="flex items-start gap-4 overflow-x-auto py-2 px-1 no-scrollbar">
           {(['الكل', ...availableCategoryTabs] as const).map((cat) => {
             const active = selectedCategory === cat;
+            const isComingSoon = cat === 'هدايا وإكسسوارات';
             return (
               <button
                 key={cat}
@@ -891,39 +899,44 @@ export function StoresView({
                   setSelectedCategory(cat);
                   setSelectedSubCategory('الكل');
                 }}
-                className="flex flex-col items-center gap-2 shrink-0 group cursor-pointer focus:outline-none"
+                className={`flex flex-col items-center gap-2 shrink-0 group cursor-pointer focus:outline-none ${
+                  isComingSoon && !active ? 'opacity-80' : ''
+                }`}
               >
-                <div
-                  className={`w-16 h-16 rounded-full flex items-center justify-center transition shadow-md ${
-                    active
-                      ? 'bg-[#FF6B00] text-white ring-4 ring-[#FF6B00]/30 scale-105'
-                      : 'bg-[#283548] border border-[#334155] text-[#FF6B00] group-hover:border-[#FF6B00]'
-                  }`}
-                >
-                  {cat === 'الكل' ? (
-                    <LayoutGrid className="w-6 h-6" />
-                  ) : cat === 'أكل بيتي' ? (
-                    <ChefHat className="w-6 h-6" />
-                  ) : cat === 'أسماك وبحريات' ? (
-                    <Fish className="w-6 h-6" />
-                  ) : cat === 'مشويات ومطاعم' ? (
-                    <Flame className="w-6 h-6" />
-                  ) : cat === 'مخابز وفطائر' ? (
-                    <Croissant className="w-6 h-6" />
-                  ) : cat === 'سوبر ماركت' ? (
-                    <ShoppingBasket className="w-6 h-6" />
-                  ) : cat === 'صيدليات' ? (
-                    <Pill className="w-6 h-6" />
-                  ) : cat === 'مستحضرات تجميل' ? (
-                    <Sparkles className="w-6 h-6" />
-                  ) : cat === 'أدوات منزلية' ? (
-                    <Home className="w-6 h-6" />
-                  ) : cat === 'ملابس' ? (
-                    <Shirt className="w-6 h-6" />
-                  ) : cat === 'هدايا وإكسسوارات' ? (
-                    <Gift className="w-6 h-6" />
-                  ) : (
-                    <UtensilsCrossed className="w-6 h-6" />
+                <div className="relative">
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center transition shadow-md ${
+                      active
+                        ? 'bg-[#FF6B00] text-white ring-4 ring-[#FF6B00]/30 scale-105'
+                        : 'bg-[#283548] border border-[#334155] text-[#FF6B00] group-hover:border-[#FF6B00]'
+                    }`}
+                  >
+                    {cat === 'الكل' ? (
+                      <LayoutGrid className="w-6 h-6" />
+                    ) : cat === 'أكل بيتي' ? (
+                      <ChefHat className="w-6 h-6" />
+                    ) : cat === 'أسماك وبحريات' ? (
+                      <Fish className="w-6 h-6" />
+                    ) : cat === 'مشويات ومطاعم' ? (
+                      <Flame className="w-6 h-6" />
+                    ) : cat === 'مخابز وفطائر' ? (
+                      <Croissant className="w-6 h-6" />
+                    ) : cat === 'سوبر ماركت' ? (
+                      <ShoppingBasket className="w-6 h-6" />
+                    ) : cat === 'صيدليات' ? (
+                      <Pill className="w-6 h-6" />
+                    ) : cat === 'مستحضرات تجميل' ? (
+                      <Sparkles className="w-6 h-6" />
+                    ) : cat === 'هدايا وإكسسوارات' ? (
+                      <Gift className="w-6 h-6" />
+                    ) : (
+                      <UtensilsCrossed className="w-6 h-6" />
+                    )}
+                  </div>
+                  {isComingSoon && (
+                    <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#FF6B00] text-white text-[9px] font-extrabold whitespace-nowrap shadow">
+                      قريباً
+                    </span>
                   )}
                 </div>
                 <span
@@ -1047,9 +1060,17 @@ export function StoresView({
           />
         ) : filteredStores.length === 0 ? (
           <EmptyState
-            icon={Search}
-            title="لا توجد نتائج مطابقة في هذا التصنيف حالياً"
-            description="جرّب اختيار تصنيف آخر أو مسح كلمة البحث لعرض جميع متاجر إدكو."
+            icon={selectedCategory === 'هدايا وإكسسوارات' ? Gift : Search}
+            title={
+              selectedCategory === 'هدايا وإكسسوارات'
+                ? 'قسم الهدايا والإكسسوارات قريباً في إدكو'
+                : 'لا توجد نتائج مطابقة في هذا التصنيف حالياً'
+            }
+            description={
+              selectedCategory === 'هدايا وإكسسوارات'
+                ? 'نجهّز حالياً لانضمام أفضل محلات الهدايا والإكسسوارات داخل مدينة إدكو. تصفح باقي الأقسام المتاحة الآن.'
+                : 'جرّب اختيار تصنيف آخر أو مسح كلمة البحث لعرض جميع متاجر إدكو.'
+            }
             actionLabel="عرض كل المتاجر والصيدليات"
             onAction={() => {
               setSelectedCategory('الكل');

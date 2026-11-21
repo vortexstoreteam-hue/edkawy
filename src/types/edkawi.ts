@@ -1441,7 +1441,7 @@ export interface WalletTopupRequestInput {
   method: WalletTopupMethod;
   referenceNumber: string;
   senderPhone: string;
-  receiptImageUrl?: string;
+  receiptImageUrl: string;
 }
 
 export interface WalletTransactionRecord {
