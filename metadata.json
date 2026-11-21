@@ -1,0 +1,12 @@
+{
+  "name": "Remix أدكاوي - توصيل إدكو",
+  "description": "منصة توصيل الطلبات والمتاجر المحلية في مدينة إدكو بربط مباشر مع قاعدة بيانات سحابية حقيقية.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

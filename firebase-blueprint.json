@@ -1,0 +1,1921 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Unified login RBAC profile mapping a Firebase Auth UID to its portal role, contact info, map-pinned addresses, loyalty points, and theme preference.",
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["admin", "store", "courier", "customer", "sales_agent", "support_agent", "operations"],
+          "maxLength": 20,
+          "description": "Assigned RBAC role used by Unified Login routing."
+        },
+        "customerCode": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 12,
+          "pattern": "^EDK-USR-[0-9]{4}$",
+          "description": "Unique 4-digit customer code (EDK-USR-XXXX) generated upon customer registration or first login."
+        },
+        "referralCode": {
+          "type": "string",
+          "maxLength": 24,
+          "description": "Unique referral code (AGENT-XXXX) when role is sales_agent."
+        },
+        "referredByCode": {
+          "type": "string",
+          "maxLength": 24,
+          "description": "Referral code (AGENT-XXXX) that referred this account."
+        },
+        "referredByAgentId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Sales Agent UID that referred this account."
+        },
+        "requiresEmailVerification": {
+          "type": "boolean",
+          "description": "Whether newly registered store or sales_agent account requires Firebase emailVerified before portal access."
+        },
+        "lastReviewPromptAtIso": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "ISO timestamp of last Google Play in-app review prompt."
+        },
+        "isBanned": {
+          "type": "boolean",
+          "description": "Whether the customer account is banned by Admin from placing new orders."
+        },
+        "banType": {
+          "type": "string",
+          "enum": ["temporary_24h", "suspended", "permanent"],
+          "maxLength": 20,
+          "description": "Ban severity tier applied by Admin."
+        },
+        "banUntilIso": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "ISO expiration timestamp for temporary_24h bans."
+        },
+        "banReason": {
+          "type": "string",
+          "maxLength": 240,
+          "description": "Admin-recorded reason for account suspension."
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "User email address."
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Display name of the account holder."
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 20,
+          "pattern": "^01[0125][0-9]{8}$",
+          "description": "Customer or user Egyptian mobile number."
+        },
+        "defaultNeighborhood": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Default Edku neighborhood for delivery."
+        },
+        "defaultAddress": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Default street and building address in Edku."
+        },
+        "defaultLat": {
+          "type": "number",
+          "description": "Pinned default delivery latitude in Edku."
+        },
+        "defaultLng": {
+          "type": "number",
+          "description": "Pinned default delivery longitude in Edku."
+        },
+        "profileCompleted": {
+          "type": "boolean",
+          "description": "Whether Google or Email customer completed phone and map location onboarding."
+        },
+        "favoriteStoreIds": {
+          "type": "array",
+          "description": "Bounded list (up to 50) of favorite store IDs."
+        },
+        "savedAddresses": {
+          "type": "array",
+          "description": "Bounded list (up to 10) of saved Edku delivery addresses with map coordinates."
+        },
+        "darkMode": {
+          "type": "boolean",
+          "description": "Synced dark mode preference."
+        },
+        "storeId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Linked store document ID in /stores when role is store."
+        },
+        "points": {
+          "type": "number",
+          "description": "Accumulated Edkawy loyalty points balance."
+        },
+        "walletBalance": {
+          "type": "number",
+          "description": "Customer EGP wallet balance approved via Admin top-ups or refunds."
+        },
+        "totalSpentEgp": {
+          "type": "number",
+          "description": "Cumulative EGP spent across orders for unlocking Top Rated section."
+        },
+        "customerReferralCode": {
+          "type": "string",
+          "maxLength": 24,
+          "description": "Customer share-and-earn referral code (EDK-REF-XXXX)."
+        },
+        "lastRefundOrderId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Order ID used to verify atomic wallet refund upon cancellation."
+        },
+        "currentStreak": {
+          "type": "number",
+          "description": "Consecutive delivered orders progress toward Streak 5 reward."
+        },
+        "freeDeliveryRewards": {
+          "type": "number",
+          "description": "Earned free delivery vouchers from Streak 5."
+        },
+        "lastDeliveredOrderAtIso": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "ISO timestamp of most recent delivered order."
+        },
+        "lastSpinDate": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "ISO timestamp of last Daily Spin execution (24h cooldown)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of profile creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last profile update."
+        }
+      },
+      "required": ["role", "createdAt", "updatedAt"]
+    },
+    "CustomerDirectoryEntry": {
+      "title": "CustomerDirectoryEntry",
+      "description": "Non-PII customer loyalty directory entry for real-time points, streaks, and Admin points management.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Customer Firebase Auth UID."
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Customer display name."
+        },
+        "customerCode": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 12,
+          "pattern": "^EDK-USR-[0-9]{4}$",
+          "description": "Mirrored unique customer code (EDK-USR-XXXX) for Admin directory search."
+        },
+        "isBanned": {
+          "type": "boolean",
+          "description": "Mirrored customer ban flag for real-time Admin status display."
+        },
+        "banType": {
+          "type": "string",
+          "enum": ["temporary_24h", "suspended", "permanent"],
+          "maxLength": 20,
+          "description": "Mirrored ban tier."
+        },
+        "banUntilIso": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "Mirrored ISO expiration timestamp for temporary_24h bans."
+        },
+        "banReason": {
+          "type": "string",
+          "maxLength": 240,
+          "description": "Mirrored reason for customer ban."
+        },
+        "neighborhood": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Customer neighborhood in Edku."
+        },
+        "points": {
+          "type": "number",
+          "description": "Current loyalty points balance."
+        },
+        "totalSpentEgp": {
+          "type": "number",
+          "description": "Mirrored cumulative customer spend in EGP."
+        },
+        "currentStreak": {
+          "type": "number",
+          "description": "Current order streak (0 to 5)."
+        },
+        "freeDeliveryRewards": {
+          "type": "number",
+          "description": "Earned free delivery rewards."
+        },
+        "totalDeliveredOrders": {
+          "type": "number",
+          "description": "Total completed orders count."
+        },
+        "lastDeliveredOrderAtIso": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "ISO timestamp of last completed delivery."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last points update."
+        }
+      },
+      "required": ["uid", "name", "points", "currentStreak", "totalDeliveredOrders", "updatedAt"]
+    },
+    "Store": {
+      "title": "Store",
+      "description": "Local merchant, restaurant, bakery, supermarket, or pharmacy in Edku city with uploaded image, pinned map coordinates, and aggregate review ratings.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Arabic display name of the store in Edku."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "أسماك وبحريات",
+            "مشويات ومطاعم",
+            "مخابز وفطائر",
+            "سوبر ماركت",
+            "صيدليات",
+            "أكل بيتي",
+            "مستحضرات تجميل",
+            "أدوات منزلية",
+            "ملابس",
+            "هدايا وإكسسوارات"
+          ],
+          "maxLength": 40,
+          "description": "Primary Super App merchant category."
+        },
+        "categoryId": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "Linked category document ID in /categories."
+        },
+        "isHomeFood": {
+          "type": "boolean",
+          "description": "Special badge flag marking authentic home-cooked food providers in Edku."
+        },
+        "neighborhood": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Neighborhood or street in Edku city."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 220,
+          "description": "Short summary of store specialties."
+        },
+        "deliveryFee": {
+          "type": "number",
+          "description": "Base store delivery fee in EGP (0 to 250)."
+        },
+        "deliveryTimeMinutes": {
+          "type": "number",
+          "description": "Estimated delivery duration in minutes (10 to 120)."
+        },
+        "rating": {
+          "type": "number",
+          "description": "Average customer rating between 1 and 5."
+        },
+        "reviewCount": {
+          "type": "number",
+          "description": "Total number of customer reviews."
+        },
+        "ratingSum": {
+          "type": "number",
+          "description": "Cumulative sum of star ratings."
+        },
+        "lat": {
+          "type": "number",
+          "description": "Pinned store latitude coordinate in Edku city."
+        },
+        "lng": {
+          "type": "number",
+          "description": "Pinned store longitude coordinate in Edku city."
+        },
+        "imageKey": {
+          "type": "string",
+          "enum": [
+            "seafood",
+            "grills",
+            "bakery",
+            "grocery",
+            "pharmacy",
+            "home_food",
+            "cosmetics",
+            "household",
+            "clothing",
+            "gifts"
+          ],
+          "maxLength": 24,
+          "description": "Category visual fallback key."
+        },
+        "imageUrl": {
+          "type": "string",
+          "maxLength": 750000,
+          "description": "Compressed device-uploaded store image Data URL or HTTPS URL."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether the store is active on the platform."
+        },
+        "isOpen": {
+          "type": "boolean",
+          "description": "Real-time merchant Open/Closed switch."
+        },
+        "prepTimeMinutes": {
+          "type": "number",
+          "description": "Default expected preparation time in minutes (5 to 180)."
+        },
+        "minOrderAmount": {
+          "type": "number",
+          "description": "Minimum order subtotal in EGP (0 to 5000)."
+        },
+        "menuItems": {
+          "type": "array",
+          "description": "Bounded preview list (1 to 8) of store menu items."
+        },
+        "ownerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Firebase Auth UID of the dedicated store owner login."
+        },
+        "loginEmail": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Store login email address."
+        },
+        "referredByAgentId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Optional Sales Agent UID who onboarded this store."
+        },
+        "referredByCode": {
+          "type": "string",
+          "maxLength": 24,
+          "description": "Optional referral code (AGENT-XXXX) used during store onboarding."
+        },
+        "inviteToken": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Optional invitation token used during self-onboarding."
+        },
+        "createdBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Firebase Auth UID of the creator."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of store creation."
+        }
+      },
+      "required": [
+        "name",
+        "category",
+        "neighborhood",
+        "description",
+        "deliveryFee",
+        "deliveryTimeMinutes",
+        "rating",
+        "imageKey",
+        "isActive",
+        "menuItems",
+        "createdBy",
+        "createdAt"
+      ]
+    },
+    "StoreCredential": {
+      "title": "StoreCredential",
+      "description": "Admin-only isolated store owner contact and generated @adkawy.com login credentials.",
+      "type": "object",
+      "properties": {
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 80 },
+        "phone": { "type": "string", "maxLength": 15 },
+        "loginEmail": { "type": "string", "maxLength": 100 },
+        "generatedPassword": { "type": "string", "maxLength": 64 },
+        "ownerUid": { "type": "string", "maxLength": 128 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "storeId",
+        "storeName",
+        "phone",
+        "loginEmail",
+        "generatedPassword",
+        "ownerUid",
+        "createdBy",
+        "createdAt"
+      ]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Store product or Mystery Box offer with mandatory device-uploaded photo and live inventory stock.",
+      "type": "object",
+      "properties": {
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeOwnerId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 220 },
+        "category": { "type": "string", "maxLength": 40 },
+        "price": { "type": "number" },
+        "imageKey": {
+          "type": "string",
+          "enum": [
+            "seafood",
+            "grills",
+            "bakery",
+            "grocery",
+            "pharmacy",
+            "home_food",
+            "cosmetics",
+            "household",
+            "clothing",
+            "gifts",
+            "hero_seafood",
+            "shrimp_casserole",
+            "hawawshi_grill",
+            "savory_feteer",
+            "dairy_cheese"
+          ],
+          "maxLength": 30
+        },
+        "imageUrl": { "type": "string", "maxLength": 750000 },
+        "isAvailable": { "type": "boolean" },
+        "stockQuantity": { "type": "number", "description": "Available stock count; 0 locks ordering." },
+        "hasVariants": { "type": "boolean", "description": "Whether product uses smart variants (sizes, colors, shades, portions)." },
+        "variants": { "type": "array", "description": "Bounded list (<= 25) of ProductVariant maps with per-variant price and stock." },
+        "isMysteryBox": { "type": "boolean", "description": "Whether this item is a discounted Mystery Box." },
+        "originalValueEgp": { "type": "number", "description": "Original value before Mystery Box discount." },
+        "isFlashSale": { "type": "boolean", "description": "Whether product is currently on Flash Sale." },
+        "flashDiscountPercent": { "type": "number", "description": "Flash sale discount percent (1-90)." },
+        "flashSaleEndsAtIso": { "type": "string", "maxLength": 40, "description": "Flash sale expiration ISO timestamp." },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "storeId",
+        "name",
+        "description",
+        "category",
+        "price",
+        "imageKey",
+        "isAvailable",
+        "createdBy",
+        "createdAt"
+      ]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Delivery or 4-stage Pharmacy Prescription order with map coordinates, scheduling, group cart link, and loyalty points.",
+      "type": "object",
+      "properties": {
+        "orderType": {
+          "type": "string",
+          "enum": ["standard", "pharmacy_prescription", "custom_errand"],
+          "maxLength": 30
+        },
+        "prescriptionImageUrl": { "type": "string", "maxLength": 750000 },
+        "prescriptionMedicineRequest": { "type": "string", "maxLength": 600 },
+        "pharmacistNote": { "type": "string", "maxLength": 300 },
+        "errandDescription": { "type": "string", "maxLength": 400 },
+        "errandPickupAddress": { "type": "string", "maxLength": 180 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeOwnerId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 100 },
+        "storeLat": { "type": "number" },
+        "storeLng": { "type": "number" },
+        "customerName": { "type": "string", "maxLength": 100 },
+        "customerPhone": { "type": "string", "maxLength": 20 },
+        "deliveryNeighborhood": { "type": "string", "maxLength": 80 },
+        "deliveryAddress": { "type": "string", "maxLength": 250 },
+        "customerLat": { "type": "number" },
+        "customerLng": { "type": "number" },
+        "isScheduled": { "type": "boolean" },
+        "scheduledForIso": { "type": "string", "maxLength": 40 },
+        "groupCartId": { "type": "string", "maxLength": 128 },
+        "groupSessionId": { "type": "string", "maxLength": 128 },
+        "zoneId": {
+          "type": "string",
+          "enum": ["zone_1", "zone_2", "zone_3", "zone_4", "zone_5"],
+          "maxLength": 20
+        },
+        "zoneName": { "type": "string", "maxLength": 80 },
+        "items": { "type": "array" },
+        "itemsSummary": { "type": "string", "maxLength": 500 },
+        "itemNames": { "type": "array" },
+        "itemCount": { "type": "number" },
+        "subtotal": { "type": "number" },
+        "smallOrderFee": { "type": "number" },
+        "couponCode": { "type": "string", "maxLength": 32 },
+        "discountPercent": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "deliveryFee": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["cash", "wallet", "visa", "cash_on_delivery"],
+          "maxLength": 30
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "awaiting_pharmacy_quote",
+            "awaiting_customer_approval",
+            "awaiting_courier_quote",
+            "awaiting_customer_errand_approval",
+            "pending",
+            "pending_payment",
+            "confirmed",
+            "preparing",
+            "ready",
+            "on_the_way",
+            "delivering",
+            "delivered",
+            "cancelled"
+          ],
+          "maxLength": 40
+        },
+        "prepTimeMinutes": { "type": "number" },
+        "courierId": { "type": "string", "maxLength": 128 },
+        "courierName": { "type": "string", "maxLength": 80 },
+        "courierPhone": { "type": "string", "maxLength": 20 },
+        "courierLocation": { "type": "string", "maxLength": 120 },
+        "courierLat": { "type": "number" },
+        "courierLng": { "type": "number" },
+        "cancelledByCourierIds": {
+          "type": "array",
+          "description": "Bounded list (<= 20) of courier UIDs who accepted and then cancelled/released this order."
+        },
+        "rejectedBy": {
+          "type": "array",
+          "description": "Bounded list (<= 30) of courier UIDs who rejected this order."
+        },
+        "tipAmountEgp": { "type": "number" },
+        "isTipped": { "type": "boolean" },
+        "isTestSimulation": {
+          "type": "boolean",
+          "description": "Flag marking temporary QA test simulation orders created from Admin Testing Center."
+        },
+        "isReviewed": { "type": "boolean" },
+        "pointsEarned": { "type": "number" },
+        "pointsAwarded": { "type": "boolean" },
+        "notes": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "customerId",
+        "storeId",
+        "storeName",
+        "customerName",
+        "customerPhone",
+        "deliveryNeighborhood",
+        "deliveryAddress",
+        "totalAmount",
+        "paymentMethod",
+        "status",
+        "createdAt"
+      ]
+    },
+    "DispatchTicket": {
+      "title": "DispatchTicket",
+      "description": "Non-PII operational order summary for courier pickup queue and admin live index.",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string", "maxLength": 128 },
+        "orderType": { "type": "string", "enum": ["standard", "pharmacy_prescription", "custom_errand"], "maxLength": 30 },
+        "pharmacistNote": { "type": "string", "maxLength": 300 },
+        "errandDescription": { "type": "string", "maxLength": 400 },
+        "errandPickupAddress": { "type": "string", "maxLength": 180 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeOwnerId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 100 },
+        "storeNeighborhood": { "type": "string", "maxLength": 80 },
+        "storeLat": { "type": "number" },
+        "storeLng": { "type": "number" },
+        "deliveryNeighborhood": { "type": "string", "maxLength": 80 },
+        "zoneId": {
+          "type": "string",
+          "enum": ["zone_1", "zone_2", "zone_3", "zone_4", "zone_5"],
+          "maxLength": 20
+        },
+        "zoneName": { "type": "string", "maxLength": 80 },
+        "customerLat": { "type": "number" },
+        "customerLng": { "type": "number" },
+        "isScheduled": { "type": "boolean" },
+        "scheduledForIso": { "type": "string", "maxLength": 40 },
+        "itemsSummary": { "type": "string", "maxLength": 500 },
+        "subtotal": { "type": "number" },
+        "smallOrderFee": { "type": "number" },
+        "couponCode": { "type": "string", "maxLength": 32 },
+        "discountPercent": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "deliveryFee": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "paymentMethod": { "type": "string", "maxLength": 30 },
+        "status": {
+          "type": "string",
+          "enum": [
+            "awaiting_pharmacy_quote",
+            "awaiting_customer_approval",
+            "awaiting_courier_quote",
+            "awaiting_customer_errand_approval",
+            "pending",
+            "pending_payment",
+            "confirmed",
+            "preparing",
+            "ready",
+            "on_the_way",
+            "delivering",
+            "delivered",
+            "cancelled"
+          ],
+          "maxLength": 40
+        },
+        "prepTimeMinutes": { "type": "number" },
+        "courierId": { "type": "string", "maxLength": 128 },
+        "courierName": { "type": "string", "maxLength": 80 },
+        "courierLat": { "type": "number" },
+        "courierLng": { "type": "number" },
+        "cancelledByCourierIds": {
+          "type": "array",
+          "description": "Bounded list (<= 20) of courier UIDs who accepted and then released this ticket."
+        },
+        "rejectedBy": {
+          "type": "array",
+          "description": "Bounded list (<= 30) of courier UIDs who rejected this ticket."
+        },
+        "isTestSimulation": {
+          "type": "boolean",
+          "description": "Flag marking temporary QA test simulation tickets."
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "orderId",
+        "customerId",
+        "storeId",
+        "storeName",
+        "deliveryNeighborhood",
+        "itemsSummary",
+        "totalAmount",
+        "paymentMethod",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Courier": {
+      "title": "Courier",
+      "description": "Private courier profile containing contact PII, GPS coordinates, and approval status.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 80 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "email": { "type": "string", "maxLength": 100 },
+        "vehicleType": {
+          "type": "string",
+          "enum": ["دراجة نارية", "سكوتر كهربائي", "دراجة هوائية"],
+          "maxLength": 30
+        },
+        "neighborhood": { "type": "string", "maxLength": 80 },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "ratingSum": { "type": "number" },
+        "isAvailable": { "type": "boolean" },
+        "approvalStatus": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected"],
+          "maxLength": 20
+        },
+        "completedDeliveries": { "type": "number" },
+        "cancelledDeliveries": { "type": "number" },
+        "walletBalance": { "type": "number" },
+        "totalTipsEgp": { "type": "number" },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "name",
+        "phone",
+        "vehicleType",
+        "neighborhood",
+        "isAvailable",
+        "completedDeliveries",
+        "updatedBy",
+        "updatedAt"
+      ]
+    },
+    "CourierDirectoryEntry": {
+      "title": "CourierDirectoryEntry",
+      "description": "Non-PII courier directory entry for fleet availability, live map pins, wallet tips, and admin approval queue.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 80 },
+        "vehicleType": {
+          "type": "string",
+          "enum": ["دراجة نارية", "سكوتر كهربائي", "دراجة هوائية"],
+          "maxLength": 30
+        },
+        "neighborhood": { "type": "string", "maxLength": 80 },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "ratingSum": { "type": "number" },
+        "isAvailable": { "type": "boolean" },
+        "approvalStatus": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected"],
+          "maxLength": 20
+        },
+        "completedDeliveries": { "type": "number" },
+        "cancelledDeliveries": { "type": "number" },
+        "walletBalance": { "type": "number" },
+        "totalTipsEgp": { "type": "number" },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "name",
+        "vehicleType",
+        "neighborhood",
+        "isAvailable",
+        "approvalStatus",
+        "completedDeliveries",
+        "updatedBy",
+        "updatedAt"
+      ]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Post-delivery 5-star customer review for a Store and optional Courier.",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string", "maxLength": 128 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "courierId": { "type": "string", "maxLength": 128 },
+        "courierName": { "type": "string", "maxLength": 80 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 80 },
+        "storeRating": { "type": "number" },
+        "courierRating": { "type": "number" },
+        "comment": { "type": "string", "maxLength": 300 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderId", "storeId", "customerId", "customerName", "storeRating", "comment", "createdAt"]
+    },
+    "AdBanner": {
+      "title": "AdBanner",
+      "description": "Promotional banner displayed on Customer Home with mandatory device-uploaded image.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 90 },
+        "subtitle": { "type": "string", "maxLength": 180 },
+        "badgeText": { "type": "string", "maxLength": 40 },
+        "imageKey": {
+          "type": "string",
+          "enum": [
+            "promo_seafood",
+            "promo_grills",
+            "seafood",
+            "grills",
+            "bakery",
+            "grocery",
+            "pharmacy",
+            "home_food",
+            "cosmetics",
+            "household",
+            "clothing",
+            "gifts"
+          ],
+          "maxLength": 30
+        },
+        "imageUrl": { "type": "string", "maxLength": 750000 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 80 },
+        "ctaLabel": { "type": "string", "maxLength": 40 },
+        "startDateIso": { "type": "string", "maxLength": 40 },
+        "endDateIso": { "type": "string", "maxLength": 40 },
+        "isActive": { "type": "boolean" },
+        "sortOrder": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "title",
+        "subtitle",
+        "badgeText",
+        "imageKey",
+        "isActive",
+        "sortOrder",
+        "createdBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Discount coupon code with optional expiry date, single-use lock, and loyalty redemption ownership.",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "maxLength": 32 },
+        "discountPercent": { "type": "number" },
+        "maxDiscountEgp": { "type": "number" },
+        "minOrderEgp": { "type": "number" },
+        "description": { "type": "string", "maxLength": 140 },
+        "expiryDateIso": { "type": "string", "maxLength": 40 },
+        "ownerUid": { "type": "string", "maxLength": 128 },
+        "pointsCost": { "type": "number" },
+        "isUsed": { "type": "boolean" },
+        "usedBy": { "type": "string", "maxLength": 128 },
+        "isActive": { "type": "boolean" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "code",
+        "discountPercent",
+        "maxDiscountEgp",
+        "minOrderEgp",
+        "description",
+        "isActive",
+        "createdBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "Real-time notification delivered to a specific recipientUid.",
+      "type": "object",
+      "properties": {
+        "recipientUid": { "type": "string", "maxLength": 128 },
+        "audience": { "type": "string", "maxLength": 24 },
+        "title": { "type": "string", "maxLength": 100 },
+        "body": { "type": "string", "maxLength": 300 },
+        "type": { "type": "string", "enum": ["order_update", "promo", "system"], "maxLength": 24 },
+        "orderId": { "type": "string", "maxLength": 128 },
+        "isRead": { "type": "boolean" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recipientUid", "title", "body", "type", "isRead", "createdBy", "createdAt"]
+    },
+    "BroadcastNotification": {
+      "title": "BroadcastNotification",
+      "description": "Internal Admin broadcast notification pushed live to All, Customers, Stores, or Couriers.",
+      "type": "object",
+      "properties": {
+        "audience": {
+          "type": "string",
+          "enum": ["all", "customer", "store", "courier"],
+          "maxLength": 20
+        },
+        "title": { "type": "string", "maxLength": 100 },
+        "body": { "type": "string", "maxLength": 300 },
+        "type": { "type": "string", "enum": ["order_update", "promo", "system"], "maxLength": 24 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["audience", "title", "body", "type", "createdBy", "createdAt"]
+    },
+    "Campaign": {
+      "title": "Campaign",
+      "description": "Rotating gamification campaign managed by Admin (Streak 5, Happy Hour, Points Multiplier, Neighborhood Challenge, Mystery Box).",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 90 },
+        "subtitle": { "type": "string", "maxLength": 180 },
+        "badgeText": { "type": "string", "maxLength": 40 },
+        "campaignType": {
+          "type": "string",
+          "enum": ["streak_5", "happy_hour", "points_multiplier", "neighborhood_challenge", "mystery_box"],
+          "maxLength": 32
+        },
+        "multiplier": { "type": "number" },
+        "discountPercent": { "type": "number" },
+        "targetNeighborhood": { "type": "string", "maxLength": 80 },
+        "startHour": { "type": "number" },
+        "endHour": { "type": "number" },
+        "rewardPoints": { "type": "number" },
+        "imageUrl": { "type": "string", "maxLength": 750000 },
+        "isActive": { "type": "boolean" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "title",
+        "subtitle",
+        "badgeText",
+        "campaignType",
+        "imageUrl",
+        "isActive",
+        "createdBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SharedCart": {
+      "title": "SharedCart",
+      "description": "Live collaborative Group Order cart shared via ?groupCart= link.",
+      "type": "object",
+      "properties": {
+        "hostUid": { "type": "string", "maxLength": 128 },
+        "hostName": { "type": "string", "maxLength": 80 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 80 },
+        "storeDeliveryFee": { "type": "number" },
+        "status": { "type": "string", "enum": ["open", "checked_out", "cancelled"], "maxLength": 20 },
+        "roomCode": { "type": "string", "maxLength": 20 },
+        "chatMessages": { "type": "array" },
+        "items": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["hostUid", "hostName", "storeId", "storeName", "storeDeliveryFee", "status", "items", "createdAt", "updatedAt"]
+    },
+    "ChatLog": {
+      "title": "ChatLog",
+      "description": "Edkawy AI Assistant conversation log per customer.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "userMessage": { "type": "string", "maxLength": 600 },
+        "assistantReply": { "type": "string", "maxLength": 1500 },
+        "suggestedStoreId": { "type": "string", "maxLength": 128 },
+        "pointsSnapshot": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userMessage", "assistantReply", "createdAt"]
+    },
+    "RegisteredAccount": {
+      "title": "RegisteredAccount",
+      "description": "Privacy-preserving SHA-256 email hash marker for Customer, Courier, Store, and Sales Agent accounts.",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["customer", "courier", "store", "sales_agent"], "maxLength": 16 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["role", "updatedAt"]
+    },
+    "PasswordResetLock": {
+      "title": "PasswordResetLock",
+      "description": "Audit timestamp of last password reset link dispatch (no cooldown lock).",
+      "type": "object",
+      "properties": {
+        "lastSentAtMs": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["lastSentAtMs", "updatedAt"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Trusted administrator marker document verified via server OTP gate for vortexstore.team@gmail.com.",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["admin"], "maxLength": 16 },
+        "email": { "type": "string", "enum": ["vortexstore.team@gmail.com"], "maxLength": 100 },
+        "activationGate": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["role", "email", "activationGate", "createdAt"]
+    },
+    "BootstrapConfig": {
+      "title": "BootstrapConfig",
+      "description": "System bootstrap pointer recording the active administrator UID.",
+      "type": "object",
+      "properties": {
+        "adminUid": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminUid", "updatedAt"]
+    },
+    "SystemMaintenanceConfig": {
+      "title": "SystemMaintenanceConfig",
+      "description": "Global platform maintenance mode, surge pricing, payment toggles, and SMTP settings controlled by Admin.",
+      "type": "object",
+      "properties": {
+        "maintenanceMode": { "type": "boolean" },
+        "maintenanceMessage": { "type": "string", "maxLength": 300 },
+        "surgeEnabled": { "type": "boolean" },
+        "surgeMultiplier": { "type": "number" },
+        "smtpEnabled": { "type": "boolean" },
+        "paymentMethods": {
+          "type": "object",
+          "properties": {
+            "cash": { "type": "boolean" },
+            "wallet": { "type": "boolean" },
+            "visa": { "type": "boolean" }
+          }
+        },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["maintenanceMode", "maintenanceMessage", "updatedBy", "updatedAt"]
+    },
+    "BlockedEntity": {
+      "title": "BlockedEntity",
+      "description": "Account and store suspension registry enforced across UI and Firestore rules.",
+      "type": "object",
+      "properties": {
+        "targetId": { "type": "string", "maxLength": 128 },
+        "targetType": { "type": "string", "enum": ["customer", "courier", "store"], "maxLength": 16 },
+        "targetName": { "type": "string", "maxLength": 100 },
+        "reason": { "type": "string", "maxLength": 240 },
+        "isBlocked": { "type": "boolean" },
+        "blockedBy": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["targetId", "targetType", "targetName", "reason", "isBlocked", "blockedBy", "updatedAt"]
+    },
+    "StaffMember": {
+      "title": "StaffMember",
+      "description": "Internal Edkawy team member account with RBAC role (super_admin, support_agent, operations) and active status.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 80 },
+        "email": { "type": "string", "maxLength": 100 },
+        "role": {
+          "type": "string",
+          "enum": ["super_admin", "support_agent", "operations"],
+          "maxLength": 20
+        },
+        "isActive": { "type": "boolean" },
+        "openTicketCount": { "type": "number" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "role", "isActive", "openTicketCount", "createdBy", "createdAt", "updatedAt"]
+    },
+    "SupportAgentPoolEntry": {
+      "title": "SupportAgentPoolEntry",
+      "description": "Non-PII support agent workload index used for least-busy automatic ticket assignment.",
+      "type": "object",
+      "properties": {
+        "staffId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 80 },
+        "isActive": { "type": "boolean" },
+        "openTicketCount": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["staffId", "name", "isActive", "openTicketCount", "updatedAt"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "PII-isolated technical support ticket with live assignment and reply status.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 80 },
+        "userPhone": { "type": "string", "maxLength": 20 },
+        "userEmail": { "type": "string", "maxLength": 100 },
+        "userRole": {
+          "type": "string",
+          "enum": ["customer", "store", "courier"],
+          "maxLength": 20
+        },
+        "subject": { "type": "string", "maxLength": 100 },
+        "category": {
+          "type": "string",
+          "enum": ["طلب", "دفع", "مشكلة تقنية", "أخرى"],
+          "maxLength": 30
+        },
+        "details": { "type": "string", "maxLength": 1000 },
+        "status": {
+          "type": "string",
+          "enum": ["open", "closed"],
+          "maxLength": 16
+        },
+        "assignedTo": { "type": "string", "maxLength": 128 },
+        "assignedToName": { "type": "string", "maxLength": 80 },
+        "hasAdminReply": { "type": "boolean" },
+        "attachmentImageUrl": { "type": "string", "maxLength": 750000 },
+        "slaDeadlineIso": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "userName",
+        "userPhone",
+        "userRole",
+        "subject",
+        "category",
+        "details",
+        "status",
+        "assignedTo",
+        "assignedToName",
+        "hasAdminReply",
+        "createdAt",
+        "lastUpdated"
+      ]
+    },
+    "SupportTicketIndexEntry": {
+      "title": "SupportTicketIndexEntry",
+      "description": "Non-PII operational ticket index enabling zero-get() real-time Admin support queue streaming.",
+      "type": "object",
+      "properties": {
+        "ticketId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "subject": { "type": "string", "maxLength": 100 },
+        "category": {
+          "type": "string",
+          "enum": ["طلب", "دفع", "مشكلة تقنية", "أخرى"],
+          "maxLength": 30
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "closed"],
+          "maxLength": 16
+        },
+        "assignedTo": { "type": "string", "maxLength": 128 },
+        "assignedToName": { "type": "string", "maxLength": 80 },
+        "hasAdminReply": { "type": "boolean" },
+        "slaDeadlineIso": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ticketId",
+        "userId",
+        "subject",
+        "category",
+        "status",
+        "assignedTo",
+        "assignedToName",
+        "hasAdminReply",
+        "createdAt",
+        "lastUpdated"
+      ]
+    },
+    "SupportMessage": {
+      "title": "SupportMessage",
+      "description": "Real-time support chat message scoped by bounded participant UIDs.",
+      "type": "object",
+      "properties": {
+        "ticketId": { "type": "string", "maxLength": 128 },
+        "senderId": { "type": "string", "maxLength": 128 },
+        "senderName": { "type": "string", "maxLength": 80 },
+        "senderRole": {
+          "type": "string",
+          "enum": ["user", "admin", "support_agent"],
+          "maxLength": 20
+        },
+        "text": { "type": "string", "maxLength": 1500 },
+        "participants": { "type": "array" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ticketId", "senderId", "senderName", "senderRole", "text", "participants", "timestamp"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable administrative security audit log recording sensitive Admin actions with server timestamp.",
+      "type": "object",
+      "properties": {
+        "adminId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Firebase Auth UID of the administrator who executed the action."
+        },
+        "adminName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Display name or email of the administrator."
+        },
+        "actionType": {
+          "type": "string",
+          "enum": [
+            "ban_customer",
+            "unban_customer",
+            "block_entity",
+            "unblock_entity",
+            "update_delivery_fee",
+            "approve_store",
+            "toggle_store_active",
+            "approve_courier",
+            "delete_product",
+            "delete_ad_banner",
+            "delete_coupon",
+            "delete_campaign",
+            "send_notification",
+            "toggle_maintenance",
+            "gift_points",
+            "purge_test_data",
+            "update_zone_price",
+            "manage_category",
+            "create_invitation",
+            "send_invitation",
+            "resend_invitation",
+            "delete_invitation",
+            "create_sales_agent",
+            "manage_sales_agent",
+            "approve_payout",
+            "reject_payout",
+            "handle_payout",
+            "admin_password_reset_link",
+            "reset_user_password",
+            "admin_update_login_email",
+            "update_user_email",
+            "approve_wallet_topup",
+            "reject_wallet_topup",
+            "update_system_settings"
+          ],
+          "maxLength": 40,
+          "description": "Machine-readable category of the sensitive operation."
+        },
+        "actionLabelAr": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Arabic label describing the sensitive action."
+        },
+        "details": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 500,
+          "description": "Detailed human-readable summary of the change."
+        },
+        "targetId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Optional target entity document ID."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server timestamp (request.time)."
+        }
+      },
+      "required": ["adminId", "adminName", "actionType", "actionLabelAr", "details", "createdAt"]
+    },
+    "AuditIndexConfig": {
+      "title": "AuditIndexConfig",
+      "description": "Bounded rolling index (<= 200 IDs) of newest audit_logs document IDs stored at /appConfig/auditIndex.",
+      "type": "object",
+      "properties": {
+        "recentLogIds": {
+          "type": "array",
+          "description": "Newest-first list of up to 200 audit_logs document IDs."
+        },
+        "updatedBy": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["recentLogIds", "updatedBy", "updatedAt"]
+    },
+    "EdkoZone": {
+      "title": "EdkoZone",
+      "description": "Approved geographical delivery pricing zone in Edku city (zone_1 through zone_5).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": ["zone_1", "zone_2", "zone_3", "zone_4", "zone_5"],
+          "maxLength": 20
+        },
+        "name": { "type": "string", "maxLength": 80 },
+        "distanceLabel": { "type": "string", "maxLength": 40 },
+        "price": { "type": "number" },
+        "neighborhoods": { "type": "array" },
+        "description": { "type": "string", "maxLength": 220 },
+        "sortOrder": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "distanceLabel", "price", "neighborhoods", "description", "sortOrder", "isActive", "updatedAt"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Dynamic Super App store category (home_food, cosmetics, household, clothing, gifts, seafood, grills, bakery, supermarket, pharmacy).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 40 },
+        "name": { "type": "string", "maxLength": 50 },
+        "storeCategory": { "type": "string", "maxLength": 40 },
+        "icon": { "type": "string", "maxLength": 32 },
+        "isActive": { "type": "boolean" },
+        "sortOrder": { "type": "number" },
+        "updatedBy": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "storeCategory", "icon", "isActive", "sortOrder", "updatedAt"]
+    },
+    "GroupSession": {
+      "title": "GroupSession",
+      "description": "Live collaborative Group Order room session shared via ?groupSession= URL.",
+      "type": "object",
+      "properties": {
+        "hostUid": { "type": "string", "maxLength": 128 },
+        "hostName": { "type": "string", "maxLength": 80 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 100 },
+        "storeDeliveryFee": { "type": "number" },
+        "status": {
+          "type": "string",
+          "enum": ["open", "checked_out", "cancelled"],
+          "maxLength": 20
+        },
+        "participants": { "type": "array" },
+        "participantNames": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["hostUid", "hostName", "storeId", "storeName", "storeDeliveryFee", "status", "participants", "createdAt", "updatedAt"]
+    },
+    "GroupSessionCartItem": {
+      "title": "GroupSessionCartItem",
+      "description": "Live participant cart line item inside /group_sessions/{sessionId}/cart/{itemId}.",
+      "type": "object",
+      "properties": {
+        "entryId": { "type": "string", "maxLength": 128 },
+        "sessionId": { "type": "string", "maxLength": 128 },
+        "participantUid": { "type": "string", "maxLength": 128 },
+        "participantName": { "type": "string", "maxLength": 80 },
+        "productId": { "type": "string", "maxLength": 128 },
+        "variantId": { "type": "string", "maxLength": 64 },
+        "variantLabel": { "type": "string", "maxLength": 80 },
+        "name": { "type": "string", "maxLength": 100 },
+        "price": { "type": "number" },
+        "quantity": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["entryId", "sessionId", "participantUid", "participantName", "productId", "name", "price", "quantity", "updatedAt"]
+    },
+    "GroupSessionChatMessage": {
+      "title": "GroupSessionChatMessage",
+      "description": "Live room chat message inside /group_sessions/{sessionId}/chat/{messageId}.",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string", "maxLength": 128 },
+        "senderUid": { "type": "string", "maxLength": 128 },
+        "senderName": { "type": "string", "maxLength": 80 },
+        "text": { "type": "string", "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["sessionId", "senderUid", "senderName", "text", "createdAt"]
+    },
+    "Invitation": {
+      "title": "Invitation",
+      "description": "Single-use 48-hour account invitation record keyed by UUID token.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 100 },
+        "userType": { "type": "string", "enum": ["store", "customer", "courier", "sales_agent"], "maxLength": 20 },
+        "token": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["pending", "accepted", "expired"], "maxLength": 16 },
+        "expiresAtMs": { "type": "number" },
+        "expiresAtIso": { "type": "string", "maxLength": 40 },
+        "invitedBy": { "type": "string", "maxLength": 128 },
+        "invitedByName": { "type": "string", "maxLength": 80 },
+        "invitedByRole": { "type": "string", "enum": ["admin", "sales_agent"], "maxLength": 20 },
+        "agentId": { "type": "string", "maxLength": 128 },
+        "referralCode": { "type": "string", "maxLength": 24 },
+        "acceptedByUid": { "type": "string", "maxLength": 128 },
+        "acceptedAtIso": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "userType", "token", "status", "expiresAtMs", "expiresAtIso", "invitedBy", "createdAt", "updatedAt"]
+    },
+    "InvitationIndexEntry": {
+      "title": "InvitationIndexEntry",
+      "description": "Non-PII operational invitation index enabling zero-get() real-time Admin listing.",
+      "type": "object",
+      "properties": {
+        "token": { "type": "string", "maxLength": 128 },
+        "maskedEmail": { "type": "string", "maxLength": 100 },
+        "userType": { "type": "string", "enum": ["store", "customer", "courier", "sales_agent"], "maxLength": 20 },
+        "status": { "type": "string", "enum": ["pending", "accepted", "expired"], "maxLength": 16 },
+        "expiresAtMs": { "type": "number" },
+        "expiresAtIso": { "type": "string", "maxLength": 40 },
+        "invitedBy": { "type": "string", "maxLength": 128 },
+        "invitedByName": { "type": "string", "maxLength": 80 },
+        "invitedByRole": { "type": "string", "enum": ["admin", "sales_agent"], "maxLength": 20 },
+        "referralCode": { "type": "string", "maxLength": 24 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["token", "maskedEmail", "userType", "status", "expiresAtMs", "expiresAtIso", "invitedBy", "createdAt", "updatedAt"]
+    },
+    "InvitationLock": {
+      "title": "InvitationLock",
+      "description": "SHA-256 email hash lock preventing duplicate active pending invitations.",
+      "type": "object",
+      "properties": {
+        "token": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["pending", "accepted", "expired"], "maxLength": 16 },
+        "expiresAtMs": { "type": "number" },
+        "invitedBy": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["token", "status", "expiresAtMs", "invitedBy", "updatedAt"]
+    },
+    "SalesAgent": {
+      "title": "SalesAgent",
+      "description": "Private PII profile for Sales Agent account isolated to self and Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 80 },
+        "email": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "referralCode": { "type": "string", "maxLength": 24 },
+        "isActive": { "type": "boolean" },
+        "inviteToken": { "type": "string", "maxLength": 128 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "phone", "referralCode", "isActive", "createdBy", "createdAt", "updatedAt"]
+    },
+    "SalesAgentDirectoryEntry": {
+      "title": "SalesAgentDirectoryEntry",
+      "description": "Non-PII Sales Agent operational ledger & commission wallet stats.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 80 },
+        "referralCode": { "type": "string", "maxLength": 24 },
+        "commissionRatePercent": { "type": "number" },
+        "availableBalance": { "type": "number" },
+        "pendingBalance": { "type": "number" },
+        "totalEarnings": { "type": "number" },
+        "invitedStoresCount": { "type": "number" },
+        "invitedCustomersCount": { "type": "number" },
+        "invitedCouriersCount": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "name",
+        "referralCode",
+        "commissionRatePercent",
+        "availableBalance",
+        "pendingBalance",
+        "totalEarnings",
+        "invitedStoresCount",
+        "invitedCustomersCount",
+        "invitedCouriersCount",
+        "isActive",
+        "createdBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ReferralCodeEntry": {
+      "title": "ReferralCodeEntry",
+      "description": "Non-PII O(1) lookup index mapping AGENT-XXXX referral codes to Sales Agent UIDs.",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "maxLength": 24 },
+        "agentId": { "type": "string", "maxLength": 128 },
+        "agentName": { "type": "string", "maxLength": 80 },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["code", "agentId", "agentName", "isActive", "createdAt"]
+    },
+    "ReferralAccount": {
+      "title": "ReferralAccount",
+      "description": "Non-PII CRM record of an account referred by a Sales Agent.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "agentId": { "type": "string", "maxLength": 128 },
+        "referralCode": { "type": "string", "maxLength": 24 },
+        "referredUid": { "type": "string", "maxLength": 128 },
+        "referredStoreId": { "type": "string", "maxLength": 128 },
+        "accountName": { "type": "string", "maxLength": 80 },
+        "accountType": { "type": "string", "enum": ["store", "customer", "courier"], "maxLength": 20 },
+        "status": { "type": "string", "enum": ["active", "inactive"], "maxLength": 16 },
+        "completedOrdersCount": { "type": "number" },
+        "totalSalesVolumeEgp": { "type": "number" },
+        "totalCommissionsEgp": { "type": "number" },
+        "joinedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "agentId",
+        "referralCode",
+        "referredUid",
+        "accountName",
+        "accountType",
+        "status",
+        "completedOrdersCount",
+        "totalSalesVolumeEgp",
+        "totalCommissionsEgp",
+        "joinedAt",
+        "updatedAt"
+      ]
+    },
+    "Commission": {
+      "title": "Commission",
+      "description": "Sales Agent commission ledger record per delivered order with 24h escrow maturity.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "orderId": { "type": "string", "maxLength": 128 },
+        "agentId": { "type": "string", "maxLength": 128 },
+        "referralCode": { "type": "string", "maxLength": 24 },
+        "referredEntityId": { "type": "string", "maxLength": 128 },
+        "referredEntityName": { "type": "string", "maxLength": 80 },
+        "referredEntityType": { "type": "string", "enum": ["store", "customer"], "maxLength": 20 },
+        "orderTotalEgp": { "type": "number" },
+        "commissionRatePercent": { "type": "number" },
+        "amountEgp": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "settled"], "maxLength": 16 },
+        "maturesAtMs": { "type": "number" },
+        "settledAtIso": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "agentId",
+        "referralCode",
+        "referredEntityId",
+        "referredEntityName",
+        "referredEntityType",
+        "orderTotalEgp",
+        "commissionRatePercent",
+        "amountEgp",
+        "status",
+        "maturesAtMs",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PayoutRequest": {
+      "title": "PayoutRequest",
+      "description": "PII-isolated Sales Agent withdrawal request (Vodafone Cash / InstaPay, min 100 EGP).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "agentId": { "type": "string", "maxLength": 128 },
+        "agentName": { "type": "string", "maxLength": 80 },
+        "agentEmail": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "method": { "type": "string", "enum": ["vodafone_cash", "instapay"], "maxLength": 24 },
+        "accountDetails": { "type": "string", "maxLength": 120 },
+        "status": { "type": "string", "enum": ["pending", "completed", "rejected"], "maxLength": 16 },
+        "rejectionReason": { "type": "string", "maxLength": 240 },
+        "processedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "agentId", "agentName", "agentEmail", "amount", "method", "accountDetails", "status", "createdAt", "updatedAt"]
+    },
+    "PayoutRequestIndexEntry": {
+      "title": "PayoutRequestIndexEntry",
+      "description": "Non-PII operational payout queue index enabling zero-get() Admin live listing.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "agentId": { "type": "string", "maxLength": 128 },
+        "agentName": { "type": "string", "maxLength": 80 },
+        "amount": { "type": "number" },
+        "method": { "type": "string", "enum": ["vodafone_cash", "instapay"], "maxLength": 24 },
+        "status": { "type": "string", "enum": ["pending", "completed", "rejected"], "maxLength": 16 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "agentId", "agentName", "amount", "method", "status", "createdAt", "updatedAt"]
+    },
+    "StoreJoinRequest": {
+      "title": "StoreJoinRequest",
+      "description": "Merchant partner application submitted via /join and reviewed by Admin in /admin/requests.",
+      "type": "object",
+      "properties": {
+        "storeName": { "type": "string", "maxLength": 100 },
+        "ownerName": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "category": { "type": "string", "maxLength": 50 },
+        "subCategory": { "type": "string", "maxLength": 50 },
+        "neighborhood": { "type": "string", "maxLength": 80 },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "commercialRegisterImage": { "type": "string", "maxLength": 1000000 },
+        "ownerUid": { "type": "string", "maxLength": 128 },
+        "rejectReason": { "type": "string", "maxLength": 300 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["storeName", "ownerName", "phone", "category", "neighborhood", "status", "createdAt", "updatedAt"]
+    },
+    "WalletTopupRequest": {
+      "title": "WalletTopupRequest",
+      "description": "Customer Vodafone Cash or InstaPay wallet top-up request reviewed by Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 80 },
+        "userPhone": { "type": "string", "maxLength": 20 },
+        "amount": { "type": "number" },
+        "method": { "type": "string", "enum": ["vodafone_cash", "instapay"], "maxLength": 24 },
+        "senderPhone": { "type": "string", "maxLength": 40 },
+        "referenceNumber": { "type": "string", "maxLength": 80 },
+        "receiptImageUrl": { "type": "string", "maxLength": 750000 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "maxLength": 16 },
+        "adminNote": { "type": "string", "maxLength": 240 },
+        "processedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "userName", "userPhone", "amount", "method", "senderPhone", "referenceNumber", "status", "createdAt", "updatedAt"]
+    },
+    "WalletTransaction": {
+      "title": "WalletTransaction",
+      "description": "Immutable customer wallet financial ledger record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["topup_credit", "order_debit", "order_refund"], "maxLength": 24 },
+        "amount": { "type": "number" },
+        "balanceAfter": { "type": "number" },
+        "description": { "type": "string", "maxLength": 200 },
+        "orderId": { "type": "string", "maxLength": 128 },
+        "requestId": { "type": "string", "maxLength": 128 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "type", "amount", "balanceAfter", "description", "createdBy", "createdAt"]
+    },
+    "LiveEvent": {
+      "title": "LiveEvent",
+      "description": "Non-PII anonymized live activity ticker event shown on Customer Home.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "text": { "type": "string", "maxLength": 160 },
+        "neighborhood": { "type": "string", "maxLength": 60 },
+        "storeName": { "type": "string", "maxLength": 80 },
+        "eventType": { "type": "string", "enum": ["new_order", "promo", "delivery"], "maxLength": 24 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "text", "neighborhood", "storeName", "eventType", "createdBy", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Unified Login RBAC role profile isolated per user and administrator."
+    },
+    "/customerDirectory/{userId}": {
+      "schema": { "$ref": "#/entities/CustomerDirectoryEntry" },
+      "description": "Non-PII customer loyalty points and streak directory."
+    },
+    "/stores/{storeId}": {
+      "schema": { "$ref": "#/entities/Store" },
+      "description": "Real-time catalog of local stores and pharmacies in Edku city."
+    },
+    "/storeCredentials/{storeId}": {
+      "schema": { "$ref": "#/entities/StoreCredential" },
+      "description": "Admin-only generated store login credentials and merchant phone."
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Real-time products catalog with inventory stock and Mystery Box flags."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Participant-isolated delivery and pharmacy prescription orders."
+    },
+    "/dispatchQueue/{orderId}": {
+      "schema": { "$ref": "#/entities/DispatchTicket" },
+      "description": "Non-PII operational dispatch queue synced atomically with /orders."
+    },
+    "/couriers/{courierId}": {
+      "schema": { "$ref": "#/entities/Courier" },
+      "description": "Private courier profile containing contact PII and approval status."
+    },
+    "/courierDirectory/{courierId}": {
+      "schema": { "$ref": "#/entities/CourierDirectoryEntry" },
+      "description": "Non-PII courier fleet status, live map pins, and pending approval directory."
+    },
+    "/reviews/{orderId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Post-delivery 5-star customer reviews for stores and couriers."
+    },
+    "/ads/{adId}": {
+      "schema": { "$ref": "#/entities/AdBanner" },
+      "description": "Promotional banners with device-uploaded images managed by Admin."
+    },
+    "/coupons/{couponId}": {
+      "schema": { "$ref": "#/entities/Coupon" },
+      "description": "Discount coupons with optional expiry date and loyalty point redemptions."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/AppNotification" },
+      "description": "Real-time targeted notifications scoped strictly to recipientUid."
+    },
+    "/broadcastNotifications/{broadcastId}": {
+      "schema": { "$ref": "#/entities/BroadcastNotification" },
+      "description": "Internal Admin broadcast notifications by role audience."
+    },
+    "/campaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/Campaign" },
+      "description": "Rotating gamification campaigns managed by Admin."
+    },
+    "/sharedCarts/{cartId}": {
+      "schema": { "$ref": "#/entities/SharedCart" },
+      "description": "Collaborative Group Order carts shared via URL parameter."
+    },
+    "/chat_logs/{logId}": {
+      "schema": { "$ref": "#/entities/ChatLog" },
+      "description": "Edkawy AI Assistant conversation logs."
+    },
+    "/registeredAccounts/{emailHash}": {
+      "schema": { "$ref": "#/entities/RegisteredAccount" },
+      "description": "SHA-256 hashed account existence registry."
+    },
+    "/passwordResetLocks/{emailHash}": {
+      "schema": { "$ref": "#/entities/PasswordResetLock" },
+      "description": "SHA-256 hashed password reset audit timestamp."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Exclusive verified administrator marker."
+    },
+    "/appConfig/{configId}": {
+      "schema": { "$ref": "#/entities/BootstrapConfig" },
+      "description": "System bootstrap and maintenance mode metadata."
+    },
+    "/blockedUsers/{targetId}": {
+      "schema": { "$ref": "#/entities/BlockedEntity" },
+      "description": "Admin-managed account and store suspension registry."
+    },
+    "/staff/{staffId}": {
+      "schema": { "$ref": "#/entities/StaffMember" },
+      "description": "Super-Admin managed internal team accounts and RBAC roles."
+    },
+    "/supportAgentsPool/{staffId}": {
+      "schema": { "$ref": "#/entities/SupportAgentPoolEntry" },
+      "description": "Non-PII active support agents pool for least-busy ticket auto-assignment."
+    },
+    "/support_tickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicket" },
+      "description": "PII-isolated technical support tickets for Customers, Stores, and Couriers."
+    },
+    "/supportTicketIndex/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicketIndexEntry" },
+      "description": "Non-PII operational ticket index synced with /support_tickets."
+    },
+    "/support_messages/{messageId}": {
+      "schema": { "$ref": "#/entities/SupportMessage" },
+      "description": "Real-time bubble chat messages scoped to ticket participants."
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable administrative audit logs readable strictly by Super Admin."
+    },
+    "/edko_zones/{zoneId}": {
+      "schema": { "$ref": "#/entities/EdkoZone" },
+      "description": "Approved 5 geographical delivery pricing zones in Edku city."
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Dynamic Super App store categories managed by Admin."
+    },
+    "/group_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/GroupSession" },
+      "description": "Live collaborative Group Order session header."
+    },
+    "/group_sessions/{sessionId}/cart/{itemId}": {
+      "schema": { "$ref": "#/entities/GroupSessionCartItem" },
+      "description": "Live participant cart line items inside a Group Order room."
+    },
+    "/group_sessions/{sessionId}/chat/{messageId}": {
+      "schema": { "$ref": "#/entities/GroupSessionChatMessage" },
+      "description": "Live room chat messages inside a Group Order room."
+    },
+    "/invitations/{token}": {
+      "schema": { "$ref": "#/entities/Invitation" },
+      "description": "Single-use 48-hour account invitations managed by Admin and Sales Agents."
+    },
+    "/invitationIndex/{token}": {
+      "schema": { "$ref": "#/entities/InvitationIndexEntry" },
+      "description": "Non-PII operational invitation index for Admin real-time monitoring."
+    },
+    "/invitationLocks/{emailHash}": {
+      "schema": { "$ref": "#/entities/InvitationLock" },
+      "description": "SHA-256 email hash lock preventing duplicate active pending invitations."
+    },
+    "/sales_agents/{agentId}": {
+      "schema": { "$ref": "#/entities/SalesAgent" },
+      "description": "PII-isolated Sales Agent profile."
+    },
+    "/salesAgentDirectory/{agentId}": {
+      "schema": { "$ref": "#/entities/SalesAgentDirectoryEntry" },
+      "description": "Non-PII Sales Agent commission ledger and wallet balance."
+    },
+    "/referralCodes/{code}": {
+      "schema": { "$ref": "#/entities/ReferralCodeEntry" },
+      "description": "Non-PII O(1) lookup index mapping AGENT-XXXX codes to Sales Agent UIDs."
+    },
+    "/referrals/{referralId}": {
+      "schema": { "$ref": "#/entities/ReferralAccount" },
+      "description": "Non-PII CRM record of referred accounts and order sales volumes."
+    },
+    "/commissions/{orderId}": {
+      "schema": { "$ref": "#/entities/Commission" },
+      "description": "Sales Agent commission ledger per delivered order with 24-hour escrow."
+    },
+    "/payout_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/PayoutRequest" },
+      "description": "PII-isolated Sales Agent payout withdrawal requests."
+    },
+    "/payoutRequestIndex/{requestId}": {
+      "schema": { "$ref": "#/entities/PayoutRequestIndexEntry" },
+      "description": "Non-PII operational payout request queue for Admin live review."
+    },
+    "/store_join_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/StoreJoinRequest" },
+      "description": "Merchant partner onboarding requests submitted from /join."
+    },
+    "/wallet_topup_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/WalletTopupRequest" },
+      "description": "Customer Vodafone Cash / InstaPay wallet top-up requests reviewed by Admin."
+    },
+    "/wallet_transactions/{txId}": {
+      "schema": { "$ref": "#/entities/WalletTransaction" },
+      "description": "Immutable customer wallet transactions ledger."
+    },
+    "/live_events/{eventId}": {
+      "schema": { "$ref": "#/entities/LiveEvent" },
+      "description": "Non-PII live activity ticker events across Edku."
+    }
+  }
+}
+
