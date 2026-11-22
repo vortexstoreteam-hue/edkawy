@@ -415,6 +415,29 @@
           "maxLength": 128,
           "description": "Optional invitation token used during self-onboarding."
         },
+        "commissionRate": {
+          "type": "number",
+          "description": "Edkawy platform commission rate on products subtotal (default 0.14 for 14%)."
+        },
+        "ownerName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Optional store manager or owner full name."
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Optional store contact phone number."
+        },
+        "pausedReason": {
+          "type": "string",
+          "maxLength": 240,
+          "description": "Optional reason for temporary store pause."
+        },
+        "suspended": {
+          "type": "boolean",
+          "description": "Whether store partnership is suspended while preserving financial history."
+        },
         "createdBy": {
           "type": "string",
           "minLength": 1,
@@ -620,6 +643,14 @@
         "isReviewed": { "type": "boolean" },
         "pointsEarned": { "type": "number" },
         "pointsAwarded": { "type": "boolean" },
+        "commissionRate": { "type": "number" },
+        "commissionAmount": { "type": "number" },
+        "restaurantNet": { "type": "number" },
+        "courierDeliveryCompensation": { "type": "number" },
+        "freeDeliveryFundedByEdkawy": { "type": "boolean" },
+        "settlementId": { "type": "string", "maxLength": 128 },
+        "treasuryReceiptId": { "type": "string", "maxLength": 128 },
+        "isFinancialSettled": { "type": "boolean" },
         "notes": { "type": "string", "maxLength": 300 },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
@@ -711,6 +742,10 @@
           "type": "boolean",
           "description": "Flag marking temporary QA test simulation tickets."
         },
+        "commissionRate": { "type": "number" },
+        "commissionAmount": { "type": "number" },
+        "restaurantNet": { "type": "number" },
+        "courierDeliveryCompensation": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
@@ -1300,7 +1335,13 @@
             "update_user_email",
             "approve_wallet_topup",
             "reject_wallet_topup",
-            "update_system_settings"
+            "update_system_settings",
+            "update_store_commission",
+            "update_store_details",
+            "treasury_handover",
+            "pay_courier_dues",
+            "settle_restaurant",
+            "resolve_financial_exception"
           ],
           "maxLength": 40,
           "description": "Machine-readable category of the sensitive operation."
@@ -1753,6 +1794,153 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "text", "neighborhood", "storeName", "eventType", "createdBy", "createdAt"]
+    },
+    "DriverWallet": {
+      "title": "DriverWallet",
+      "description": "Three-balance courier financial wallet: collectionCustody (COD cash held), courierDues (earned delivery fees >= 15 EGP), and handedOverAmount (cumulative handed over to Edkawy treasury).",
+      "type": "object",
+      "properties": {
+        "courierId": { "type": "string", "maxLength": 128 },
+        "courierName": { "type": "string", "maxLength": 80 },
+        "collectionCustody": { "type": "number" },
+        "courierDues": { "type": "number" },
+        "handedOverAmount": { "type": "number" },
+        "totalPaidDues": { "type": "number" },
+        "totalOrdersDelivered": { "type": "number" },
+        "lastOrderAtIso": { "type": "string", "maxLength": 40 },
+        "lastHandoverAtIso": { "type": "string", "maxLength": 40 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["courierId", "courierName", "collectionCustody", "courierDues", "handedOverAmount", "totalOrdersDelivered", "updatedAt"]
+    },
+    "FinancialTransaction": {
+      "title": "FinancialTransaction",
+      "description": "Immutable financial ledger record tracking COD collection, courier earnings, Edkawy commission, restaurant payables, handovers, payouts, settlements, and exception adjustments.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "orderId": { "type": "string", "maxLength": 128 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 100 },
+        "courierId": { "type": "string", "maxLength": 128 },
+        "courierName": { "type": "string", "maxLength": 80 },
+        "type": {
+          "type": "string",
+          "enum": [
+            "order_collection",
+            "courier_earning",
+            "edkawy_commission",
+            "restaurant_payable",
+            "cash_handover",
+            "courier_payout",
+            "restaurant_settlement",
+            "exception_adjustment"
+          ],
+          "maxLength": 40
+        },
+        "amount": { "type": "number" },
+        "direction": { "type": "string", "enum": ["credit", "debit", "neutral"], "maxLength": 16 },
+        "description": { "type": "string", "maxLength": 300 },
+        "referenceId": { "type": "string", "maxLength": 128 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "isTestSimulation": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "type", "amount", "description", "createdBy", "createdAt"]
+    },
+    "TreasuryReceipt": {
+      "title": "TreasuryReceipt",
+      "description": "Numbered Edkawy treasury cash handover receipt verifying courier custody match and optional shortage tracking.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "receiptNumber": { "type": "string", "maxLength": 40 },
+        "courierId": { "type": "string", "maxLength": 128 },
+        "courierName": { "type": "string", "maxLength": 80 },
+        "expectedAmount": { "type": "number" },
+        "actualAmount": { "type": "number" },
+        "varianceAmount": { "type": "number" },
+        "courierDuesPaid": { "type": "number" },
+        "orderIds": { "type": "array" },
+        "notes": { "type": "string", "maxLength": 300 },
+        "receivedByUid": { "type": "string", "maxLength": 128 },
+        "receivedByName": { "type": "string", "maxLength": 80 },
+        "exceptionId": { "type": "string", "maxLength": 128 },
+        "isTestSimulation": { "type": "boolean" },
+        "createdAtIso": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "receiptNumber", "courierId", "courierName", "expectedAmount", "actualAmount", "varianceAmount", "receivedByUid", "receivedByName", "createdAtIso", "createdAt"]
+    },
+    "RestaurantSettlement": {
+      "title": "RestaurantSettlement",
+      "description": "Daily 12:00 AM Cairo cutoff restaurant settlement batch summarizing 86% net payable and 14% Edkawy commission.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 100 },
+        "settlementDateKey": { "type": "string", "maxLength": 16 },
+        "cutoffTime": { "type": "string", "maxLength": 16 },
+        "orderIds": { "type": "array" },
+        "orderCount": { "type": "number" },
+        "grossProductsSubtotal": { "type": "number" },
+        "commissionAmount": { "type": "number" },
+        "netPayableAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending_review", "paid"], "maxLength": 24 },
+        "paymentMethod": { "type": "string", "enum": ["cash", "vodafone_cash", "instapay", "bank_transfer"], "maxLength": 24 },
+        "transferReference": { "type": "string", "maxLength": 80 },
+        "notes": { "type": "string", "maxLength": 300 },
+        "paidAtIso": { "type": "string", "maxLength": 40 },
+        "settledByUid": { "type": "string", "maxLength": 128 },
+        "settledByName": { "type": "string", "maxLength": 80 },
+        "isTestSimulation": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "storeId", "storeName", "settlementDateKey", "orderCount", "grossProductsSubtotal", "commissionAmount", "netPayableAmount", "status", "createdAt", "updatedAt"]
+    },
+    "FinancialException": {
+      "title": "FinancialException",
+      "description": "Financial exception or operational dispute requiring manual Admin arbitration with zero automatic deductions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "type": {
+          "type": "string",
+          "enum": [
+            "cancelled_before_prep",
+            "store_rejected",
+            "customer_refused_door",
+            "courier_failed_delivery",
+            "cash_shortage",
+            "wrong_order"
+          ],
+          "maxLength": 40
+        },
+        "orderId": { "type": "string", "maxLength": 128 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 100 },
+        "courierId": { "type": "string", "maxLength": 128 },
+        "courierName": { "type": "string", "maxLength": 80 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "disputedAmount": { "type": "number" },
+        "adjustedAmount": { "type": "number" },
+        "responsibleParty": { "type": "string", "enum": ["store", "courier", "customer", "edkawy", "none"], "maxLength": 24 },
+        "status": { "type": "string", "enum": ["pending_review", "resolved_no_deduction", "resolved_with_adjustment"], "maxLength": 32 },
+        "holdSettlement": { "type": "boolean" },
+        "description": { "type": "string", "maxLength": 400 },
+        "resolutionNote": { "type": "string", "maxLength": 400 },
+        "createdByUid": { "type": "string", "maxLength": 128 },
+        "createdByName": { "type": "string", "maxLength": 80 },
+        "resolvedByUid": { "type": "string", "maxLength": 128 },
+        "resolvedByName": { "type": "string", "maxLength": 80 },
+        "resolvedAtIso": { "type": "string", "maxLength": 40 },
+        "isTestSimulation": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "type", "disputedAmount", "status", "description", "createdByUid", "createdAt", "updatedAt"]
     }
   },
   "firestore": {
@@ -1943,6 +2131,26 @@
     "/live_events/{eventId}": {
       "schema": { "$ref": "#/entities/LiveEvent" },
       "description": "Non-PII live activity ticker events across Edku."
+    },
+    "/driver_wallets/{courierId}": {
+      "schema": { "$ref": "#/entities/DriverWallet" },
+      "description": "Courier three-balance wallet: collection custody, courier dues, and handed over cash."
+    },
+    "/transactions/{txId}": {
+      "schema": { "$ref": "#/entities/FinancialTransaction" },
+      "description": "Immutable financial ledger across orders, treasury handovers, payouts, and settlements."
+    },
+    "/treasury_receipts/{receiptId}": {
+      "schema": { "$ref": "#/entities/TreasuryReceipt" },
+      "description": "Numbered Edkawy treasury cash handover receipts."
+    },
+    "/restaurant_settlements/{settlementId}": {
+      "schema": { "$ref": "#/entities/RestaurantSettlement" },
+      "description": "Daily 12:00 AM cutoff restaurant settlements ledger."
+    },
+    "/financial_exceptions/{exceptionId}": {
+      "schema": { "$ref": "#/entities/FinancialException" },
+      "description": "Operational disputes and shortages awaiting manual Admin resolution."
     }
   }
 }

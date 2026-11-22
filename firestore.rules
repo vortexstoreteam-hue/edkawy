@@ -81,7 +81,7 @@ service cloud.firestore {
       return (
         'email' in request.auth.token &&
         request.auth.token.email.lower() in ['vortexstore.team@gmail.com', 'alaslybys46@gmail.com'] &&
-        request.auth.token.get('email_verified', true) == true
+        request.auth.token.email_verified == true
       ) ||
       exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
@@ -522,6 +522,11 @@ service cloud.firestore {
         'commercialRegisterNumber',
         'commercialRegisterImageUrl',
         'taxCertificateNumber',
+        'commissionRate',
+        'ownerName',
+        'phone',
+        'pausedReason',
+        'suspended',
         'referredByAgentId',
         'referredByCode',
         'inviteToken',
@@ -578,6 +583,11 @@ service cloud.firestore {
       ('commercialRegisterNumber' in data ? (data.commercialRegisterNumber is string && data.commercialRegisterNumber.size() >= 3 && data.commercialRegisterNumber.size() <= 40) : true) &&
       ('commercialRegisterImageUrl' in data ? isValidUploadedImage(data.commercialRegisterImageUrl) : true) &&
       ('taxCertificateNumber' in data ? (data.taxCertificateNumber is string && data.taxCertificateNumber.size() >= 3 && data.taxCertificateNumber.size() <= 40) : true) &&
+      ('commissionRate' in data ? (data.commissionRate is number && data.commissionRate >= 0 && data.commissionRate <= 0.5) : true) &&
+      ('ownerName' in data ? (data.ownerName is string && data.ownerName.size() <= 80) : true) &&
+      ('phone' in data ? (data.phone is string && data.phone.size() <= 20) : true) &&
+      ('pausedReason' in data ? (data.pausedReason is string && data.pausedReason.size() <= 240) : true) &&
+      ('suspended' in data ? data.suspended is bool : true) &&
       (
         !data.keys().hasAny(['loginEmail', 'referredByAgentId', 'referredByCode', 'inviteToken']) || (
           (!('loginEmail' in data) || (data.loginEmail is string && data.loginEmail.size() <= 100)) &&
@@ -781,6 +791,14 @@ service cloud.firestore {
         'isReviewed',
         'pointsEarned',
         'pointsAwarded',
+        'commissionRate',
+        'commissionAmount',
+        'restaurantNet',
+        'courierDeliveryCompensation',
+        'freeDeliveryFundedByEdkawy',
+        'settlementId',
+        'treasuryReceiptId',
+        'isFinancialSettled',
         'notes',
         'createdAt',
         'updatedAt'
@@ -853,7 +871,15 @@ service cloud.firestore {
       (!('courierLng' in data) || data.courierLng == null || data.courierLng is number) &&
       (!('isReviewed' in data) || data.isReviewed == null || data.isReviewed is bool) &&
       (!('pointsEarned' in data) || data.pointsEarned == null || data.pointsEarned is number) &&
-      (!('pointsAwarded' in data) || data.pointsAwarded == null || data.pointsAwarded is bool);
+      (!('pointsAwarded' in data) || data.pointsAwarded == null || data.pointsAwarded is bool) &&
+      (!('commissionRate' in data) || data.commissionRate == null || (data.commissionRate is number && data.commissionRate >= 0 && data.commissionRate <= 0.5)) &&
+      (!('commissionAmount' in data) || data.commissionAmount == null || (data.commissionAmount is number && data.commissionAmount >= 0)) &&
+      (!('restaurantNet' in data) || data.restaurantNet == null || (data.restaurantNet is number && data.restaurantNet >= 0)) &&
+      (!('courierDeliveryCompensation' in data) || data.courierDeliveryCompensation == null || (data.courierDeliveryCompensation is number && data.courierDeliveryCompensation >= 0)) &&
+      (!('freeDeliveryFundedByEdkawy' in data) || data.freeDeliveryFundedByEdkawy == null || data.freeDeliveryFundedByEdkawy is bool) &&
+      (!('settlementId' in data) || data.settlementId == null || (data.settlementId is string && data.settlementId.size() <= 128)) &&
+      (!('treasuryReceiptId' in data) || data.treasuryReceiptId == null || (data.treasuryReceiptId is string && data.treasuryReceiptId.size() <= 128)) &&
+      (!('isFinancialSettled' in data) || data.isFinancialSettled == null || data.isFinancialSettled is bool);
     }
 
     function orderSmallFee(data) {
@@ -977,6 +1003,11 @@ service cloud.firestore {
         'cancelledByCourierIds',
         'rejectedBy',
         'isTestSimulation',
+        'commissionRate',
+        'commissionAmount',
+        'restaurantNet',
+        'courierDeliveryCompensation',
+        'freeDeliveryFundedByEdkawy',
         'notes',
         'createdAt',
         'updatedAt'
@@ -992,35 +1023,15 @@ service cloud.firestore {
       data.status is string && data.status.size() <= 40 &&
       data.createdAt is timestamp &&
       data.updatedAt is timestamp &&
-      (!('orderType' in data) || data.orderType == null || (data.orderType is string && data.orderType.size() <= 30)) &&
-      (!('storeOwnerId' in data) || data.storeOwnerId == null || (data.storeOwnerId is string && data.storeOwnerId.size() <= 128)) &&
-      (!('storeNeighborhood' in data) || data.storeNeighborhood == null || (data.storeNeighborhood is string && data.storeNeighborhood.size() <= 80)) &&
-      (!('storeLat' in data) || data.storeLat == null || data.storeLat is number) &&
-      (!('storeLng' in data) || data.storeLng == null || data.storeLng is number) &&
-      (!('customerLat' in data) || data.customerLat == null || data.customerLat is number) &&
-      (!('customerLng' in data) || data.customerLng == null || data.customerLng is number) &&
-      (!('subtotal' in data) || data.subtotal == null || data.subtotal is number) &&
-      (!('deliveryFee' in data) || data.deliveryFee == null || data.deliveryFee is number) &&
-      (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 300)) &&
-      (!('cancelledByCourierIds' in data) || data.cancelledByCourierIds == null || (data.cancelledByCourierIds is list && data.cancelledByCourierIds.size() <= 20 && (data.cancelledByCourierIds.size() == 0 || (data.cancelledByCourierIds[0] is string && data.cancelledByCourierIds[0].size() <= 128)))) &&
-      (!('isTestSimulation' in data) || data.isTestSimulation == null || data.isTestSimulation is bool) &&
-      (!('zoneId' in data) || data.zoneId == null || data.zoneId in ['zone_1', 'zone_2', 'zone_3', 'zone_4', 'zone_5']) &&
-      (!('zoneName' in data) || data.zoneName == null || (data.zoneName is string && data.zoneName.size() <= 80)) &&
+      (!('subtotal' in data) || data.subtotal == null || (data.subtotal is number && data.subtotal >= 0)) &&
+      (!('deliveryFee' in data) || data.deliveryFee == null || (data.deliveryFee is number && data.deliveryFee >= 0)) &&
       (!('smallOrderFee' in data) || data.smallOrderFee == null || (data.smallOrderFee is number && data.smallOrderFee >= 0 && data.smallOrderFee <= 20)) &&
-      (!('rejectedBy' in data) || data.rejectedBy == null || (data.rejectedBy is list && data.rejectedBy.size() <= 30 && (data.rejectedBy.size() == 0 || (data.rejectedBy[0] is string && data.rejectedBy[0].size() <= 128)))) &&
-      (!('pharmacistNote' in data) || data.pharmacistNote == null || (data.pharmacistNote is string && data.pharmacistNote.size() <= 300)) &&
-      (!('errandDescription' in data) || data.errandDescription == null || (data.errandDescription is string && data.errandDescription.size() <= 400)) &&
-      (!('errandPickupAddress' in data) || data.errandPickupAddress == null || (data.errandPickupAddress is string && data.errandPickupAddress.size() <= 180)) &&
-      (!('prepTimeMinutes' in data) || data.prepTimeMinutes == null || data.prepTimeMinutes is number) &&
-      (!('courierId' in data) || data.courierId == null || (data.courierId is string && data.courierId.size() <= 128)) &&
-      (!('courierName' in data) || data.courierName == null || (data.courierName is string && data.courierName.size() <= 80)) &&
-      (!('courierLat' in data) || data.courierLat == null || data.courierLat is number) &&
-      (!('courierLng' in data) || data.courierLng == null || data.courierLng is number) &&
-      (!('isScheduled' in data) || data.isScheduled == null || data.isScheduled is bool) &&
-      (!('scheduledForIso' in data) || data.scheduledForIso == null || (data.scheduledForIso is string && data.scheduledForIso.size() <= 40)) &&
-      (!('couponCode' in data) || data.couponCode == null || (data.couponCode is string && data.couponCode.size() <= 32)) &&
-      (!('discountPercent' in data) || data.discountPercent == null || data.discountPercent is number) &&
-      (!('discountAmount' in data) || data.discountAmount == null || data.discountAmount is number);
+      (!('cancelledByCourierIds' in data) || data.cancelledByCourierIds == null || (data.cancelledByCourierIds is list && data.cancelledByCourierIds.size() <= 20)) &&
+      (!('rejectedBy' in data) || data.rejectedBy == null || (data.rejectedBy is list && data.rejectedBy.size() <= 30)) &&
+      (!('commissionRate' in data) || data.commissionRate == null || data.commissionRate is number) &&
+      (!('commissionAmount' in data) || data.commissionAmount == null || data.commissionAmount is number) &&
+      (!('restaurantNet' in data) || data.restaurantNet == null || data.restaurantNet is number) &&
+      (!('courierDeliveryCompensation' in data) || data.courierDeliveryCompensation == null || data.courierDeliveryCompensation is number);
     }
 
     function isCourierUnassignedOrSelf(ext) {
@@ -1082,8 +1093,8 @@ service cloud.firestore {
             (inc.status == 'ready' && ext.status in ['on_the_way', 'delivering'] && isCourierExplicitlySelf(ext) && inc.get('courierId', '') == '' && changed.hasOnly(['status', 'courierId', 'courierName', 'courierPhone', 'courierLocation', 'courierLat', 'courierLng', 'cancelledByCourierIds', 'updatedAt'])) ||
             (inc.status == 'awaiting_courier_quote' && ext.status in ['awaiting_customer_errand_approval', 'on_the_way', 'delivering'] && ext.get('orderType', '') == 'custom_errand' && isCourierExplicitlySelf(ext) && inc.get('courierId', '') == '' && changed.hasOnly(['status', 'courierId', 'courierName', 'courierPhone', 'courierLocation', 'courierLat', 'courierLng', 'cancelledByCourierIds', 'updatedAt'])) ||
             (inc.status in ['on_the_way', 'delivering'] && inc.get('courierId', '') == request.auth.uid && (ext.status == 'ready' ? isCourierUnassignedOrSelf(ext) : (ext.status in ['pending', 'preparing', 'on_the_way', 'delivering'] && isCourierExplicitlySelf(ext))) && changed.hasOnly(['status', 'courierId', 'courierName', 'courierPhone', 'courierLocation', 'courierLat', 'courierLng', 'updatedAt'])) ||
-            (inc.status == 'delivered' && ext.status in ['pending', 'preparing', 'ready', 'on_the_way', 'delivering'] && inc.get('courierId', '') == request.auth.uid && (ext.status == 'ready' ? isCourierUnassignedOrSelf(ext) : isCourierExplicitlySelf(ext)) && changed.hasOnly(['status', 'courierId', 'courierName', 'courierPhone', 'courierLocation', 'courierLat', 'courierLng', 'pointsEarned', 'pointsAwarded', 'updatedAt'])) ||
-            (inc.status == 'awaiting_customer_errand_approval' && ext.status in ['awaiting_courier_quote', 'awaiting_customer_errand_approval'] && inc.get('deliveryFee', 0) >= 10 && inc.get('deliveryFee', 0) <= 500 && inc.totalAmount == inc.deliveryFee && inc.get('courierId', '') == request.auth.uid && isCourierUnassignedOrSelf(ext) && changed.hasOnly(['status', 'deliveryFee', 'totalAmount', 'courierId', 'courierName', 'courierPhone', 'courierLocation', 'courierLat', 'courierLng', 'updatedAt']))
+            (inc.status == 'delivered' && ext.status in ['pending', 'preparing', 'ready', 'on_the_way', 'delivering'] && inc.get('courierId', '') == request.auth.uid && (ext.status == 'ready' ? isCourierUnassignedOrSelf(ext) : isCourierExplicitlySelf(ext)) && changed.hasOnly(['status', 'courierId', 'courierName', 'courierPhone', 'courierLocation', 'courierLat', 'courierLng', 'pointsEarned', 'pointsAwarded', 'commissionRate', 'commissionAmount', 'restaurantNet', 'courierDeliveryCompensation', 'updatedAt'])) ||
+            (inc.status == 'awaiting_customer_errand_approval' && ext.status in ['awaiting_courier_quote', 'awaiting_customer_errand_approval'] && inc.get('deliveryFee', 0) >= 15 && inc.get('deliveryFee', 0) <= 500 && inc.totalAmount == inc.deliveryFee && inc.get('courierId', '') == request.auth.uid && isCourierUnassignedOrSelf(ext) && changed.hasOnly(['status', 'deliveryFee', 'totalAmount', 'courierId', 'courierName', 'courierPhone', 'courierLocation', 'courierLat', 'courierLng', 'updatedAt']))
           ) && isApprovedCourier()
         )
       );
@@ -1114,7 +1125,7 @@ service cloud.firestore {
             (inc.status == 'ready' && ext.status in ['on_the_way', 'delivering'] && isCourierExplicitlySelf(ext) && inc.get('courierId', '') == '' && changed.hasOnly(['status', 'courierId', 'courierName', 'courierLat', 'courierLng', 'cancelledByCourierIds', 'updatedAt'])) ||
             (inc.status == 'awaiting_courier_quote' && ext.status in ['awaiting_customer_errand_approval', 'on_the_way', 'delivering'] && ext.get('orderType', '') == 'custom_errand' && isCourierExplicitlySelf(ext) && inc.get('courierId', '') == '' && changed.hasOnly(['status', 'courierId', 'courierName', 'courierLat', 'courierLng', 'cancelledByCourierIds', 'updatedAt'])) ||
             (inc.status in ['on_the_way', 'delivering'] && inc.get('courierId', '') == request.auth.uid && (ext.status == 'ready' ? isCourierUnassignedOrSelf(ext) : (ext.status in ['pending', 'preparing', 'on_the_way', 'delivering'] && isCourierExplicitlySelf(ext))) && changed.hasOnly(['status', 'courierId', 'courierName', 'courierLat', 'courierLng', 'updatedAt'])) ||
-            (inc.status == 'delivered' && inc.get('courierId', '') == request.auth.uid && (ext.status == 'ready' ? isCourierUnassignedOrSelf(ext) : (ext.status in ['pending', 'preparing', 'on_the_way', 'delivering'] && isCourierExplicitlySelf(ext))) && changed.hasOnly(['status', 'courierId', 'courierName', 'courierLat', 'courierLng', 'updatedAt'])) ||
+            (inc.status == 'delivered' && inc.get('courierId', '') == request.auth.uid && (ext.status == 'ready' ? isCourierUnassignedOrSelf(ext) : (ext.status in ['pending', 'preparing', 'on_the_way', 'delivering'] && isCourierExplicitlySelf(ext))) && changed.hasOnly(['status', 'courierId', 'courierName', 'courierLat', 'courierLng', 'commissionRate', 'commissionAmount', 'restaurantNet', 'courierDeliveryCompensation', 'updatedAt'])) ||
             (inc.status == 'awaiting_customer_errand_approval' && ext.status in ['awaiting_courier_quote', 'awaiting_customer_errand_approval'] && inc.get('courierId', '') == request.auth.uid && isCourierUnassignedOrSelf(ext) && changed.hasOnly(['status', 'deliveryFee', 'totalAmount', 'courierId', 'courierName', 'courierLat', 'courierLng', 'updatedAt']))
           ) && isApprovedCourier()
         )
@@ -3257,7 +3268,13 @@ service cloud.firestore {
         'update_user_email',
         'approve_wallet_topup',
         'reject_wallet_topup',
-        'update_system_settings'
+        'update_system_settings',
+        'update_store_commission',
+        'update_store_details',
+        'treasury_handover',
+        'pay_courier_dues',
+        'settle_restaurant',
+        'resolve_financial_exception'
       ] &&
       data.actionLabelAr is string && data.actionLabelAr.size() >= 2 && data.actionLabelAr.size() <= 80 &&
       data.details is string && data.details.size() >= 2 && data.details.size() <= 500 &&
@@ -3308,7 +3325,7 @@ service cloud.firestore {
       data.id in ['zone_1', 'zone_2', 'zone_3', 'zone_4', 'zone_5'] &&
       data.name is string && data.name.size() >= 3 && data.name.size() <= 80 &&
       data.distanceLabel is string && data.distanceLabel.size() >= 2 && data.distanceLabel.size() <= 40 &&
-      data.price is number && data.price >= 5 && data.price <= 250 &&
+      data.price is number && data.price >= 15 && data.price <= 250 &&
       data.neighborhoods is list && data.neighborhoods.size() >= 1 && data.neighborhoods.size() <= 25 &&
       data.neighborhoods[0] is string && data.neighborhoods[0].size() <= 80 &&
       data.description is string && data.description.size() >= 4 && data.description.size() <= 220 &&
@@ -4749,6 +4766,89 @@ service cloud.firestore {
       );
       allow update: if false;
       allow delete: if isSignedIn() && isValidId(eventId) && isAdmin();
+    }
+
+    // Collection: /driver_wallets/{courierId} (3-Balance Courier Wallet: Custody, Dues, HandedOver)
+    match /driver_wallets/{courierId} {
+      allow get: if isSignedIn() && isValidId(courierId) && (courierId == request.auth.uid || isOperationsOrAdmin());
+      allow list: if isSignedIn() && isOperationsOrAdmin();
+      allow create, update: if isSignedIn() && isValidId(courierId) &&
+        incoming().keys().hasAll(['courierId', 'courierName', 'collectionCustody', 'courierDues', 'handedOverAmount', 'totalDuesPaid', 'totalOrdersDelivered', 'updatedAt']) &&
+        incoming().courierId == courierId &&
+        incoming().collectionCustody >= 0 && incoming().courierDues >= 0 && incoming().handedOverAmount >= 0 &&
+        incoming().updatedAt == request.time &&
+        (isOperationsOrAdmin() || (courierId == request.auth.uid && isApprovedCourier()));
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Collection: /transactions/{txId} (Immutable 3-Party Financial Ledger)
+    match /transactions/{txId} {
+      allow get, list: if isSignedIn() && (
+        isOperationsOrAdmin() ||
+        existing().get('courierId', '') == request.auth.uid ||
+        existing().get('storeOwnerId', '') == request.auth.uid
+      );
+      allow create: if isNonAnonymousUser() && isValidId(txId) &&
+        incoming().keys().hasAll(['id', 'type', 'amount', 'notes', 'createdBy', 'createdAt']) &&
+        incoming().id == txId &&
+        incoming().type in ['order_collection', 'courier_earning', 'edkawy_commission', 'restaurant_payable', 'cash_handover', 'courier_payout', 'restaurant_settlement', 'exception_adjustment'] &&
+        incoming().amount >= 0 &&
+        incoming().createdAt == request.time &&
+        (
+          isOperationsOrAdmin() ||
+          (isApprovedCourier() && incoming().get('courierId', '') == request.auth.uid && incoming().type in ['order_collection', 'courier_earning', 'edkawy_commission', 'restaurant_payable'])
+        );
+      allow update: if false;
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Collection: /treasury_receipts/{receiptId} (Edkawy HQ Cash Handover Receipts)
+    match /treasury_receipts/{receiptId} {
+      allow get, list: if isSignedIn() && (isOperationsOrAdmin() || existing().courierId == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(receiptId) &&
+        incoming().keys().hasAll(['id', 'receiptNumber', 'courierId', 'courierName', 'expectedAmount', 'actualAmount', 'varianceAmount', 'receivedByUid', 'createdAt']) &&
+        incoming().id == receiptId &&
+        incoming().expectedAmount >= 0 && incoming().actualAmount >= 0 &&
+        incoming().createdAt == request.time &&
+        isOperationsOrAdmin();
+      allow update: if false;
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Collection: /restaurant_settlements/{settlementId} (Daily 12 AM Cairo Store Settlements)
+    match /restaurant_settlements/{settlementId} {
+      allow get, list: if isSignedIn() && (
+        isOperationsOrAdmin() ||
+        existing().get('storeOwnerId', '') == request.auth.uid
+      );
+      allow create, update: if isSignedIn() && isValidId(settlementId) &&
+        incoming().keys().hasAll(['id', 'storeId', 'storeName', 'settlementDateKey', 'ordersCount', 'grossProductsSales', 'edkawyCommission', 'restaurantNetPayable', 'status', 'updatedAt']) &&
+        incoming().id == settlementId &&
+        incoming().status in ['pending_review', 'paid', 'disputed'] &&
+        incoming().grossProductsSales >= 0 && incoming().restaurantNetPayable >= 0 &&
+        incoming().updatedAt == request.time &&
+        isOperationsOrAdmin();
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Collection: /financial_exceptions/{exceptionId} (Manual Admin Review Queue for Disputes & Shortages)
+    match /financial_exceptions/{exceptionId} {
+      allow get, list: if isSignedIn() && (
+        isOperationsOrAdmin() ||
+        existing().get('courierId', '') == request.auth.uid ||
+        existing().get('storeOwnerId', '') == request.auth.uid
+      );
+      allow create: if isNonAnonymousUser() && isValidId(exceptionId) &&
+        incoming().keys().hasAll(['id', 'exceptionType', 'disputedAmount', 'status', 'description', 'createdBy', 'createdAt']) &&
+        incoming().id == exceptionId &&
+        incoming().status == 'pending_review' &&
+        incoming().disputedAmount >= 0 &&
+        incoming().createdAt == request.time &&
+        (isOperationsOrAdmin() || incoming().createdBy == request.auth.uid);
+      allow update: if isSignedIn() && isValidId(exceptionId) &&
+        incoming().status in ['pending_review', 'resolved_no_deduction', 'resolved_with_adjustment'] &&
+        isOperationsOrAdmin();
+      allow delete: if isSignedIn() && isAdmin();
     }
   }
 }

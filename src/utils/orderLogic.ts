@@ -17,7 +17,12 @@ import {
   CreateSupportTicketInput,
   CustomErrandOrderInput,
   CustomerDirectoryEntry,
+  DriverWalletRecord,
   EdkoZoneId,
+  FinancialExceptionRecord,
+  FinancialExceptionType,
+  FinancialTransactionRecord,
+  FounderFinancialKpis,
   FraudAlertRecord,
   GroupBillParticipantShare,
   GroupSessionCartItem,
@@ -32,11 +37,14 @@ import {
   ProductImageKey,
   ProductRecord,
   ProductVariant,
+  RestaurantSettlementRecord,
+  RestaurantSettlementStatus,
   ReviewSubmitInput,
   StoreCategory,
   StoreImageKey,
   StoreOperationalSettingsInput,
   StoreRecord,
+  TreasuryReceiptRecord,
 } from '../types/edkawi';
 import {
   APPROVED_EDKO_ZONE_IDS,
@@ -46,6 +54,9 @@ import { isValidUploadedImageUrl } from './imageUpload';
 
 export const SMALL_ORDER_THRESHOLD_EGP = 50;
 export const SMALL_ORDER_FEE_EGP = 5;
+export const MIN_COURIER_DELIVERY_FEE_EGP = 15;
+export const DEFAULT_EDKAWY_COMMISSION_RATE = 0.14;
+export const DAILY_SETTLEMENT_CUTOFF_TIME = '00:00';
 
 export const STORE_CATEGORIES: readonly StoreCategory[] = [
   'أكل بيتي',
@@ -144,7 +155,7 @@ export const BLUEPRINT_LIMITS = {
   neighborhoodMax: 80,
   descriptionMin: 4,
   descriptionMax: 220,
-  deliveryFeeMin: 0,
+  deliveryFeeMin: 15,
   deliveryFeeMax: 200,
   deliveryTimeMin: 10,
   deliveryTimeMax: 120,
@@ -706,7 +717,7 @@ export function validateAdminCreateStoreForm(
     deliveryFee < BLUEPRINT_LIMITS.deliveryFeeMin ||
     deliveryFee > BLUEPRINT_LIMITS.deliveryFeeMax
   ) {
-    errors.deliveryFee = 'رسوم التوصيل يجب أن تكون بين ٠ و ١٥٠ ج.م.';
+    errors.deliveryFee = 'رسوم التوصيل يجب أن تكون بين ١٥ و ٢٠٠ ج.م.';
   }
 
   if (
@@ -910,7 +921,7 @@ export function validateNewStoreForm(input: NewStoreInput): ValidationResult {
     deliveryFee < BLUEPRINT_LIMITS.deliveryFeeMin ||
     deliveryFee > BLUEPRINT_LIMITS.deliveryFeeMax
   ) {
-    errors.deliveryFee = 'رسوم التوصيل يجب أن تكون بين ٠ و ١٥٠ ج.م.';
+    errors.deliveryFee = 'رسوم التوصيل يجب أن تكون بين ١٥ و ٢٠٠ ج.م.';
   }
 
   if (
@@ -1042,8 +1053,8 @@ export function calculateCartTotals(
       ? Number(options.zoneDeliveryFee)
       : Number(cart[0].deliveryFee);
   const baseZoneFee = Number.isFinite(rawDeliveryFee)
-    ? Math.min(200, Math.max(0, Math.trunc(rawDeliveryFee)))
-    : 15;
+    ? Math.min(200, Math.max(MIN_COURIER_DELIVERY_FEE_EGP, Math.trunc(rawDeliveryFee)))
+    : MIN_COURIER_DELIVERY_FEE_EGP;
   const freeDeliveryApplied = Boolean(options?.useFreeDeliveryReward);
   const deliveryFee = freeDeliveryApplied ? 0 : baseZoneFee;
 
@@ -1991,6 +2002,18 @@ export function getAuditActionLabelAr(actionType: AuditActionType): string {
       return 'رفض طلب شحن محفظة عميل';
     case 'update_system_settings':
       return 'تحديث إعدادات الدفع والتشغيل بالمنصة';
+    case 'update_store_commission':
+      return 'تعديل نسبة عمولة مطعم / متجر';
+    case 'update_store_details':
+      return 'تحديث بيانات متجر من الإدارة';
+    case 'treasury_handover':
+      return 'توريد نقدية من مندوب إلى خزينة إدكاوي';
+    case 'pay_courier_dues':
+      return 'صرف مستحقات مندوب توصيل';
+    case 'settle_restaurant':
+      return 'صرف تسوية يومية لمطعم / متجر';
+    case 'resolve_financial_exception':
+      return 'مراجعة وحسم حالة مالية استثنائية';
     default:
       return 'عملية إدارية';
   }
@@ -2318,3 +2341,304 @@ export function computeFraudDetectionAlerts(params: {
     (b.detectedAtIso || '').localeCompare(a.detectedAtIso || '')
   );
 }
+
+/* ============================================================================
+ * EDKAWY FINANCIAL ENGINE (86% STORE / 14% EDKAWY / 100% COURIER >= 15 EGP)
+ * ========================================================================== */
+
+export interface OrderFinancialSplit {
+  subtotal: number;
+  deliveryFee: number;
+  commissionRate: number;
+  commissionAmount: number;
+  restaurantNet: number;
+  courierEarning: number;
+  customerTotal: number;
+  isBalanced: boolean;
+}
+
+export function normalizeCommissionRate(rawRate?: number): number {
+  if (typeof rawRate !== 'number' || !Number.isFinite(rawRate)) {
+    return DEFAULT_EDKAWY_COMMISSION_RATE;
+  }
+  const normalized = rawRate > 1 ? rawRate / 100 : rawRate;
+  return Number(Math.min(0.5, Math.max(0, normalized)).toFixed(4));
+}
+
+export function calculateOrderFinancialSplit(params: {
+  subtotal: number;
+  deliveryFee: number;
+  smallOrderFee?: number;
+  discountAmount?: number;
+  commissionRate?: number;
+  courierDeliveryCompensation?: number;
+  freeDeliveryFundedByEdkawy?: boolean;
+}): OrderFinancialSplit {
+  const subtotal = Math.max(0, Math.round(Number(params.subtotal || 0) * 100) / 100);
+  const deliveryFee = Math.max(
+    0,
+    Math.round(Number(params.deliveryFee || 0) * 100) / 100
+  );
+  const smallOrderFee = Math.max(
+    0,
+    Math.round(Number(params.smallOrderFee || 0) * 100) / 100
+  );
+  const discountAmount = Math.max(
+    0,
+    Math.round(Number(params.discountAmount || 0) * 100) / 100
+  );
+  const commissionRate = normalizeCommissionRate(params.commissionRate);
+  const commissionAmount =
+    Math.round(subtotal * commissionRate * 100) / 100;
+  const restaurantNet =
+    Math.round((subtotal - commissionAmount) * 100) / 100;
+
+  const courierEarning =
+    typeof params.courierDeliveryCompensation === 'number' &&
+    params.courierDeliveryCompensation > 0
+      ? Math.max(
+          MIN_COURIER_DELIVERY_FEE_EGP,
+          Math.round(params.courierDeliveryCompensation * 100) / 100
+        )
+      : params.freeDeliveryFundedByEdkawy
+      ? MIN_COURIER_DELIVERY_FEE_EGP
+      : deliveryFee;
+
+  const customerTotal =
+    Math.round(
+      (Math.max(0, subtotal - discountAmount) + deliveryFee + smallOrderFee) *
+        100
+    ) / 100;
+
+  const splitSum =
+    Math.round((restaurantNet + commissionAmount + deliveryFee) * 100) / 100;
+  const standardTotal = Math.round((subtotal + deliveryFee) * 100) / 100;
+
+  return {
+    subtotal,
+    deliveryFee,
+    commissionRate,
+    commissionAmount,
+    restaurantNet,
+    courierEarning,
+    customerTotal,
+    isBalanced: Math.abs(splitSum - standardTotal) < 0.02,
+  };
+}
+
+export function getOrderFinancialSnapshot(
+  order: OrderRecord,
+  fallbackStoreCommissionRate = DEFAULT_EDKAWY_COMMISSION_RATE
+): OrderFinancialSplit {
+  const rate = normalizeCommissionRate(
+    order.commissionRate ?? fallbackStoreCommissionRate
+  );
+  const subtotal = Math.max(0, Number(order.subtotal || 0));
+  const deliveryFee = Math.max(0, Number(order.deliveryFee || 0));
+
+  if (
+    typeof order.commissionAmount === 'number' &&
+    typeof order.restaurantNet === 'number'
+  ) {
+    const commissionAmount = Math.round(order.commissionAmount * 100) / 100;
+    const restaurantNet = Math.round(order.restaurantNet * 100) / 100;
+    const courierEarning =
+      typeof order.courierDeliveryCompensation === 'number' &&
+      order.courierDeliveryCompensation > 0
+        ? order.courierDeliveryCompensation
+        : order.freeDeliveryFundedByEdkawy
+        ? MIN_COURIER_DELIVERY_FEE_EGP
+        : deliveryFee;
+    return {
+      subtotal,
+      deliveryFee,
+      commissionRate: rate,
+      commissionAmount,
+      restaurantNet,
+      courierEarning,
+      customerTotal: Number(order.totalAmount || subtotal + deliveryFee),
+      isBalanced:
+        Math.abs(restaurantNet + commissionAmount - subtotal) < 0.02,
+    };
+  }
+
+  return calculateOrderFinancialSplit({
+    subtotal,
+    deliveryFee,
+    smallOrderFee: order.smallOrderFee,
+    discountAmount: order.discountAmount,
+    commissionRate: rate,
+    courierDeliveryCompensation: order.courierDeliveryCompensation,
+    freeDeliveryFundedByEdkawy: order.freeDeliveryFundedByEdkawy,
+  });
+}
+
+export function getCairoDateKey(dateInput?: string | Date): string {
+  try {
+    const d =
+      dateInput instanceof Date
+        ? dateInput
+        : dateInput
+        ? new Date(dateInput)
+        : new Date();
+    if (Number.isNaN(d.getTime())) {
+      return new Date().toISOString().slice(0, 10);
+    }
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Cairo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(d);
+    const y = parts.find((p) => p.type === 'year')?.value ?? '2026';
+    const m = parts.find((p) => p.type === 'month')?.value ?? '01';
+    const day = parts.find((p) => p.type === 'day')?.value ?? '01';
+    return `${y}-${m}-${day}`;
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+export function getFinancialExceptionTypeLabelAr(
+  type: FinancialExceptionType
+): string {
+  switch (type) {
+    case 'cancelled_before_prep':
+      return 'إلغاء قبل التحضير';
+    case 'store_rejected':
+      return 'رفض المطعم بعد الطلب';
+    case 'customer_refused_door':
+      return 'رفض العميل عند الاستلام';
+    case 'courier_failed_delivery':
+      return 'فشل التوصيل من طرف المندوب';
+    case 'cash_shortage':
+      return 'عجز نقدي عند المندوب';
+    case 'wrong_order':
+      return 'طلب خاطئ أو ناقص';
+    default:
+      return 'حالة استثنائية';
+  }
+}
+
+export function getSettlementStatusLabelAr(
+  status: RestaurantSettlementStatus
+): string {
+  switch (status) {
+    case 'paid':
+      return 'مدفوعة';
+    case 'disputed':
+      return 'معلّقة للمراجعة';
+    default:
+      return 'قيد المراجعة';
+  }
+}
+
+export function calculateFounderFinancialKpis(params: {
+  orders: readonly OrderRecord[];
+  stores: readonly StoreRecord[];
+  wallets: readonly DriverWalletRecord[];
+  transactions?: readonly FinancialTransactionRecord[];
+  receipts: readonly TreasuryReceiptRecord[];
+  settlements: readonly RestaurantSettlementRecord[];
+  exceptions: readonly FinancialExceptionRecord[];
+}): FounderFinancialKpis {
+  const realOrders = params.orders.filter((o) => !o.isTestSimulation);
+  const storeRateMap = new Map<string, number>();
+  for (const s of params.stores) {
+    storeRateMap.set(s.id, normalizeCommissionRate(s.commissionRate));
+  }
+
+  let totalStoreSales = 0;
+  let totalEdkawyCommissions = 0;
+  let totalDeliveryFees = 0;
+  let deliveredOrdersCount = 0;
+  let cancelledOrdersCount = 0;
+  let totalDeliveredNetPayable = 0;
+
+  for (const order of realOrders) {
+    if (order.status === 'cancelled') {
+      cancelledOrdersCount += 1;
+      continue;
+    }
+    if (order.status === 'delivered') {
+      deliveredOrdersCount += 1;
+      const snap = getOrderFinancialSnapshot(
+        order,
+        storeRateMap.get(order.storeId) ?? DEFAULT_EDKAWY_COMMISSION_RATE
+      );
+      totalStoreSales += snap.subtotal;
+      totalEdkawyCommissions += snap.commissionAmount;
+      totalDeliveryFees += snap.courierEarning;
+      totalDeliveredNetPayable += snap.restaurantNet;
+    }
+  }
+
+  let totalCourierDues = 0;
+  let cashHeldByCouriers = 0;
+  let totalDuesPaid = 0;
+  for (const w of params.wallets) {
+    totalCourierDues += Math.max(0, Number(w.courierDues || 0));
+    cashHeldByCouriers += Math.max(0, Number(w.collectionCustody || 0));
+    totalDuesPaid += Math.max(0, Number(w.totalDuesPaid || 0));
+  }
+
+  let totalHandedOverGross = 0;
+  let cashVarianceNet = 0;
+  let cashShortageFromReceipts = 0;
+  for (const r of params.receipts) {
+    totalHandedOverGross += Math.max(0, Number(r.actualAmount || 0));
+    const variance = Number(r.varianceAmount || 0);
+    cashVarianceNet += variance;
+    if (variance < 0) {
+      cashShortageFromReceipts += Math.abs(variance);
+    }
+  }
+
+  let paidStoreSettlements = 0;
+  for (const s of params.settlements) {
+    if (s.status === 'paid') {
+      paidStoreSettlements += Math.max(0, Number(s.restaurantNetPayable || 0));
+    }
+  }
+
+  const cashInTreasury = Math.max(
+    0,
+    Math.round((totalHandedOverGross - paidStoreSettlements - totalDuesPaid) * 100) /
+      100
+  );
+  const unpaidStorePayables = Math.max(
+    0,
+    Math.round((totalDeliveredNetPayable - paidStoreSettlements) * 100) / 100
+  );
+
+  let pendingExceptionsCount = 0;
+  let openShortageExceptions = 0;
+  for (const ex of params.exceptions) {
+    if (ex.status === 'pending_review') {
+      pendingExceptionsCount += 1;
+      if (ex.exceptionType === 'cash_shortage') {
+        openShortageExceptions += Math.max(0, Number(ex.disputedAmount || 0));
+      }
+    }
+  }
+
+  return {
+    totalStoreSales: Math.round(totalStoreSales * 100) / 100,
+    totalEdkawyCommissions: Math.round(totalEdkawyCommissions * 100) / 100,
+    totalDeliveryFees: Math.round(totalDeliveryFees * 100) / 100,
+    totalCourierDues: Math.round(totalCourierDues * 100) / 100,
+    cashInTreasury,
+    totalHandedOverGross: Math.round(totalHandedOverGross * 100) / 100,
+    cashHeldByCouriers: Math.round(cashHeldByCouriers * 100) / 100,
+    unpaidStorePayables,
+    paidStoreSettlements: Math.round(paidStoreSettlements * 100) / 100,
+    cancelledOrdersCount,
+    cashShortageTotal:
+      Math.round(Math.max(cashShortageFromReceipts, openShortageExceptions) * 100) /
+      100,
+    cashVarianceNet: Math.round(cashVarianceNet * 100) / 100,
+    deliveredOrdersCount,
+    pendingExceptionsCount,
+  };
+}
+
