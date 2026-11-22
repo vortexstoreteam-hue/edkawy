@@ -10,6 +10,7 @@ export interface CompressImageOptions {
   maxWidth?: number;
   maxHeight?: number;
   quality?: number;
+  maxChars?: number;
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -55,6 +56,10 @@ export async function compressDeviceImageToDataUrl(
   const targetMaxW = options?.maxWidth ?? 920;
   const targetMaxH = options?.maxHeight ?? 920;
   const initialQuality = options?.quality ?? 0.78;
+  const maxAllowedChars = Math.min(
+    MAX_UPLOADED_IMAGE_CHARS,
+    Math.max(40_000, options?.maxChars ?? MAX_UPLOADED_IMAGE_CHARS)
+  );
 
   let width = img.naturalWidth || img.width || 640;
   let height = img.naturalHeight || img.height || 480;
@@ -87,28 +92,34 @@ export async function compressDeviceImageToDataUrl(
       const encoded = canvas.toDataURL(mime, q);
       if (
         encoded.startsWith(`data:${mime}`) &&
-        encoded.length <= MAX_UPLOADED_IMAGE_CHARS
+        encoded.length <= maxAllowedChars
       ) {
         return encoded;
       }
     }
   }
 
-  // Final compact pass at 600px max dimension
-  const compactScale = Math.min(1, 600 / Math.max(width, height));
-  canvas.width = Math.max(1, Math.round(width * compactScale));
-  canvas.height = Math.max(1, Math.round(height * compactScale));
-  const compactCtx = canvas.getContext('2d');
-  if (compactCtx) {
-    compactCtx.fillStyle = '#FFFFFF';
-    compactCtx.fillRect(0, 0, canvas.width, canvas.height);
-    compactCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  // Compact pass at 600px then 480px max dimension if still above limit
+  for (const [dimLimit, fallbackQ] of [
+    [600, 0.5],
+    [480, 0.45],
+  ] as const) {
+    const compactScale = Math.min(1, dimLimit / Math.max(width, height));
+    canvas.width = Math.max(1, Math.round(width * compactScale));
+    canvas.height = Math.max(1, Math.round(height * compactScale));
+    const compactCtx = canvas.getContext('2d');
+    if (compactCtx) {
+      compactCtx.fillStyle = '#FFFFFF';
+      compactCtx.fillRect(0, 0, canvas.width, canvas.height);
+      compactCtx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    }
+    const fallbackEncoded = canvas.toDataURL('image/jpeg', fallbackQ);
+    if (fallbackEncoded.length <= maxAllowedChars) {
+      return fallbackEncoded;
+    }
   }
-  const fallbackEncoded = canvas.toDataURL('image/jpeg', 0.5);
-  if (fallbackEncoded.length > MAX_UPLOADED_IMAGE_CHARS) {
-    throw new Error('تعذر ضغط الصورة بالحجم المناسب. يرجى اختيار صورة أوضح بحجم أقل.');
-  }
-  return fallbackEncoded;
+
+  throw new Error('تعذر ضغط الصورة بالحجم المناسب. يرجى اختيار صورة أوضح بحجم أقل.');
 }
 
 export function isValidUploadedImageUrl(value?: string | null): boolean {

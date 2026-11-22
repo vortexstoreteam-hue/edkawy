@@ -95,9 +95,11 @@ import {
   CouponRecord,
   CourierApprovalStatus,
   CourierCredentialRecord,
+  CourierKycDocumentsInput,
   CourierProfileInput,
   CourierRecord,
   CourierRegisterInput,
+  CourierVehicleType,
   CreateInvitationInput,
   CreatePayoutRequestInput,
   CreateStaffMemberInput,
@@ -193,6 +195,7 @@ import {
   isCouponExpired,
   isEdkuWaterCoordinate,
   isStoreOpen,
+  isCourierDrivingLicenseRequired,
   isValidCustomerCodeFormat,
   isValidFirestoreId,
   normalizeEgyptPhoneOrEmpty,
@@ -203,6 +206,7 @@ import {
   validateCheckoutForm,
   validateCompleteProfileForm,
   validateCouponForm,
+  validateCourierKycDocuments,
   validateCourierProfile,
   validateCourierRegistrationForm,
   validateCustomErrandInput,
@@ -212,6 +216,7 @@ import {
   validatePharmacyPrescriptionInput,
   validateReviewForm,
   validateStaffMemberForm,
+  validateStoreLegalFields,
   validateStoreSettingsForm,
   validateSupportTicketForm,
 } from '../utils/orderLogic';
@@ -620,6 +625,19 @@ function parseStoreSnapshotDoc(
     menuItems,
     ownerUid: typeof d.ownerUid === 'string' ? d.ownerUid : undefined,
     loginEmail: typeof d.loginEmail === 'string' ? d.loginEmail : undefined,
+    commercialRegisterNumber:
+      typeof d.commercialRegisterNumber === 'string'
+        ? d.commercialRegisterNumber
+        : undefined,
+    commercialRegisterImageUrl: sanitizeOptionalImage(
+      typeof d.commercialRegisterImageUrl === 'string'
+        ? d.commercialRegisterImageUrl
+        : undefined
+    ),
+    taxCertificateNumber:
+      typeof d.taxCertificateNumber === 'string'
+        ? d.taxCertificateNumber
+        : undefined,
     referredByAgentId:
       typeof d.referredByAgentId === 'string' ? d.referredByAgentId : undefined,
     referredByCode:
@@ -1046,6 +1064,36 @@ function parseCourierDoc(
       typeof d.cancelledDeliveries === 'number'
         ? Math.max(0, Math.trunc(d.cancelledDeliveries))
         : 0,
+    nationalIdFrontUrl: sanitizeOptionalImage(
+      typeof d.nationalIdFrontUrl === 'string' ? d.nationalIdFrontUrl : undefined
+    ),
+    nationalIdBackUrl: sanitizeOptionalImage(
+      typeof d.nationalIdBackUrl === 'string' ? d.nationalIdBackUrl : undefined
+    ),
+    drivingLicenseFrontUrl: sanitizeOptionalImage(
+      typeof d.drivingLicenseFrontUrl === 'string'
+        ? d.drivingLicenseFrontUrl
+        : undefined
+    ),
+    drivingLicenseBackUrl: sanitizeOptionalImage(
+      typeof d.drivingLicenseBackUrl === 'string'
+        ? d.drivingLicenseBackUrl
+        : undefined
+    ),
+    vehiclePhotoUrl: sanitizeOptionalImage(
+      typeof d.vehiclePhotoUrl === 'string' ? d.vehiclePhotoUrl : undefined
+    ),
+    selfieWithIdUrl: sanitizeOptionalImage(
+      typeof d.selfieWithIdUrl === 'string' ? d.selfieWithIdUrl : undefined
+    ),
+    kycSubmittedAtIso:
+      typeof d.kycSubmittedAtIso === 'string' ? d.kycSubmittedAtIso : undefined,
+    kycRejectionReason:
+      typeof d.kycRejectionReason === 'string' && d.kycRejectionReason.trim()
+        ? d.kycRejectionReason
+        : undefined,
+    kycReviewedAtIso:
+      typeof d.kycReviewedAtIso === 'string' ? d.kycReviewedAtIso : undefined,
     updatedBy: String(d.updatedBy ?? docSnap.id),
     updatedAtIso: toIsoString(d.updatedAt),
   };
@@ -2391,6 +2439,12 @@ export async function createStoreByAdminInFirestore(
   const userProfileRef = doc(db, 'users', ownerUid);
   const firstProdRef = doc(collection(db, 'products'));
 
+  const cleanCommercialRegNumber = (input.commercialRegisterNumber ?? '').trim().slice(0, 40);
+  const cleanTaxNumber = (input.taxCertificateNumber ?? '').trim().slice(0, 40);
+  const cleanCommercialRegImage = sanitizeOptionalImage(
+    input.commercialRegisterImageUrl
+  );
+
   try {
     await waitForFirestoreWarmup();
     await setDoc(newStoreRef, {
@@ -2411,6 +2465,13 @@ export async function createStoreByAdminInFirestore(
       isOpen: true,
       prepTimeMinutes: deliveryTimeMinutes,
       minOrderAmount: 0,
+      ...(cleanCommercialRegNumber
+        ? { commercialRegisterNumber: cleanCommercialRegNumber }
+        : {}),
+      ...(cleanCommercialRegImage
+        ? { commercialRegisterImageUrl: cleanCommercialRegImage }
+        : {}),
+      ...(cleanTaxNumber ? { taxCertificateNumber: cleanTaxNumber } : {}),
       menuItems,
       ownerUid,
       createdBy: adminUid,
@@ -2646,10 +2707,16 @@ export async function fetchStoreCredentialsMapForAdmin(
 
 export async function approveCourierByAdminInFirestore(
   courierId: string,
-  nextStatus: CourierApprovalStatus = 'approved'
+  nextStatus: CourierApprovalStatus = 'approved',
+  rejectionReason?: string
 ): Promise<void> {
   const courierPath = `couriers/${courierId}`;
   const isApproved = nextStatus === 'approved';
+  const cleanReason =
+    nextStatus === 'rejected'
+      ? (rejectionReason?.trim() || 'المستندات المرفقة غير واضحة أو غير مكتملة. يرجى إعادة الرفع بوضوح.').slice(0, 240)
+      : '';
+  const reviewedIso = new Date().toISOString();
   try {
     await waitForFirestoreWarmup();
     const userRef = doc(db, 'users', courierId);
@@ -2678,6 +2745,8 @@ export async function approveCourierByAdminInFirestore(
       batch.update(courierRef, {
         approvalStatus: nextStatus,
         isAvailable: isApproved,
+        kycRejectionReason: cleanReason,
+        kycReviewedAtIso: reviewedIso,
         updatedAt: serverTimestamp(),
       });
     } else {
@@ -2690,6 +2759,8 @@ export async function approveCourierByAdminInFirestore(
         neighborhood: fallbackArea,
         isAvailable: isApproved,
         approvalStatus: nextStatus,
+        kycRejectionReason: cleanReason,
+        kycReviewedAtIso: reviewedIso,
         completedDeliveries: Math.max(
           0,
           Math.trunc(Number(dirData?.completedDeliveries ?? 0))
@@ -3421,6 +3492,20 @@ export async function updateStoreSettingsInFirestore(
   if (cleanImg) {
     patch.imageUrl = cleanImg;
   }
+  if (settings.commercialRegisterNumber?.trim()) {
+    patch.commercialRegisterNumber = settings.commercialRegisterNumber
+      .trim()
+      .slice(0, 40);
+  }
+  if (settings.taxCertificateNumber?.trim()) {
+    patch.taxCertificateNumber = settings.taxCertificateNumber
+      .trim()
+      .slice(0, 40);
+  }
+  const cleanCrImg = sanitizeOptionalImage(settings.commercialRegisterImageUrl);
+  if (cleanCrImg) {
+    patch.commercialRegisterImageUrl = cleanCrImg;
+  }
 
   try {
     await waitForFirestoreWarmup();
@@ -3433,6 +3518,62 @@ export async function updateStoreSettingsInFirestore(
       error
     );
     handleFirestoreError(error, OperationType.UPDATE, storePath);
+  }
+}
+
+export async function submitCourierKycInFirestore(
+  courierUid: string,
+  vehicleType: CourierVehicleType,
+  docs: CourierKycDocumentsInput
+): Promise<void> {
+  const validation = validateCourierKycDocuments(vehicleType, docs);
+  if (!validation.valid) {
+    throw new Error(Object.values(validation.errors)[0]);
+  }
+
+  const submittedAtIso = new Date().toISOString();
+  const courierPath = `couriers/${courierUid}`;
+  const courierPatch: Record<string, unknown> = {
+    vehicleType,
+    approvalStatus: 'pending',
+    isAvailable: false,
+    nationalIdFrontUrl: docs.nationalIdFrontUrl.trim().slice(0, 130000),
+    nationalIdBackUrl: docs.nationalIdBackUrl.trim().slice(0, 130000),
+    vehiclePhotoUrl: docs.vehiclePhotoUrl.trim().slice(0, 130000),
+    selfieWithIdUrl: docs.selfieWithIdUrl.trim().slice(0, 130000),
+    kycSubmittedAtIso: submittedAtIso,
+    kycRejectionReason: '',
+    updatedAt: serverTimestamp(),
+  };
+
+  if (isCourierDrivingLicenseRequired(vehicleType)) {
+    courierPatch.drivingLicenseFrontUrl = (docs.drivingLicenseFrontUrl ?? '')
+      .trim()
+      .slice(0, 130000);
+    courierPatch.drivingLicenseBackUrl = (docs.drivingLicenseBackUrl ?? '')
+      .trim()
+      .slice(0, 130000);
+  }
+
+  try {
+    await waitForFirestoreWarmup();
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'couriers', courierUid), courierPatch);
+    batch.update(doc(db, 'courierDirectory', courierUid), {
+      vehicleType,
+      approvalStatus: 'pending',
+      isAvailable: false,
+      updatedAt: serverTimestamp(),
+    });
+    await batch.commit();
+  } catch (error) {
+    logFirestoreFailure(
+      'couriers',
+      courierUid,
+      'submitCourierKycInFirestore',
+      error
+    );
+    handleFirestoreError(error, OperationType.UPDATE, courierPath);
   }
 }
 
@@ -7545,7 +7686,8 @@ export async function getSharedCartByRoomCode(
 
 export function listenToSharedCartByRoomCode(
   roomCode: string,
-  onData: (cart: SharedCartRecord | null) => void
+  onData: (cart: SharedCartRecord | null) => void,
+  onError?: (err: Error) => void
 ): Unsubscribe {
   const code = (roomCode || '').trim().toUpperCase();
   if (!code) {
@@ -7566,7 +7708,11 @@ export function listenToSharedCartByRoomCode(
         onData(parseSharedCartDoc(snap.docs[0]));
       }
     },
-    () => onData(null)
+    (err) => {
+      logFirestoreFailure('sharedCarts', code, 'listenToSharedCartByRoomCode', err);
+      onError?.(err instanceof Error ? err : new Error(String(err)));
+      onData(null);
+    }
   );
 }
 
@@ -7575,34 +7721,48 @@ export async function sendSharedCartChatMessage(
   message: { senderUid: string; senderName: string; text: string }
 ): Promise<void> {
   if (!cartId || !isValidFirestoreId(cartId)) return;
+  if (!auth.currentUser || auth.currentUser.isAnonymous) {
+    throw new Error('يرجى تسجيل الدخول بحسابك أولاً لإرسال رسالة في السلة الجماعية.');
+  }
+  const cleanText = message.text.trim().slice(0, 300);
+  if (!cleanText) return;
   await waitForFirestoreWarmup();
   const ref = doc(db, 'sharedCarts', cartId);
-  const snap = await getDocWithRetry(ref, 'sharedCarts', cartId);
-  const parsed = parseSharedCartDoc(snap);
-  if (!parsed || parsed.status !== 'open') {
-    throw new Error('لا يمكن إرسال رسالة في طلب جماعي غير نشط.');
+
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const parsed = parseSharedCartDoc(snap);
+      if (!parsed || parsed.status !== 'open') {
+        throw new Error('لا يمكن إرسال رسالة في طلب جماعي غير نشط.');
+      }
+
+      const newMsg: SharedCartChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        senderUid: auth.currentUser?.uid || message.senderUid,
+        senderName: (message.senderName.trim() || 'عضو').slice(0, 50),
+        text: cleanText,
+        timestampIso: new Date().toISOString(),
+      };
+
+      const currentMessages = parsed.chatMessages || [];
+      const updatedMessages = [...currentMessages.slice(-49), newMsg];
+
+      tx.update(ref, {
+        chatMessages: updatedMessages,
+        updatedAt: serverTimestamp(),
+      });
+    });
+  } catch (error) {
+    logFirestoreFailure('sharedCarts', cartId, 'sendSharedCartChatMessage', error);
+    handleFirestoreError(error, OperationType.UPDATE, `sharedCarts/${cartId}`);
   }
-
-  const newMsg: SharedCartChatMessage = {
-    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-    senderUid: message.senderUid,
-    senderName: message.senderName.slice(0, 50),
-    text: message.text.slice(0, 300),
-    timestampIso: new Date().toISOString(),
-  };
-
-  const currentMessages = parsed.chatMessages || [];
-  const updatedMessages = [...currentMessages.slice(-49), newMsg];
-
-  await updateDoc(ref, {
-    chatMessages: updatedMessages,
-    updatedAt: serverTimestamp(),
-  });
 }
 
 export function listenToSharedCart(
   cartId: string,
-  onData: (cart: SharedCartRecord | null) => void
+  onData: (cart: SharedCartRecord | null) => void,
+  onError?: (err: Error) => void
 ): Unsubscribe {
   if (!cartId || !isValidFirestoreId(cartId)) {
     onData(null);
@@ -7613,7 +7773,11 @@ export function listenToSharedCart(
     (snap) => {
       onData(parseSharedCartDoc(snap));
     },
-    () => onData(null)
+    (err) => {
+      logFirestoreFailure('sharedCarts', cartId, 'listenToSharedCart', err);
+      onError?.(err instanceof Error ? err : new Error(String(err)));
+      onData(null);
+    }
   );
 }
 
@@ -7624,44 +7788,105 @@ export async function upsertSharedCartItemInFirestore(
   product: ProductRecord,
   delta: number
 ): Promise<void> {
+  if (!auth.currentUser || auth.currentUser.isAnonymous) {
+    throw new Error('يرجى تسجيل الدخول بحسابك أولاً للمشاركة في السلة الجماعية.');
+  }
   await waitForFirestoreWarmup();
   const ref = doc(db, 'sharedCarts', cartId);
-  const snap = await getDocWithRetry(ref, 'sharedCarts', cartId);
-  const parsed = parseSharedCartDoc(snap);
-  if (!parsed || parsed.status !== 'open') {
-    throw new Error('هذا الطلب الجماعي مغلق أو تم إتمامه بالفعل.');
-  }
 
-  const entryId = `${participantUid}_${product.id}`.slice(0, 120);
-  const existingIdx = parsed.items.findIndex((i) => i.entryId === entryId);
-  const nextItems = [...parsed.items];
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const parsed = parseSharedCartDoc(snap);
+      if (!parsed || parsed.status !== 'open') {
+        throw new Error('هذا الطلب الجماعي مغلق أو تم إتمامه بالفعل.');
+      }
 
-  if (existingIdx >= 0) {
-    const nextQty = nextItems[existingIdx].quantity + delta;
-    if (nextQty <= 0) {
-      nextItems.splice(existingIdx, 1);
-    } else {
-      nextItems[existingIdx] = {
-        ...nextItems[existingIdx],
-        quantity: Math.min(30, nextQty),
-      };
-    }
-  } else if (delta > 0 && nextItems.length < 40) {
-    nextItems.push({
-      entryId,
-      participantUid,
-      participantName: (participantName.trim() || 'مشارك').slice(0, 80),
-      productId: product.id,
-      name: product.name.slice(0, 100),
-      price: Math.trunc(product.price),
-      quantity: Math.min(30, delta),
+      const activeUid = auth.currentUser?.uid || participantUid;
+      const entryId = `${activeUid}_${product.id}`.slice(0, 120);
+      const existingIdx = parsed.items.findIndex((i) => i.entryId === entryId);
+      const nextItems = [...parsed.items];
+
+      if (existingIdx >= 0) {
+        const nextQty = nextItems[existingIdx].quantity + delta;
+        if (nextQty <= 0) {
+          nextItems.splice(existingIdx, 1);
+        } else {
+          nextItems[existingIdx] = {
+            ...nextItems[existingIdx],
+            quantity: Math.min(30, nextQty),
+          };
+        }
+      } else if (delta > 0 && nextItems.length < 40) {
+        nextItems.push({
+          entryId,
+          participantUid: activeUid,
+          participantName: (participantName.trim() || 'مشارك').slice(0, 80),
+          productId: product.id,
+          name: product.name.slice(0, 100),
+          price: Math.trunc(product.price),
+          quantity: Math.min(30, delta),
+        });
+      }
+
+      tx.update(ref, {
+        items: nextItems,
+        updatedAt: serverTimestamp(),
+      });
     });
+  } catch (error) {
+    logFirestoreFailure('sharedCarts', cartId, 'upsertSharedCartItemInFirestore', error);
+    handleFirestoreError(error, OperationType.UPDATE, `sharedCarts/${cartId}`);
   }
+}
 
-  await updateDoc(ref, {
-    items: nextItems,
-    updatedAt: serverTimestamp(),
-  });
+export async function updateSharedCartEntryQuantityInFirestore(
+  cartId: string,
+  entryId: string,
+  delta: number
+): Promise<void> {
+  if (!auth.currentUser || auth.currentUser.isAnonymous) {
+    throw new Error('يرجى تسجيل الدخول بحسابك أولاً لتعديل السلة الجماعية.');
+  }
+  await waitForFirestoreWarmup();
+  const ref = doc(db, 'sharedCarts', cartId);
+  const activeUid = auth.currentUser.uid;
+
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const parsed = parseSharedCartDoc(snap);
+      if (!parsed || parsed.status !== 'open') {
+        throw new Error('هذا الطلب الجماعي مغلق أو تم إتمامه بالفعل.');
+      }
+      const idx = parsed.items.findIndex((i) => i.entryId === entryId);
+      if (idx < 0) return;
+
+      const target = parsed.items[idx];
+      if (target.participantUid !== activeUid && parsed.hostUid !== activeUid) {
+        throw new Error('يمكنك فقط تعديل أو حذف أصنافك الشخصية.');
+      }
+
+      const nextItems = [...parsed.items];
+      const nextQty = target.quantity + delta;
+      if (nextQty <= 0) {
+        nextItems.splice(idx, 1);
+      } else {
+        nextItems[idx] = {
+          ...target,
+          quantity: Math.min(30, nextQty),
+        };
+      }
+
+      tx.update(ref, {
+        items: nextItems,
+        updatedAt: serverTimestamp(),
+      });
+    });
+  } catch (error) {
+    logFirestoreFailure('sharedCarts', cartId, 'updateSharedCartEntryQuantityInFirestore', error);
+    handleFirestoreError(error, OperationType.UPDATE, `sharedCarts/${cartId}`);
+  }
 }
 
 export async function completeSharedCartCheckoutInFirestore(
@@ -9852,8 +10077,9 @@ export async function releaseOrderByCourierInFirestore(
     const courierRef = doc(db, 'couriers', courierUid);
     const courierDirRef = doc(db, 'courierDirectory', courierUid);
 
-    const [orderSnap, courierSnap, courierDirSnap] = await Promise.all([
+    const [orderSnap, ticketSnap, courierSnap, courierDirSnap] = await Promise.all([
       getDocWithRetry(orderRef, 'orders', orderId),
+      getDoc(ticketRef).catch(() => null),
       getDoc(courierRef).catch(() => null),
       getDoc(courierDirRef).catch(() => null),
     ]);
@@ -9886,15 +10112,17 @@ export async function releaseOrderByCourierInFirestore(
       cancelledByCourierIds: nextCancelledByCourierIds,
       updatedAt: serverTimestamp(),
     });
-    batch.update(ticketRef, {
-      status: nextStatus,
-      courierId: '',
-      courierName: '',
-      courierLat: EDKU_CITY_CENTER.lat,
-      courierLng: EDKU_CITY_CENTER.lng,
-      cancelledByCourierIds: nextCancelledByCourierIds,
-      updatedAt: serverTimestamp(),
-    });
+    if (ticketSnap?.exists()) {
+      batch.update(ticketRef, {
+        status: nextStatus,
+        courierId: '',
+        courierName: '',
+        courierLat: EDKU_CITY_CENTER.lat,
+        courierLng: EDKU_CITY_CENTER.lng,
+        cancelledByCourierIds: nextCancelledByCourierIds,
+        updatedAt: serverTimestamp(),
+      });
+    }
     await batch.commit();
 
     const prevCancelCount = Math.max(
@@ -12023,6 +12251,35 @@ export async function registerAccountFromInvitationInFirestore(
     );
   }
 
+  if (inv.userType === 'store') {
+    const legalCheck = validateStoreLegalFields(
+      {
+        commercialRegisterNumber: payload.commercialRegisterNumber,
+        taxCertificateNumber: payload.taxCertificateNumber,
+        commercialRegisterImageUrl: payload.commercialRegisterImageUrl,
+      },
+      { requireImage: true }
+    );
+    if (!legalCheck.valid) {
+      throw new Error(Object.values(legalCheck.errors)[0]);
+    }
+  }
+
+  if (inv.userType === 'courier') {
+    const courierVehicle = payload.vehicleType || 'دراجة نارية';
+    const kycCheck = validateCourierKycDocuments(courierVehicle, {
+      nationalIdFrontUrl: payload.nationalIdFrontUrl,
+      nationalIdBackUrl: payload.nationalIdBackUrl,
+      drivingLicenseFrontUrl: payload.drivingLicenseFrontUrl,
+      drivingLicenseBackUrl: payload.drivingLicenseBackUrl,
+      vehiclePhotoUrl: payload.vehiclePhotoUrl,
+      selfieWithIdUrl: payload.selfieWithIdUrl,
+    });
+    if (!kycCheck.valid) {
+      throw new Error(Object.values(kycCheck.errors)[0]);
+    }
+  }
+
   // Resolve Sales Agent attribution if invitation came from a Sales Agent or carried a referral code
   let resolvedAgentId = inv.agentId;
   let resolvedRefCode = inv.referralCode;
@@ -12036,11 +12293,50 @@ export async function registerAccountFromInvitationInFirestore(
 
   await waitForFirestoreWarmup();
 
-  // Pre-allocate non-transactional identifiers before creating the Firebase Auth user
+  // Pre-allocate referral code if needed (publicly readable) before Auth creation
   const preGeneratedRefCode =
     inv.userType === 'sales_agent'
       ? await allocateUniqueSalesAgentReferralCode()
       : '';
+
+  auth.languageCode = 'ar';
+  let credential;
+  let createdFreshAuthUser = false;
+  try {
+    credential = await createUserWithEmailAndPassword(
+      auth,
+      cleanEmail,
+      cleanPassword
+    );
+    createdFreshAuthUser = true;
+  } catch (authErr) {
+    const code =
+      typeof authErr === 'object' && authErr !== null && 'code' in authErr
+        ? String((authErr as { code?: unknown }).code ?? '')
+        : '';
+    if (code === 'auth/email-already-in-use') {
+      try {
+        credential = await signInWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          cleanPassword
+        );
+      } catch {
+        throw authErr;
+      }
+    } else {
+      throw authErr;
+    }
+  }
+
+  const uid = credential.user.uid;
+  await updateProfile(credential.user, { displayName: cleanName }).catch(
+    () => {}
+  );
+  // Ensure fresh non-anonymous Auth token is propagated before Firestore writes
+  await credential.user.getIdToken(true).catch(() => {});
+  await waitForFirestoreWarmup();
+
   const preGeneratedCustomerCode =
     inv.userType !== 'store' &&
     inv.userType !== 'sales_agent' &&
@@ -12048,22 +12344,12 @@ export async function registerAccountFromInvitationInFirestore(
       ? await allocateFreshCustomerCode()
       : '';
 
-  auth.languageCode = 'ar';
-  const credential = await createUserWithEmailAndPassword(
-    auth,
-    cleanEmail,
-    cleanPassword
-  );
-  const uid = credential.user.uid;
-  await updateProfile(credential.user, { displayName: cleanName }).catch(
-    () => {}
-  );
-
   const acceptedAtIso = new Date().toISOString();
   const emailHash = await computeEmailSha256Hex(cleanEmail);
   const invRef = doc(db, 'invitations', inv.token);
   const invIdxRef = doc(db, 'invitationIndex', inv.token);
   const lockRef = doc(db, 'invitationLocks', emailHash);
+  const userRef = doc(db, 'users', uid);
   const storeId = `store_${uid.slice(0, 16)}_${Date.now().toString(36)}`;
 
   try {
@@ -12080,6 +12366,8 @@ export async function registerAccountFromInvitationInFirestore(
       if (Number.isFinite(expiresAtMs) && Date.now() > expiresAtMs) {
         throw new Error('انتهت صلاحية رابط الدعوة.');
       }
+
+      const existingUserSnap = createdFreshAuthUser ? null : await tx.get(userRef);
 
       tx.update(invRef, {
         status: 'accepted',
@@ -12112,6 +12400,17 @@ export async function registerAccountFromInvitationInFirestore(
         const categoryId = resolveCategoryIdForStoreCategory(storeCategory);
         const imageKey = resolveStoreImageKeyForCategory(storeCategory);
         const zone = resolveZoneForNeighborhood(cleanNeighborhood);
+        const rawStoreDesc = payload.storeDescription?.trim() || '';
+        const safeStoreDesc = (
+          rawStoreDesc.length >= 2
+            ? rawStoreDesc
+            : `${cleanName} — متجر معتمد في ${cleanNeighborhood} بمدينة إدكو`
+        ).slice(0, 240);
+        const rawCrImage = sanitizeOptionalImage(payload.commercialRegisterImageUrl);
+        const validRuleCrImage =
+          rawCrImage && (rawCrImage.startsWith('data:image/') || rawCrImage.startsWith('https://'))
+            ? rawCrImage
+            : undefined;
 
         tx.set(doc(db, 'stores', storeId), {
           name: cleanName,
@@ -12119,10 +12418,7 @@ export async function registerAccountFromInvitationInFirestore(
           categoryId,
           isHomeFood,
           neighborhood: cleanNeighborhood,
-          description: (
-            payload.storeDescription?.trim() ||
-            `${cleanName} — متجر معتمد في ${cleanNeighborhood} بمدينة إدكو`
-          ).slice(0, 240),
+          description: safeStoreDesc,
           deliveryFee: zone.deliveryFee,
           deliveryTimeMinutes: 30,
           rating: 4.9,
@@ -12133,6 +12429,15 @@ export async function registerAccountFromInvitationInFirestore(
           isOpen: true,
           prepTimeMinutes: 25,
           minOrderAmount: 0,
+          ...(payload.commercialRegisterNumber?.trim()
+            ? { commercialRegisterNumber: payload.commercialRegisterNumber.trim().slice(0, 40) }
+            : {}),
+          ...(validRuleCrImage
+            ? { commercialRegisterImageUrl: validRuleCrImage }
+            : {}),
+          ...(payload.taxCertificateNumber?.trim()
+            ? { taxCertificateNumber: payload.taxCertificateNumber.trim().slice(0, 40) }
+            : {}),
           menuItems: [{ id: 'item_init_1', name: 'صنف رئيسي مميز', price: 65 }],
           ownerUid: uid,
           loginEmail: cleanEmail,
@@ -12144,7 +12449,7 @@ export async function registerAccountFromInvitationInFirestore(
           createdBy: uid,
           createdAt: serverTimestamp(),
         });
-        tx.set(doc(db, 'users', uid), {
+        const storeUserPatch = {
           role: 'store',
           storeId,
           name: cleanName,
@@ -12155,9 +12460,16 @@ export async function registerAccountFromInvitationInFirestore(
           ...(resolvedAgentId && isValidFirestoreId(resolvedAgentId)
             ? { referredByAgentId: resolvedAgentId }
             : {}),
-          createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        });
+        };
+        if (existingUserSnap?.exists()) {
+          tx.update(userRef, storeUserPatch);
+        } else {
+          tx.set(userRef, {
+            ...storeUserPatch,
+            createdAt: serverTimestamp(),
+          });
+        }
         return;
       }
 
@@ -12197,16 +12509,23 @@ export async function registerAccountFromInvitationInFirestore(
           isActive: true,
           createdAt: serverTimestamp(),
         });
-        tx.set(doc(db, 'users', uid), {
+        const agentUserPatch = {
           role: 'sales_agent',
           name: cleanName,
           email: cleanEmail,
           phone: cleanPhone,
           referralCode: preGeneratedRefCode,
           requiresEmailVerification: true,
-          createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        });
+        };
+        if (existingUserSnap?.exists()) {
+          tx.update(userRef, agentUserPatch);
+        } else {
+          tx.set(userRef, {
+            ...agentUserPatch,
+            createdAt: serverTimestamp(),
+          });
+        }
         return;
       }
 
@@ -12223,6 +12542,25 @@ export async function registerAccountFromInvitationInFirestore(
           isAvailable: false,
           approvalStatus: 'pending',
           completedDeliveries: 0,
+          ...(payload.nationalIdFrontUrl
+            ? { nationalIdFrontUrl: payload.nationalIdFrontUrl.trim().slice(0, 130000) }
+            : {}),
+          ...(payload.nationalIdBackUrl
+            ? { nationalIdBackUrl: payload.nationalIdBackUrl.trim().slice(0, 130000) }
+            : {}),
+          ...(isCourierDrivingLicenseRequired(vehicleType) && payload.drivingLicenseFrontUrl
+            ? { drivingLicenseFrontUrl: payload.drivingLicenseFrontUrl.trim().slice(0, 130000) }
+            : {}),
+          ...(isCourierDrivingLicenseRequired(vehicleType) && payload.drivingLicenseBackUrl
+            ? { drivingLicenseBackUrl: payload.drivingLicenseBackUrl.trim().slice(0, 130000) }
+            : {}),
+          ...(payload.vehiclePhotoUrl
+            ? { vehiclePhotoUrl: payload.vehiclePhotoUrl.trim().slice(0, 130000) }
+            : {}),
+          ...(payload.selfieWithIdUrl
+            ? { selfieWithIdUrl: payload.selfieWithIdUrl.trim().slice(0, 130000) }
+            : {}),
+          kycSubmittedAtIso: acceptedAtIso,
           updatedBy: uid,
           updatedAt: serverTimestamp(),
         });
@@ -12238,7 +12576,7 @@ export async function registerAccountFromInvitationInFirestore(
           updatedBy: uid,
           updatedAt: serverTimestamp(),
         });
-        tx.set(doc(db, 'users', uid), {
+        const courierUserPatch = {
           role: 'courier',
           name: cleanName,
           email: cleanEmail,
@@ -12247,39 +12585,72 @@ export async function registerAccountFromInvitationInFirestore(
           ...(resolvedAgentId && isValidFirestoreId(resolvedAgentId)
             ? { referredByAgentId: resolvedAgentId }
             : {}),
-          createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        });
+        };
+        if (existingUserSnap?.exists()) {
+          tx.update(userRef, courierUserPatch);
+        } else {
+          tx.set(userRef, {
+            ...courierUserPatch,
+            createdAt: serverTimestamp(),
+          });
+        }
         return;
       }
 
       const cleanAddress = (
         payload.address?.trim() || `${cleanNeighborhood}، مدينة إدكو`
       ).slice(0, 200);
-      tx.set(doc(db, 'users', uid), {
-        role: 'customer',
-        customerCode: preGeneratedCustomerCode,
-        name: cleanName,
-        email: cleanEmail,
-        phone: cleanPhone,
-        defaultNeighborhood: cleanNeighborhood,
-        defaultAddress: cleanAddress,
-        defaultLat: coords.lat,
-        defaultLng: coords.lng,
-        profileCompleted: true,
-        points: 0,
-        currentStreak: 0,
-        ...(resolvedRefCode ? { referredByCode: resolvedRefCode } : {}),
-        ...(resolvedAgentId && isValidFirestoreId(resolvedAgentId)
-          ? { referredByAgentId: resolvedAgentId }
-          : {}),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
+      if (existingUserSnap?.exists()) {
+        const existingCode = existingUserSnap.data()?.customerCode;
+        tx.update(userRef, {
+          role: 'customer',
+          ...(isValidCustomerCodeFormat(existingCode)
+            ? {}
+            : { customerCode: preGeneratedCustomerCode }),
+          name: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          defaultNeighborhood: cleanNeighborhood,
+          defaultAddress: cleanAddress,
+          defaultLat: coords.lat,
+          defaultLng: coords.lng,
+          profileCompleted: true,
+          ...(resolvedRefCode ? { referredByCode: resolvedRefCode } : {}),
+          ...(resolvedAgentId && isValidFirestoreId(resolvedAgentId)
+            ? { referredByAgentId: resolvedAgentId }
+            : {}),
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        tx.set(userRef, {
+          role: 'customer',
+          customerCode: preGeneratedCustomerCode,
+          name: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          defaultNeighborhood: cleanNeighborhood,
+          defaultAddress: cleanAddress,
+          defaultLat: coords.lat,
+          defaultLng: coords.lng,
+          profileCompleted: true,
+          points: 0,
+          currentStreak: 0,
+          ...(resolvedRefCode ? { referredByCode: resolvedRefCode } : {}),
+          ...(resolvedAgentId && isValidFirestoreId(resolvedAgentId)
+            ? { referredByAgentId: resolvedAgentId }
+            : {}),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
     });
   } catch (err) {
-    // Rollback orphaned Firebase Auth user if atomic Firestore invitation commit failed
-    await deleteUser(credential.user).catch(() => {});
+    console.error('[Edkawy Invite] Firestore invitation transaction failed:', err);
+    // Rollback orphaned Firebase Auth user only if newly created in this call
+    if (createdFreshAuthUser) {
+      await deleteUser(credential.user).catch(() => {});
+    }
     throw err;
   }
 
@@ -13732,9 +14103,17 @@ function parseStoreJoinRequestDoc(
     neighborhood: String(d.neighborhood ?? ''),
     lat: typeof d.lat === 'number' ? d.lat : undefined,
     lng: typeof d.lng === 'number' ? d.lng : undefined,
+    commercialRegisterNumber:
+      typeof d.commercialRegisterNumber === 'string'
+        ? d.commercialRegisterNumber
+        : undefined,
     commercialRegisterImage:
       typeof d.commercialRegisterImage === 'string'
         ? d.commercialRegisterImage
+        : undefined,
+    taxCertificateNumber:
+      typeof d.taxCertificateNumber === 'string'
+        ? d.taxCertificateNumber
         : undefined,
     ownerUid: typeof d.ownerUid === 'string' ? d.ownerUid : undefined,
     rejectReason:
@@ -13754,6 +14133,8 @@ export async function submitStoreJoinRequestInFirestore(
   await waitForFirestoreWarmup();
   const ref = doc(collection(db, 'store_join_requests'));
   const currentUid = auth.currentUser?.uid;
+  const crNum = (input.commercialRegisterNumber ?? '').trim().slice(0, 40);
+  const taxNum = (input.taxCertificateNumber ?? '').trim().slice(0, 40);
   await setDoc(ref, {
     storeName: input.storeName.trim().slice(0, 100),
     ownerName: input.ownerName.trim().slice(0, 100),
@@ -13763,9 +14144,11 @@ export async function submitStoreJoinRequestInFirestore(
     neighborhood: (input.neighborhood.trim() || 'شارع البحر').slice(0, 80),
     ...(typeof input.lat === 'number' ? { lat: input.lat } : {}),
     ...(typeof input.lng === 'number' ? { lng: input.lng } : {}),
+    ...(crNum ? { commercialRegisterNumber: crNum } : {}),
     ...(input.commercialRegisterImage
       ? { commercialRegisterImage: input.commercialRegisterImage.slice(0, 1000000) }
       : {}),
+    ...(taxNum ? { taxCertificateNumber: taxNum } : {}),
     ...(currentUid && isValidFirestoreId(currentUid) ? { ownerUid: currentUid } : {}),
     status: 'pending',
     createdAt: serverTimestamp(),
@@ -13822,7 +14205,9 @@ export async function approveStoreJoinRequestInFirestore(
     deliveryTimeMinutes: 30,
     rating: 5.0,
     imageKey,
-    ...(sanitizedRegImage ? { imageUrl: sanitizedRegImage } : {}),
+    ...(sanitizedRegImage ? { imageUrl: sanitizedRegImage, commercialRegisterImageUrl: sanitizedRegImage } : {}),
+    ...(data.commercialRegisterNumber ? { commercialRegisterNumber: data.commercialRegisterNumber.slice(0, 40) } : {}),
+    ...(data.taxCertificateNumber ? { taxCertificateNumber: data.taxCertificateNumber.slice(0, 40) } : {}),
     isActive: true,
     isOpen: true,
     lat: coords.lat,
@@ -13834,8 +14219,6 @@ export async function approveStoreJoinRequestInFirestore(
         id: `item_${Date.now()}_1`,
         name: `صنف مميز من ${data.storeName}`,
         price: 50,
-        description: 'صنف ترحيبي مميز مع افتتاح المتجر',
-        category: data.subCategory || 'عام',
       },
     ],
     ...(data.ownerUid ? { ownerUid: data.ownerUid } : {}),

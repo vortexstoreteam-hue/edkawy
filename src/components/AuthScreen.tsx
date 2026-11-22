@@ -45,6 +45,7 @@ import {
 } from '../services/edkawiFirebaseService';
 import {
   AdminOtpRequestResult,
+  CourierKycDocumentsInput,
   CourierVehicleType,
   EmailVerificationRequestResult,
   InvitationRecord,
@@ -57,8 +58,12 @@ import {
   EDKU_NEIGHBORHOODS,
   formatAppErrorMessage,
   STORE_CATEGORIES,
+  validateCourierKycDocuments,
+  validateStoreLegalFields,
 } from '../utils/orderLogic';
 import { AdkawyLogo } from './AdkawyLogo';
+import { CourierKycFields } from './CourierKycFields';
+import { DeviceImageInput } from './DeviceImageInput';
 import { EdkuLocationPickerMap } from './EdkuGoogleMaps';
 import { ResilientImage } from './ResilientImage';
 
@@ -70,6 +75,7 @@ interface AuthScreenProps {
   ) => void;
   onFallbackGuestPreview?: () => void;
   hasPendingCartForCheckout?: boolean;
+  hasPendingGroupJoin?: boolean;
   onOpenLegalModal?: (section?: LegalSectionKey) => void;
   inviteToken?: string | null;
   onClearInviteToken?: () => void;
@@ -108,6 +114,7 @@ export function AuthScreen({
   onAuthTransitionEnd,
   onFallbackGuestPreview,
   hasPendingCartForCheckout = false,
+  hasPendingGroupJoin = false,
   onOpenLegalModal,
   inviteToken = null,
   onClearInviteToken,
@@ -149,8 +156,26 @@ export function AuthScreen({
     useState<StoreCategory>('أكل بيتي');
   const [inviteIsHomeFood, setInviteIsHomeFood] = useState(true);
   const [inviteStoreDesc, setInviteStoreDesc] = useState('');
+  const [inviteCommercialRegisterNumber, setInviteCommercialRegisterNumber] =
+    useState('');
+  const [inviteTaxCertificateNumber, setInviteTaxCertificateNumber] =
+    useState('');
+  const [inviteCommercialRegisterImageUrl, setInviteCommercialRegisterImageUrl] =
+    useState('');
   const [inviteVehicleType, setInviteVehicleType] =
     useState<CourierVehicleType>('دراجة نارية');
+  const [inviteCourierKyc, setInviteCourierKyc] =
+    useState<CourierKycDocumentsInput>({
+      nationalIdFrontUrl: '',
+      nationalIdBackUrl: '',
+      drivingLicenseFrontUrl: '',
+      drivingLicenseBackUrl: '',
+      vehiclePhotoUrl: '',
+      selfieWithIdUrl: '',
+    });
+  const [inviteLegalErrors, setInviteLegalErrors] = useState<
+    Record<string, string>
+  >({});
 
   const activeRefCode =
     (referralCode || readPendingSessionReferralCode() || '').trim();
@@ -290,6 +315,35 @@ export function AuthScreen({
       return;
     }
 
+    setInviteLegalErrors({});
+    if (inviteRecord.userType === 'store') {
+      const legalCheck = validateStoreLegalFields(
+        {
+          commercialRegisterNumber: inviteCommercialRegisterNumber,
+          taxCertificateNumber: inviteTaxCertificateNumber,
+          commercialRegisterImageUrl: inviteCommercialRegisterImageUrl,
+        },
+        { requireImage: true }
+      );
+      if (!legalCheck.valid) {
+        setInviteLegalErrors(legalCheck.errors);
+        setErrorMsg(Object.values(legalCheck.errors)[0]);
+        return;
+      }
+    }
+
+    if (inviteRecord.userType === 'courier') {
+      const kycCheck = validateCourierKycDocuments(
+        inviteVehicleType,
+        inviteCourierKyc
+      );
+      if (!kycCheck.valid) {
+        setInviteLegalErrors(kycCheck.errors);
+        setErrorMsg(Object.values(kycCheck.errors)[0]);
+        return;
+      }
+    }
+
     setBusyMode('register_invite');
     onAuthTransitionStart();
     try {
@@ -315,14 +369,59 @@ export function AuthScreen({
           inviteRecord.userType === 'store'
             ? inviteStoreCategory === 'أكل بيتي' || inviteIsHomeFood
             : undefined,
+        commercialRegisterNumber:
+          inviteRecord.userType === 'store'
+            ? inviteCommercialRegisterNumber.trim()
+            : undefined,
+        taxCertificateNumber:
+          inviteRecord.userType === 'store'
+            ? inviteTaxCertificateNumber.trim()
+            : undefined,
+        commercialRegisterImageUrl:
+          inviteRecord.userType === 'store'
+            ? inviteCommercialRegisterImageUrl
+            : undefined,
         vehicleType:
           inviteRecord.userType === 'courier' ? inviteVehicleType : undefined,
+        nationalIdFrontUrl:
+          inviteRecord.userType === 'courier'
+            ? inviteCourierKyc.nationalIdFrontUrl
+            : undefined,
+        nationalIdBackUrl:
+          inviteRecord.userType === 'courier'
+            ? inviteCourierKyc.nationalIdBackUrl
+            : undefined,
+        drivingLicenseFrontUrl:
+          inviteRecord.userType === 'courier'
+            ? inviteCourierKyc.drivingLicenseFrontUrl
+            : undefined,
+        drivingLicenseBackUrl:
+          inviteRecord.userType === 'courier'
+            ? inviteCourierKyc.drivingLicenseBackUrl
+            : undefined,
+        vehiclePhotoUrl:
+          inviteRecord.userType === 'courier'
+            ? inviteCourierKyc.vehiclePhotoUrl
+            : undefined,
+        selfieWithIdUrl:
+          inviteRecord.userType === 'courier'
+            ? inviteCourierKyc.selfieWithIdUrl
+            : undefined,
       });
       onClearInviteToken?.();
       onAuthTransitionEnd(role, false);
     } catch (err) {
       onAuthTransitionEnd();
-      setErrorMsg(formatAppErrorMessage(err, 'تعذر إتمام التسجيل عبر الدعوة.'));
+      console.error('[Edkawy Invite] Registration failed:', err);
+      const authCode =
+        typeof err === 'object' && err !== null && 'code' in err
+          ? String((err as { code?: unknown }).code ?? '')
+          : '';
+      if (authCode.startsWith('auth/')) {
+        setErrorMsg(formatFirebaseAuthError(err).message);
+      } else {
+        setErrorMsg(formatAppErrorMessage(err, 'تعذر إتمام التسجيل عبر الدعوة.'));
+      }
     } finally {
       setBusyMode(null);
     }
@@ -945,29 +1044,103 @@ export function AuthScreen({
                         className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
                       />
                     </div>
+
+                    <div className="p-4 rounded-2xl bg-[#0F172A] border border-[#334155] space-y-3">
+                      <p className="text-xs font-bold text-[#FF6B00]">
+                        التوثيق القانوني والضريبي الإجباري للمتجر
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-[#F8FAFC] mb-1.5">
+                            رقم السجل التجاري *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            dir="ltr"
+                            maxLength={40}
+                            value={inviteCommercialRegisterNumber}
+                            onChange={(e) =>
+                              setInviteCommercialRegisterNumber(e.target.value)
+                            }
+                            placeholder="123456"
+                            className="w-full px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#1E293B] text-sm font-mono tabular-nums text-left text-[#F8FAFC]"
+                          />
+                          {inviteLegalErrors.commercialRegisterNumber && (
+                            <p className="text-xs text-red-400 mt-1">
+                              {inviteLegalErrors.commercialRegisterNumber}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-[#F8FAFC] mb-1.5">
+                            رقم الشهادة الضريبية *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            dir="ltr"
+                            maxLength={40}
+                            value={inviteTaxCertificateNumber}
+                            onChange={(e) =>
+                              setInviteTaxCertificateNumber(e.target.value)
+                            }
+                            placeholder="458-921-703"
+                            className="w-full px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#1E293B] text-sm font-mono tabular-nums text-left text-[#F8FAFC]"
+                          />
+                          {inviteLegalErrors.taxCertificateNumber && (
+                            <p className="text-xs text-red-400 mt-1">
+                              {inviteLegalErrors.taxCertificateNumber}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <DeviceImageInput
+                        label="صورة السجل التجاري الساري (إجباري) *"
+                        helperText="تُراجع من الإدارة ويظهر السجل والرقم الضريبي بصفحة المتجر للعملاء"
+                        value={inviteCommercialRegisterImageUrl}
+                        onChange={setInviteCommercialRegisterImageUrl}
+                        maxWidth={960}
+                        maxHeight={960}
+                        maxChars={220000}
+                        quality={0.76}
+                        error={inviteLegalErrors.commercialRegisterImageUrl}
+                        required
+                      />
+                    </div>
                   </div>
                 )}
 
                 {inviteRecord.userType === 'courier' && (
-                  <div>
-                    <label className="block text-xs font-bold text-[#F8FAFC] mb-1.5">
-                      وسيلة التوصيل
-                    </label>
-                    <select
-                      value={inviteVehicleType}
-                      onChange={(e) =>
-                        setInviteVehicleType(
-                          e.target.value as CourierVehicleType
-                        )
-                      }
-                      className="w-full px-3 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
-                    >
-                      {COURIER_VEHICLE_TYPES.map((vt) => (
-                        <option key={vt} value={vt}>
-                          {vt}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-[#F8FAFC] mb-1.5">
+                        وسيلة التوصيل
+                      </label>
+                      <select
+                        value={inviteVehicleType}
+                        onChange={(e) =>
+                          setInviteVehicleType(
+                            e.target.value as CourierVehicleType
+                          )
+                        }
+                        className="w-full px-3 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+                      >
+                        {COURIER_VEHICLE_TYPES.map((vt) => (
+                          <option key={vt} value={vt}>
+                            {vt}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <CourierKycFields
+                      vehicleType={inviteVehicleType}
+                      value={inviteCourierKyc}
+                      onChange={setInviteCourierKyc}
+                      errors={inviteLegalErrors}
+                    />
                   </div>
                 )}
 
@@ -1656,7 +1829,13 @@ export function AuthScreen({
                 <div className="flex-grow border-t border-[#334155]" />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {hasPendingGroupJoin && (
+                <div className="p-3.5 rounded-2xl bg-[#FF6B00]/15 border border-[#FF6B00]/40 text-xs text-[#F8FAFC] font-bold">
+                  أنت مدعو إلى سلة جماعية في إدكاوي — سجّل الدخول بحسابك أو أنشئ حساباً للدخول فوراً إلى غرفة السلة والمشاركة مع أصدقائك.
+                </div>
+              )}
+
+              <div className={`grid grid-cols-1 ${!hasPendingCartForCheckout && !hasPendingGroupJoin ? 'sm:grid-cols-2' : ''} gap-3`}>
                 <button
                   type="button"
                   disabled={busyMode !== null}
@@ -1671,7 +1850,7 @@ export function AuthScreen({
                   </span>
                 </button>
 
-                {!hasPendingCartForCheckout && (
+                {!hasPendingCartForCheckout && !hasPendingGroupJoin && (
                   <button
                     type="button"
                     disabled={busyMode !== null}

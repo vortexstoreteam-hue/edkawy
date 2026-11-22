@@ -27,12 +27,14 @@ import {
   deleteCurrentAccountCompletely,
   incrementCourierWalletBalance,
   rejectOrderByCourierInFirestore,
+  submitCourierKycInFirestore,
 } from '../services/edkawiFirebaseService';
 import {
   EDKU_CITY_CENTER,
   resolveEdkuCoordsForNeighborhood,
 } from '../data/edkuSeedStores';
 import {
+  CourierKycDocumentsInput,
   CourierProfileInput,
   CourierRecord,
   CourierVehicleType,
@@ -45,8 +47,11 @@ import {
   estimateEdkuDistanceKm,
   formatAppErrorMessage,
   getPaymentMethodLabel,
+  isCourierDrivingLicenseRequired,
+  validateCourierKycDocuments,
   validateCourierProfile,
 } from '../utils/orderLogic';
+import { CourierKycFields } from './CourierKycFields';
 import {
   CourierMultiStopAndHeatmapMap,
   EdkuLocationPickerMap,
@@ -157,6 +162,77 @@ export function CourierPortalView({
     string[]
   >([]);
   const lastAlertedOrderIdRef = useRef<string | null>(null);
+
+  // KYC Verification Upload / Resubmission State (Gate 1)
+  const [kycVehicleType, setKycVehicleType] = useState<CourierVehicleType>(
+    currentCourier?.vehicleType ?? 'دراجة نارية'
+  );
+  const [kycDocs, setKycDocs] = useState<CourierKycDocumentsInput>({
+    nationalIdFrontUrl: currentCourier?.nationalIdFrontUrl ?? '',
+    nationalIdBackUrl: currentCourier?.nationalIdBackUrl ?? '',
+    drivingLicenseFrontUrl: currentCourier?.drivingLicenseFrontUrl ?? '',
+    drivingLicenseBackUrl: currentCourier?.drivingLicenseBackUrl ?? '',
+    vehiclePhotoUrl: currentCourier?.vehiclePhotoUrl ?? '',
+    selfieWithIdUrl: currentCourier?.selfieWithIdUrl ?? '',
+  });
+  const [kycErrors, setKycErrors] = useState<Record<string, string>>({});
+  const [kycSubmitting, setKycSubmitting] = useState(false);
+  const [kycErrorBanner, setKycErrorBanner] = useState<string | null>(null);
+  const [kycSuccessBanner, setKycSuccessBanner] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentCourier) return;
+    setKycVehicleType(currentCourier.vehicleType || 'دراجة نارية');
+    setKycDocs({
+      nationalIdFrontUrl: currentCourier.nationalIdFrontUrl || '',
+      nationalIdBackUrl: currentCourier.nationalIdBackUrl || '',
+      drivingLicenseFrontUrl: currentCourier.drivingLicenseFrontUrl || '',
+      drivingLicenseBackUrl: currentCourier.drivingLicenseBackUrl || '',
+      vehiclePhotoUrl: currentCourier.vehiclePhotoUrl || '',
+      selfieWithIdUrl: currentCourier.selfieWithIdUrl || '',
+    });
+  }, [
+    currentCourier?.id,
+    currentCourier?.vehicleType,
+    currentCourier?.nationalIdFrontUrl,
+    currentCourier?.nationalIdBackUrl,
+    currentCourier?.drivingLicenseFrontUrl,
+    currentCourier?.drivingLicenseBackUrl,
+    currentCourier?.vehiclePhotoUrl,
+    currentCourier?.selfieWithIdUrl,
+  ]);
+
+  async function handleSubmitKycDocuments(e: FormEvent) {
+    e.preventDefault();
+    if (!currentCourier) return;
+    setKycErrorBanner(null);
+    setKycSuccessBanner(null);
+    const check = validateCourierKycDocuments(kycVehicleType, kycDocs);
+    if (!check.valid) {
+      setKycErrors(check.errors);
+      setKycErrorBanner(Object.values(check.errors)[0]);
+      return;
+    }
+    setKycErrors({});
+    setKycSubmitting(true);
+    try {
+      await submitCourierKycInFirestore(
+        courierUid || currentCourier.id,
+        kycVehicleType,
+        kycDocs
+      );
+      setKycSuccessBanner(
+        'تم إرسال مستندات التوثيق بنجاح! طلبك الآن قيد المراجعة لدى إدارة إدكاوي وسيفتح حسابك فور الاعتماد.'
+      );
+      onNotify?.('تم إرسال مستندات التحقق إلى قسم المراجعة بنجاح.');
+    } catch (err) {
+      setKycErrorBanner(
+        formatAppErrorMessage(err, 'تعذر حفظ مستندات التوثيق حالياً.')
+      );
+    } finally {
+      setKycSubmitting(false);
+    }
+  }
 
   async function handleCourierRejectOrder(orderId: string) {
     if (!currentCourier) return;
@@ -521,58 +597,80 @@ export function CourierPortalView({
     );
   }
 
-  // Gate 1: Pending or Rejected Courier Account Screen
+  // Gate 1: Pending or Rejected Courier Account Screen (with KYC Upload & Resubmission)
   if (currentCourier.approvalStatus !== 'approved') {
     const isRejected = currentCourier.approvalStatus === 'rejected';
+    const hasCompleteKyc = validateCourierKycDocuments(
+      currentCourier.vehicleType,
+      currentCourier
+    ).valid;
+    const requiresLicense = isCourierDrivingLicenseRequired(kycVehicleType);
+
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-8 py-12 sm:py-16 edkawi-page-enter">
-        <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 sm:p-10 text-center space-y-5">
-          <div
-            className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ${
-              isRejected
-                ? 'bg-rose-950/60 border border-rose-800/70'
-                : 'bg-[#FF6B00]/15 border border-[#FF6B00]/30'
-            }`}
-          >
-            {isRejected ? (
-              <ShieldAlert
-                className="w-8 h-8 text-rose-400"
-                aria-hidden="true"
-              />
-            ) : (
-              <Clock className="w-8 h-8 text-[#FF6B00]" aria-hidden="true" />
-            )}
+      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-10 sm:py-14 edkawi-page-enter space-y-6">
+        <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 sm:p-8 space-y-6">
+          <div className="text-center space-y-4">
+            <div
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ${
+                isRejected
+                  ? 'bg-rose-950/60 border border-rose-800/70'
+                  : 'bg-[#FF6B00]/15 border border-[#FF6B00]/30'
+              }`}
+            >
+              {isRejected ? (
+                <ShieldAlert
+                  className="w-8 h-8 text-rose-400"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Clock className="w-8 h-8 text-[#FF6B00]" aria-hidden="true" />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-[#FF6B00]">
+                بوابة كابتن التوصيل · مدينة إدكو
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
+                {isRejected
+                  ? 'تم رفض مستندات التوثيق — يرجى التعديل وإعادة الإرسال'
+                  : !hasCompleteKyc
+                  ? 'أكمل رفع مستندات التوثيق للمراجعة'
+                  : 'حسابك ومستنداتك قيد المراجعة لدى إدارة إدكاوي'}
+              </h1>
+              <p className="text-sm text-[#94A3B8] leading-relaxed max-w-xl mx-auto">
+                {isRejected
+                  ? 'راجع سبب الرفض بالأسفل وأعد رفع الصور المطلوبة بوضوح ليتم إرسال طلبك فوراً لقسم المراجعة.'
+                  : !hasCompleteKyc
+                  ? 'لأمان العملاء وتفعيل حساب الكابتن، يرجى رفع صور الهوية والمركبة المطلوبة أدناه ثم إرسالها للمراجعة.'
+                  : 'تم استلام مستندات التوثيق الخاصة بك وحالتك الآن قيد المراجعة. فور موافقة الإدارة، ستفتح شاشة استلام الطلبات هنا تلقائياً.'}
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-bold text-[#FF6B00]">
-              بوابة كابتن التوصيل · مدينة إدكو
-            </p>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
-              {isRejected
-                ? 'تعذر تفعيل حساب المندوب حالياً'
-                : 'حسابك قيد المراجعة لدى إدارة إدكاوي'}
-            </h1>
-            <p className="text-sm sm:text-base text-[#94A3B8] leading-relaxed max-w-lg mx-auto">
-              {isRejected
-                ? 'يرجى التواصل مع إدارة إدكاوي لمراجعة بيانات حسابك.'
-                : 'تم تسجيل بياناتك بنجاح وحالة حسابك الآن قيد المراجعة. بمجرد موافقة الإدارة على طلب انضمامك، ستفتح شاشة استلام الطلبات هنا تلقائياً في نفس اللحظة.'}
-            </p>
-          </div>
+          {isRejected && currentCourier.kycRejectionReason && (
+            <div
+              role="alert"
+              className="p-4 rounded-2xl bg-rose-950/50 border border-rose-500/40 text-right space-y-1"
+            >
+              <p className="text-xs font-bold text-rose-300">
+                سبب الرفض المسجل من قسم المراجعة:
+              </p>
+              <p className="text-sm text-rose-100 leading-relaxed">
+                {currentCourier.kycRejectionReason}
+              </p>
+            </div>
+          )}
 
           <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#334155] text-right space-y-2 text-xs sm:text-sm">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[#94A3B8]">
-                اسم المندوب:
-              </span>
+              <span className="text-[#94A3B8]">اسم المندوب:</span>
               <span className="font-bold text-[#F8FAFC]">
                 {currentCourier.name}
               </span>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[#94A3B8]">
-                رقم الموبايل:
-              </span>
+              <span className="text-[#94A3B8]">رقم الموبايل:</span>
               <span
                 dir="ltr"
                 className="font-mono font-bold text-[#F8FAFC] tabular-nums"
@@ -581,35 +679,121 @@ export function CourierPortalView({
               </span>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[#94A3B8]">
-                وسيلة التوصيل والمنطقة:
-              </span>
+              <span className="text-[#94A3B8]">وسيلة التوصيل والمنطقة:</span>
               <span className="font-semibold text-[#F8FAFC]">
                 {currentCourier.vehicleType} · {currentCourier.neighborhood}
               </span>
             </div>
+            <div className="flex items-center justify-between gap-3 pt-1 border-t border-[#334155]/60">
+              <span className="text-[#94A3B8]">حالة مستندات التحقق (KYC):</span>
+              <span
+                className={`font-bold ${
+                  isRejected
+                    ? 'text-rose-400'
+                    : hasCompleteKyc
+                    ? 'text-emerald-400'
+                    : 'text-[#FF6B00]'
+                }`}
+              >
+                {isRejected
+                  ? 'بحاجة لإعادة رفع'
+                  : hasCompleteKyc
+                  ? 'مكتملة وبانتظار اعتماد الإدارة'
+                  : 'غير مكتملة — يرجى الرفع الآن'}
+              </span>
+            </div>
           </div>
 
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsSupportModalOpen(true)}
-              className="min-h-[46px] px-5 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+          {kycErrorBanner && (
+            <div
+              role="alert"
+              className="p-4 rounded-2xl bg-rose-950/50 border border-rose-500/40 text-xs sm:text-sm font-semibold text-rose-200"
             >
-              <Headphones className="w-4 h-4" />
-              <span>التواصل مع الدعم الفني</span>
-            </button>
-            {onLogout && (
-              <button
-                type="button"
-                onClick={() => setConfirmLogoutOpen(true)}
-                className="min-h-[46px] px-5 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+              {kycErrorBanner}
+            </div>
+          )}
+
+          {kycSuccessBanner && (
+            <div
+              role="status"
+              className="p-4 rounded-2xl bg-emerald-950/50 border border-emerald-500/40 text-xs sm:text-sm font-semibold text-emerald-200"
+            >
+              {kycSuccessBanner}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmitKycDocuments} className="space-y-4 text-right">
+            <div>
+              <label className="block text-xs font-bold text-[#F8FAFC] mb-1.5">
+                نوع وسيلة التوصيل
+              </label>
+              <select
+                value={kycVehicleType}
+                onChange={(e) =>
+                  setKycVehicleType(e.target.value as CourierVehicleType)
+                }
+                className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
               >
-                <LogOut className="w-4 h-4 text-[#FF6B00]" />
-                <span>تسجيل الخروج</span>
+                {COURIER_VEHICLE_TYPES.map((vt) => (
+                  <option key={vt} value={vt}>
+                    {vt}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-[#94A3B8] mt-1">
+                {requiresLicense
+                  ? 'الموتوسيكل والسكوتر يتطلبان: البطاقة (وش وظهر) + رخصة القيادة (وش وظهر) + سيلفي بجانب الوجه + صورة المركبة.'
+                  : 'الدراجة الهوائية معفاة من رخصة القيادة — مطلوب البطاقة (وش وظهر) + سيلفي بالبطاقة بجانب الوجه + صورة العجلة.'}
+              </p>
+            </div>
+
+            <CourierKycFields
+              vehicleType={kycVehicleType}
+              value={kycDocs}
+              onChange={setKycDocs}
+              errors={kycErrors}
+            />
+
+            <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="submit"
+                disabled={kycSubmitting}
+                className="min-h-[46px] px-6 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>
+                  {kycSubmitting
+                    ? 'جارٍ رفع وإرسال المستندات...'
+                    : isRejected
+                    ? 'إعادة إرسال المستندات للمراجعة'
+                    : hasCompleteKyc
+                    ? 'تحديث المستندات المرسلة'
+                    : 'إرسال مستندات التوثيق للمراجعة'}
+                </span>
               </button>
-            )}
-          </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSupportModalOpen(true)}
+                  className="min-h-[46px] px-4 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Headphones className="w-4 h-4 text-[#FF6B00]" />
+                  <span>الدعم الفني</span>
+                </button>
+                {onLogout && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmLogoutOpen(true)}
+                    className="min-h-[46px] px-4 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-rose-500 text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-400" />
+                    <span>تسجيل الخروج</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
         </section>
 
         <PortalSupportModal

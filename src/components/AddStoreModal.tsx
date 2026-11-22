@@ -40,6 +40,10 @@ export function AddStoreModal({
   const [lng, setLng] = useState<number>(EDKU_CITY_CENTER.lng);
   const [isWaterPin, setIsWaterPin] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [commercialRegisterNumber, setCommercialRegisterNumber] = useState('');
+  const [taxCertificateNumber, setTaxCertificateNumber] = useState('');
+  const [commercialRegisterImageUrl, setCommercialRegisterImageUrl] =
+    useState('');
   const [deliveryFee, setDeliveryFee] = useState('15');
   const [deliveryTimeMinutes, setDeliveryTimeMinutes] = useState('25');
   const [firstItemName, setFirstItemName] = useState('');
@@ -66,6 +70,9 @@ export function AddStoreModal({
     setLng(EDKU_CITY_CENTER.lng);
     setIsWaterPin(false);
     setImageUrl('');
+    setCommercialRegisterNumber('');
+    setTaxCertificateNumber('');
+    setCommercialRegisterImageUrl('');
     setDeliveryFee('15');
     setDeliveryTimeMinutes('25');
     setFirstItemName('');
@@ -110,6 +117,9 @@ export function AddStoreModal({
       lat,
       lng,
       imageUrl,
+      commercialRegisterNumber: commercialRegisterNumber.trim(),
+      taxCertificateNumber: taxCertificateNumber.trim(),
+      commercialRegisterImageUrl,
       deliveryFee: Math.trunc(Number(deliveryFee)),
       deliveryTimeMinutes: Math.trunc(Number(deliveryTimeMinutes)),
       firstItemName: firstItemName.trim() || undefined,
@@ -450,11 +460,92 @@ export function AddStoreModal({
                   helperText="اختر صورة حقيقية من جهازك — لا تُستخدم أي صور افتراضية"
                   value={imageUrl}
                   onChange={setImageUrl}
+                  maxChars={220000}
                   required
                 />
                 {errors.imageUrl && (
                   <p className="text-xs text-red-400 mt-1">{errors.imageUrl}</p>
                 )}
+              </div>
+
+              {/* Mandatory Legal & Tax Fields */}
+              <div className="p-4 rounded-2xl bg-[#0F172A] border border-[#334155] space-y-4">
+                <p className="text-xs font-bold text-[#FF6B00]">
+                  التوثيق القانوني والضريبي الإجباري للمتجر (يظهر للعملاء)
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="store-cr-number"
+                      className="block text-xs font-bold text-[#F8FAFC] mb-1"
+                    >
+                      رقم السجل التجاري *
+                    </label>
+                    <input
+                      id="store-cr-number"
+                      type="text"
+                      dir="ltr"
+                      maxLength={40}
+                      value={commercialRegisterNumber}
+                      onChange={(e) =>
+                        setCommercialRegisterNumber(e.target.value)
+                      }
+                      placeholder="123456"
+                      className="w-full px-3 py-2.5 rounded-2xl bg-[#1E293B] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                      required
+                    />
+                    {errors.commercialRegisterNumber && (
+                      <p className="text-xs text-red-400 mt-1">
+                        {errors.commercialRegisterNumber}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="store-tax-number"
+                      className="block text-xs font-bold text-[#F8FAFC] mb-1"
+                    >
+                      رقم الشهادة / البطاقة الضريبية *
+                    </label>
+                    <input
+                      id="store-tax-number"
+                      type="text"
+                      dir="ltr"
+                      maxLength={40}
+                      value={taxCertificateNumber}
+                      onChange={(e) => setTaxCertificateNumber(e.target.value)}
+                      placeholder="458-921-703"
+                      className="w-full px-3 py-2.5 rounded-2xl bg-[#1E293B] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                      required
+                    />
+                    {errors.taxCertificateNumber && (
+                      <p className="text-xs text-red-400 mt-1">
+                        {errors.taxCertificateNumber}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <DeviceImageInput
+                    label="صورة السجل التجاري الساري (إجباري) *"
+                    helperText="مستند السجل التجاري للمراجعة وتوثيق المتجر"
+                    value={commercialRegisterImageUrl}
+                    onChange={setCommercialRegisterImageUrl}
+                    maxWidth={960}
+                    maxHeight={960}
+                    maxChars={220000}
+                    quality={0.76}
+                    required
+                  />
+                  {errors.commercialRegisterImageUrl && (
+                    <p className="text-xs text-red-400 mt-1">
+                      {errors.commercialRegisterImageUrl}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Interactive Map Location Picker */}

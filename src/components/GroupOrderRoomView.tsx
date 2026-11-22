@@ -10,6 +10,10 @@ import {
   ArrowRight,
   AlertCircle,
   Sparkles,
+  Plus,
+  Minus,
+  Trash2,
+  Store,
 } from 'lucide-react';
 import {
   SharedCartItemEntry,
@@ -19,12 +23,15 @@ import {
 import {
   listenToSharedCartByRoomCode,
   sendSharedCartChatMessage,
+  updateSharedCartEntryQuantityInFirestore,
 } from '../services/edkawiFirebaseService';
+import { formatAppErrorMessage } from '../utils/orderLogic';
 
 interface GroupOrderRoomViewProps {
   roomCode: string;
   currentUser: UserProfileRecord | null;
   onBackToHome: () => void;
+  onOpenStoreMenu?: (storeId: string, cartId: string) => void;
   onProceedToCheckout?: (cart: SharedCartRecord) => void;
 }
 
@@ -32,6 +39,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
   roomCode,
   currentUser,
   onBackToHome,
+  onOpenStoreMenu,
   onProceedToCheckout,
 }) => {
   const [cart, setCart] = useState<SharedCartRecord | null>(null);
@@ -40,17 +48,26 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
   const [copied, setCopied] = useState(false);
   const [showSplitBill, setShowSplitBill] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [busyEntryId, setBusyEntryId] = useState<string | null>(null);
 
-  const myUid = currentUser?.uid || 'guest';
-  const myName = currentUser?.name || 'أنا';
+  const myUid = currentUser?.uid || '';
+  const myName = currentUser?.name || 'مشارك';
 
   useEffect(() => {
     if (!roomCode) return;
     setLoading(true);
-    const unsubscribe = listenToSharedCartByRoomCode(roomCode, (updatedCart) => {
-      setCart(updatedCart);
-      setLoading(false);
-    });
+    setErrorMsg(null);
+    const unsubscribe = listenToSharedCartByRoomCode(
+      roomCode,
+      (updatedCart) => {
+        setCart(updatedCart);
+        setLoading(false);
+      },
+      (err) => {
+        setErrorMsg(formatAppErrorMessage(err, 'تعذر الاتصال بغرفة الطلب الجماعي.'));
+        setLoading(false);
+      }
+    );
     return () => unsubscribe();
   }, [roomCode]);
 
@@ -64,7 +81,8 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cart || !chatInput.trim()) return;
+    if (!cart || !chatInput.trim() || !myUid) return;
+    setErrorMsg(null);
     try {
       await sendSharedCartChatMessage(cart.id, {
         senderUid: myUid,
@@ -72,8 +90,21 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
         text: chatInput.trim(),
       });
       setChatInput('');
-    } catch (err: any) {
-      setErrorMsg(err?.message || 'تعذر إرسال الرسالة');
+    } catch (err: unknown) {
+      setErrorMsg(formatAppErrorMessage(err, 'تعذر إرسال الرسالة'));
+    }
+  };
+
+  const handleChangeEntryQty = async (entryId: string, delta: number) => {
+    if (!cart) return;
+    setErrorMsg(null);
+    setBusyEntryId(entryId);
+    try {
+      await updateSharedCartEntryQuantityInFirestore(cart.id, entryId, delta);
+    } catch (err: unknown) {
+      setErrorMsg(formatAppErrorMessage(err, 'تعذر تحديث كمية الصنف.'));
+    } finally {
+      setBusyEntryId(null);
     }
   };
 
@@ -144,9 +175,14 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
           <p className="text-sm text-[#94A3B8]">
             رمز الغرفة <span className="font-mono text-[#FF6B00] font-bold">{roomCode}</span> غير صحيح أو انتهت صلاحيته.
           </p>
+          {errorMsg && (
+            <p className="text-xs text-rose-400 bg-rose-950/40 border border-rose-500/30 rounded-xl p-2.5">
+              {errorMsg}
+            </p>
+          )}
           <button
             onClick={onBackToHome}
-            className="w-full py-3 bg-[#FF6B00] text-white font-bold rounded-xl shadow-lg shadow-[#FF6B00]/20 text-sm"
+            className="w-full py-3 bg-[#FF6B00] text-white font-bold rounded-xl shadow-lg shadow-[#FF6B00]/20 text-sm cursor-pointer"
           >
             العودة للرئيسية
           </button>
@@ -155,18 +191,18 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
     );
   }
 
-  const isHost = cart.hostUid === myUid;
+  const isHost = Boolean(myUid) && cart.hostUid === myUid;
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] p-4 flex flex-col font-['Cairo',sans-serif] dir-rtl" dir="rtl">
       {/* Top Header */}
-      <div className="bg-[#1E293B] border border-[#334155] rounded-2xl p-4 mb-4 shadow-md flex items-center justify-between">
+      <div className="bg-[#1E293B] border border-[#334155] rounded-2xl p-4 mb-4 shadow-md flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#FF6B00]/20 text-[#FF6B00] flex items-center justify-center font-bold">
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-base font-bold text-[#F8FAFC]">سلة الشلة - {cart.storeName}</h1>
               <span className="bg-[#FF6B00]/20 text-[#FF6B00] text-xs font-mono font-bold px-2 py-0.5 rounded-lg border border-[#FF6B00]/30">
                 {cart.roomCode}
@@ -177,9 +213,19 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {onOpenStoreMenu && cart.status === 'open' && (
+            <button
+              type="button"
+              onClick={() => onOpenStoreMenu(cart.storeId, cart.id)}
+              className="flex items-center gap-1.5 text-xs bg-[#FF6B00] hover:bg-[#E55F00] text-white font-bold px-3.5 py-2 rounded-xl transition cursor-pointer"
+            >
+              <Store className="w-4 h-4" />
+              <span>أضف أصنافاً من المنيو</span>
+            </button>
+          )}
           <button
             onClick={handleCopyLink}
-            className="flex items-center gap-1.5 text-xs bg-[#0F172A] hover:bg-[#0F172A]/80 border border-[#334155] text-[#94A3B8] px-3 py-2 rounded-xl transition"
+            className="flex items-center gap-1.5 text-xs bg-[#0F172A] hover:bg-[#0F172A]/80 border border-[#334155] text-[#94A3B8] px-3 py-2 rounded-xl transition cursor-pointer"
             title="نسخ الرابط"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -187,7 +233,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
           </button>
           <button
             onClick={onBackToHome}
-            className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] bg-[#0F172A] border border-[#334155] px-3 py-2 rounded-xl transition"
+            className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] bg-[#0F172A] border border-[#334155] px-3 py-2 rounded-xl transition cursor-pointer"
           >
             خروج
           </button>
@@ -212,7 +258,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
             </div>
             <button
               onClick={() => setShowSplitBill(!showSplitBill)}
-              className="flex items-center gap-1.5 text-xs bg-[#FF6B00]/10 hover:bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/30 px-3 py-1.5 rounded-xl transition font-medium"
+              className="flex items-center gap-1.5 text-xs bg-[#FF6B00]/10 hover:bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/30 px-3 py-1.5 rounded-xl transition font-medium cursor-pointer"
             >
               <Calculator className="w-3.5 h-3.5" />
               <span>تقسيم الحساب</span>
@@ -222,36 +268,93 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
           {/* Items List */}
           <div className="flex-1 overflow-y-auto space-y-3 max-h-[380px] pr-1">
             {cart.items.length === 0 ? (
-              <div className="text-center py-12 text-[#94A3B8] space-y-2">
+              <div className="text-center py-12 text-[#94A3B8] space-y-3">
                 <ShoppingBag className="w-10 h-10 mx-auto opacity-40 text-[#94A3B8]" />
                 <p className="text-sm">السلة فارغة حالياً</p>
-                <p className="text-xs">شارك رمز الغرفة مع أصدقائك ليبدأ الجميع بإضافة طلباتهم!</p>
+                <p className="text-xs">افتح قائمة المتجر لإضافة طلبك أو شارك رمز الغرفة مع أصدقائك!</p>
+                {onOpenStoreMenu && cart.status === 'open' && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenStoreMenu(cart.storeId, cart.id)}
+                    className="px-5 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <Store className="w-4 h-4" />
+                    <span>تصفح قائمة {cart.storeName} وإضافة أصناف</span>
+                  </button>
+                )}
               </div>
             ) : (
-              cart.items.map((item) => (
-                <div
-                  key={item.entryId}
-                  className="bg-[#0F172A] border border-[#334155] rounded-xl p-3 flex items-center justify-between gap-3 shadow-sm"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[#F8FAFC]">{item.name}</span>
-                      <span className="text-[10px] bg-[#334155] text-[#94A3B8] px-2 py-0.5 rounded-md font-normal">
-                        طلب {item.participantName}
-                      </span>
-                    </div>
-                    <div className="text-xs text-[#FF6B00] font-mono font-bold">
-                      {item.price} ج.م × {item.quantity} = {item.price * item.quantity} ج.م
-                    </div>
-                  </div>
+              cart.items.map((item) => {
+                const canModify =
+                  cart.status === 'open' &&
+                  Boolean(myUid) &&
+                  (item.participantUid === myUid || isHost);
+                const isBusy = busyEntryId === item.entryId;
 
-                  {cart.status === 'open' && (
-                    <div className="flex items-center gap-2 bg-[#1E293B] border border-[#334155] rounded-lg px-2 py-1">
-                      <span className="text-xs font-mono font-bold text-[#F8FAFC] px-1">{item.quantity}</span>
+                return (
+                  <div
+                    key={item.entryId}
+                    className="bg-[#0F172A] border border-[#334155] rounded-xl p-3 flex items-center justify-between gap-3 shadow-sm"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-[#F8FAFC] truncate">{item.name}</span>
+                        <span className="text-[10px] bg-[#334155] text-[#94A3B8] px-2 py-0.5 rounded-md font-normal">
+                          طلب {item.participantName}
+                        </span>
+                      </div>
+                      <div className="text-xs text-[#FF6B00] font-mono font-bold tabular-nums">
+                        {item.price} ج.م × {item.quantity} = {item.price * item.quantity} ج.م
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))
+
+                    {cart.status === 'open' && (
+                      <div className="flex items-center gap-1.5 bg-[#1E293B] border border-[#334155] rounded-xl px-2 py-1 shrink-0">
+                        {canModify ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => void handleChangeEntryQty(item.entryId, 1)}
+                              aria-label={`زيادة ${item.name}`}
+                              className="w-7 h-7 rounded-lg bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white flex items-center justify-center cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="text-xs font-mono font-bold text-[#F8FAFC] px-1.5 tabular-nums">
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() => void handleChangeEntryQty(item.entryId, -1)}
+                              aria-label={`إنقاص ${item.name}`}
+                              className="w-7 h-7 rounded-lg bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] disabled:opacity-50 text-[#F8FAFC] flex items-center justify-center cursor-pointer"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isBusy}
+                              onClick={() =>
+                                void handleChangeEntryQty(item.entryId, -item.quantity)
+                              }
+                              aria-label={`حذف ${item.name}`}
+                              className="w-7 h-7 rounded-lg bg-rose-950/60 border border-rose-500/40 text-rose-300 hover:bg-rose-900/60 disabled:opacity-50 flex items-center justify-center cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-xs font-mono font-bold text-[#F8FAFC] px-1 tabular-nums">
+                            ×{item.quantity}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
 
@@ -276,7 +379,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
               <button
                 onClick={() => onProceedToCheckout && onProceedToCheckout(cart)}
                 disabled={cart.items.length === 0}
-                className="w-full mt-2 py-3 bg-[#FF6B00] hover:bg-[#FF6B00]/90 disabled:opacity-40 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#FF6B00]/20"
+                className="w-full mt-2 py-3 bg-[#FF6B00] hover:bg-[#FF6B00]/90 disabled:opacity-40 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#FF6B00]/20 cursor-pointer"
               >
                 <span>متابعة إتمام الطلب كمسؤول الغرفة</span>
                 <ArrowRight className="w-4 h-4 transform rotate-180" />

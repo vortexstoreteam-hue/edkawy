@@ -8,6 +8,7 @@ import {
   CheckoutFormInput,
   CompleteProfileInput,
   CouponInput,
+  CourierKycDocumentsInput,
   CourierProfileInput,
   CourierRecord,
   CourierRegisterInput,
@@ -521,6 +522,94 @@ export function validateCourierRegistrationForm(
   };
 }
 
+export function isCourierDrivingLicenseRequired(
+  vehicleType: CourierVehicleType
+): boolean {
+  return vehicleType !== 'دراجة هوائية';
+}
+
+export function validateCourierKycDocuments(
+  vehicleType: CourierVehicleType,
+  docs: Partial<CourierKycDocumentsInput>
+): ValidationResult {
+  const errors: Record<string, string> = {};
+
+  if (!isValidUploadedImageUrl(docs.nationalIdFrontUrl)) {
+    errors.nationalIdFrontUrl = 'صورة وجه البطاقة الشخصية إجبارية للمراجعة.';
+  }
+  if (!isValidUploadedImageUrl(docs.nationalIdBackUrl)) {
+    errors.nationalIdBackUrl = 'صورة ظهر البطاقة الشخصية إجبارية للمراجعة.';
+  }
+  if (!isValidUploadedImageUrl(docs.selfieWithIdUrl)) {
+    errors.selfieWithIdUrl =
+      vehicleType === 'دراجة هوائية'
+        ? 'صورة سيلفي لك مع البطاقة بجانب الوجه إجبارية للتوثيق.'
+        : 'صورة سيلفي لك مع الرخصة والبطاقة بجانب الوجه إجبارية للتوثيق.';
+  }
+  if (!isValidUploadedImageUrl(docs.vehiclePhotoUrl)) {
+    errors.vehiclePhotoUrl =
+      vehicleType === 'دراجة هوائية'
+        ? 'صورة واضحة للدراجة الهوائية إجبارية.'
+        : 'صورة واضحة للموتوسيكل أو السكوتر إجبارية.';
+  }
+
+  if (isCourierDrivingLicenseRequired(vehicleType)) {
+    if (!isValidUploadedImageUrl(docs.drivingLicenseFrontUrl)) {
+      errors.drivingLicenseFrontUrl =
+        'صورة وجه رخصة القيادة إجبارية للموتوسيكل والسكوتر.';
+    }
+    if (!isValidUploadedImageUrl(docs.drivingLicenseBackUrl)) {
+      errors.drivingLicenseBackUrl =
+        'صورة ظهر رخصة القيادة إجبارية للموتوسيكل والسكوتر.';
+    }
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+  };
+}
+
+export function validateStoreLegalFields(
+  input: {
+    commercialRegisterNumber?: string;
+    taxCertificateNumber?: string;
+    commercialRegisterImageUrl?: string;
+  },
+  options?: { requireImage?: boolean }
+): ValidationResult {
+  const errors: Record<string, string> = {};
+  const crNum = (input.commercialRegisterNumber ?? '').trim();
+  const taxNum = (input.taxCertificateNumber ?? '').trim();
+
+  if (crNum.length < 3 || crNum.length > 40) {
+    errors.commercialRegisterNumber =
+      'رقم السجل التجاري إجباري (من ٣ إلى ٤٠ حرفاً أو رقماً).';
+  }
+  if (taxNum.length < 3 || taxNum.length > 40) {
+    errors.taxCertificateNumber =
+      'رقم الشهادة الضريبية / البطاقة الضريبية إجباري (من ٣ إلى ٤٠ حرفاً أو رقماً).';
+  }
+  if (
+    options?.requireImage &&
+    !isValidUploadedImageUrl(input.commercialRegisterImageUrl)
+  ) {
+    errors.commercialRegisterImageUrl =
+      'إرفاق صورة السجل التجاري إجباري.';
+  } else if (
+    input.commercialRegisterImageUrl !== undefined &&
+    input.commercialRegisterImageUrl.trim().length > 0 &&
+    !isValidUploadedImageUrl(input.commercialRegisterImageUrl)
+  ) {
+    errors.commercialRegisterImageUrl = 'صورة السجل التجاري المرفقة غير صالحة.';
+  }
+
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+  };
+}
+
 export function validateCustomerRegistrationForm(input: {
   name: string;
   email: string;
@@ -628,6 +717,16 @@ export function validateAdminCreateStoreForm(
     errors.deliveryTimeMinutes = 'وقت التوصيل يجب أن يكون بين ١٠ و ١٢٠ دقيقة.';
   }
 
+  const legalValidation = validateStoreLegalFields(
+    {
+      commercialRegisterNumber: input.commercialRegisterNumber,
+      taxCertificateNumber: input.taxCertificateNumber,
+      commercialRegisterImageUrl: input.commercialRegisterImageUrl,
+    },
+    { requireImage: true }
+  );
+  Object.assign(errors, legalValidation.errors);
+
   return {
     valid: Object.keys(errors).length === 0,
     errors,
@@ -664,6 +763,16 @@ export function validateStoreSettingsForm(
       errors.imageUrl = 'صورة المتجر المرفقة غير صالحة.';
     }
   }
+
+  const legalValidation = validateStoreLegalFields(
+    {
+      commercialRegisterNumber: input.commercialRegisterNumber,
+      taxCertificateNumber: input.taxCertificateNumber,
+      commercialRegisterImageUrl: input.commercialRegisterImageUrl,
+    },
+    { requireImage: false }
+  );
+  Object.assign(errors, legalValidation.errors);
 
   return {
     valid: Object.keys(errors).length === 0,

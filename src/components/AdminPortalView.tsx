@@ -212,7 +212,11 @@ interface AdminPortalViewProps {
   unreadNotificationsCount?: number;
   onOpenNotifications?: () => void;
   onNotify?: (msg: string) => void;
-  onApproveCourier: (courierId: string) => Promise<void>;
+  onApproveCourier: (
+    courierId: string,
+    nextStatus?: 'approved' | 'rejected',
+    rejectionReason?: string
+  ) => Promise<void>;
   onCreateCourierByAdmin: (
     input: AdminCreateCourierInput
   ) => Promise<CourierCredentialRecord>;
@@ -425,6 +429,9 @@ export function AdminPortalView({
   // Wallet Top-Up Requests & 3-Tier Ban states
   const [topupNoteById, setTopupNoteById] = useState<Record<string, string>>({});
   const [zoomedTopupReceiptUrl, setZoomedTopupReceiptUrl] = useState<string | null>(null);
+  const [zoomedKycDoc, setZoomedKycDoc] = useState<{ title: string; url: string } | null>(null);
+  const [courierRejectOpenId, setCourierRejectOpenId] = useState<string | null>(null);
+  const [courierRejectReasonById, setCourierRejectReasonById] = useState<Record<string, string>>({});
   const [banTypeByCustomerUid, setBanTypeByCustomerUid] = useState<Record<string, CustomerBanType>>({});
   const [banReasonByCustomerUid, setBanReasonByCustomerUid] = useState<Record<string, string>>({});
 
@@ -724,6 +731,11 @@ export function AdminPortalView({
     [couriers]
   );
 
+  const rejectedCouriers = useMemo(
+    () => couriers.filter((c) => c.approvalStatus === 'rejected'),
+    [couriers]
+  );
+
   const filteredStores = useMemo(() => {
     const q = storeSearch.trim().toLowerCase();
     if (!q) return stores;
@@ -858,10 +870,29 @@ export function AdminPortalView({
     setErrorBanner(null);
     setBusyKey(`approve_${courierId}`);
     try {
-      await onApproveCourier(courierId);
+      await onApproveCourier(courierId, 'approved');
       flashSuccess('تم اعتماد حساب الكابتن بنجاح وإشعاره فوراً.');
     } catch (err) {
       setErrorBanner(formatAppErrorMessage(err, 'تعذر ترقية حساب المندوب.'));
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function handleRejectCourierClick(courierId: string) {
+    const reason = (courierRejectReasonById[courierId] || '').trim();
+    if (reason.length < 4) {
+      setErrorBanner('يرجى كتابة سبب واضح لرفض مستندات المندوب (٤ أحرف على الأقل).');
+      return;
+    }
+    setErrorBanner(null);
+    setBusyKey(`reject_${courierId}`);
+    try {
+      await onApproveCourier(courierId, 'rejected', reason);
+      setCourierRejectOpenId(null);
+      flashSuccess('تم رفض مستندات المندوب وتسجيل السبب ليتمكن من التعديل وإعادة الرفع.');
+    } catch (err) {
+      setErrorBanner(formatAppErrorMessage(err, 'تعذر تسجيل رفض مستندات المندوب.'));
     } finally {
       setBusyKey(null);
     }
@@ -2635,7 +2666,7 @@ export function AdminPortalView({
                 <div className="edkawi-soft-card overflow-hidden">
                   <div className="px-5 py-4 border-b border-[#334155] flex items-center justify-between gap-3">
                     <h2 className="text-sm sm:text-base font-bold text-[#F8FAFC]">
-                      طلبات انضمام مناديب تنتظر الموافقة (
+                      طلبات انضمام مناديب تنتظر المراجعة والاعتماد (
                       <span className="font-mono tabular-nums">
                         {pendingCouriers.length}
                       </span>
@@ -2646,38 +2677,69 @@ export function AdminPortalView({
                       onClick={() => selectSection('couriers')}
                       className="text-xs font-bold text-[#FF6B00] hover:underline cursor-pointer"
                     >
-                      فتح قسم المندوبين
+                      مراجعة مستندات المناديب بالتفصيل
                     </button>
                   </div>
                   <div className="divide-y divide-[#334155]">
-                    {pendingCouriers.map((c) => (
-                      <div
-                        key={c.id}
-                        className="px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 text-sm"
-                      >
-                        <div>
-                          <p className="font-bold text-[#F8FAFC]">
-                            {c.name}
-                          </p>
-                          <p className="text-xs text-[#94A3B8]">
-                            <span dir="ltr" className="font-mono tabular-nums">
-                              {c.phone}
-                            </span>{' '}
-                            · {c.vehicleType} · {c.neighborhood}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          disabled={busyKey === `approve_${c.id}`}
-                          onClick={() => void handleApproveClick(c.id)}
-                          className="py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer whitespace-nowrap"
+                    {pendingCouriers.map((c) => {
+                      const requiresLicense = c.vehicleType !== 'دراجة هوائية';
+                      const docCount = [
+                        c.nationalIdFrontUrl,
+                        c.nationalIdBackUrl,
+                        c.selfieWithIdUrl,
+                        c.vehiclePhotoUrl,
+                        ...(requiresLicense
+                          ? [c.drivingLicenseFrontUrl, c.drivingLicenseBackUrl]
+                          : []),
+                      ].filter(Boolean).length;
+                      const expectedDocs = requiresLicense ? 6 : 4;
+                      return (
+                        <div
+                          key={c.id}
+                          className="px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 text-sm"
                         >
-                          {busyKey === `approve_${c.id}`
-                            ? 'جارٍ الاعتماد...'
-                            : 'موافقة واعتماد الكابتن'}
-                        </button>
-                      </div>
-                    ))}
+                          <div className="space-y-0.5">
+                            <p className="font-bold text-[#F8FAFC] flex items-center gap-2">
+                              <span>{c.name}</span>
+                              <span
+                                className={`text-[11px] font-bold px-2 py-0.5 rounded-lg ${
+                                  docCount === expectedDocs
+                                    ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40'
+                                    : 'bg-amber-950/60 text-amber-300 border border-amber-500/40'
+                                }`}
+                              >
+                                مستندات: {docCount}/{expectedDocs}
+                              </span>
+                            </p>
+                            <p className="text-xs text-[#94A3B8]">
+                              <span dir="ltr" className="font-mono tabular-nums">
+                                {c.phone}
+                              </span>{' '}
+                              · {c.vehicleType} · {c.neighborhood}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => selectSection('couriers')}
+                              className="py-2 px-3.5 rounded-xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs font-bold cursor-pointer whitespace-nowrap"
+                            >
+                              معاينة المستندات
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busyKey === `approve_${c.id}`}
+                              onClick={() => void handleApproveClick(c.id)}
+                              className="py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer whitespace-nowrap"
+                            >
+                              {busyKey === `approve_${c.id}`
+                                ? 'جارٍ الاعتماد...'
+                                : 'اعتماد الكابتن'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -2818,6 +2880,20 @@ export function AdminPortalView({
                           <p className="text-xs text-[#94A3B8]">
                             التصنيف: {req.category} {req.subCategory ? `(${req.subCategory})` : ''} · الحي: {req.neighborhood}
                           </p>
+                          {(req.commercialRegisterNumber || req.taxCertificateNumber) && (
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                              {req.commercialRegisterNumber && (
+                                <span className="text-[11px] font-mono bg-[#0F172A] border border-[#334155] text-[#F8FAFC] px-2.5 py-1 rounded-xl">
+                                  السجل التجاري: {req.commercialRegisterNumber}
+                                </span>
+                              )}
+                              {req.taxCertificateNumber && (
+                                <span className="text-[11px] font-mono bg-[#0F172A] border border-[#334155] text-[#FF6B00] px-2.5 py-1 rounded-xl">
+                                  الرقم الضريبي: {req.taxCertificateNumber}
+                                </span>
+                              )}
+                            </div>
+                          )}
                           {req.rejectReason && (
                             <p className="text-xs text-rose-500 font-semibold">
                               سبب الرفض: {req.rejectReason}
@@ -2826,19 +2902,23 @@ export function AdminPortalView({
                         </div>
 
                         {req.commercialRegisterImage && (
-                          <a
-                            href={req.commercialRegisterImage}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="shrink-0 block w-24 h-20 rounded-xl overflow-hidden border border-[#334155]"
-                            title="عرض صورة السجل التجاري / الواجهة"
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setZoomedKycDoc({
+                                title: `صورة السجل التجاري — ${req.storeName}`,
+                                url: req.commercialRegisterImage!,
+                              })
+                            }
+                            className="shrink-0 block w-24 h-20 rounded-xl overflow-hidden border border-[#334155] hover:border-[#FF6B00] cursor-pointer"
+                            title="تكبير صورة السجل التجاري"
                           >
                             <img
                               src={req.commercialRegisterImage}
                               alt={`صورة ${req.storeName}`}
                               className="w-full h-full object-cover"
                             />
-                          </a>
+                          </button>
                         )}
                       </div>
 
@@ -3304,50 +3384,220 @@ export function AdminPortalView({
 
               {pendingCouriers.length > 0 && (
                 <div className="edkawi-soft-card overflow-hidden">
-                  <div className="px-5 py-4 border-b border-[#334155] bg-amber-950/25 bg-amber-950/25">
-                    <h3 className="text-sm font-bold text-amber-900 text-amber-300">
-                      طلبات انضمام قيد المراجعة ({pendingCouriers.length})
+                  <div className="px-5 py-4 border-b border-[#334155] bg-amber-950/25">
+                    <h3 className="text-sm font-bold text-amber-300">
+                      مراجعة مستندات المناديب وطلبات الانضمام ({pendingCouriers.length})
                     </h3>
                   </div>
 
                   <div className="divide-y divide-[#334155]">
-                    {pendingCouriers.map((courier) => (
+                    {pendingCouriers.map((courier) => {
+                      const requiresLicense =
+                        courier.vehicleType !== 'دراجة هوائية';
+                      const kycItems: Array<{ label: string; url?: string }> = [
+                        { label: 'وجه البطاقة', url: courier.nationalIdFrontUrl },
+                        { label: 'ظهر البطاقة', url: courier.nationalIdBackUrl },
+                        ...(requiresLicense
+                          ? [
+                              {
+                                label: 'وجه الرخصة',
+                                url: courier.drivingLicenseFrontUrl,
+                              },
+                              {
+                                label: 'ظهر الرخصة',
+                                url: courier.drivingLicenseBackUrl,
+                              },
+                            ]
+                          : []),
+                        {
+                          label: requiresLicense
+                            ? 'سيلفي بالرخصة/البطاقة'
+                            : 'سيلفي بالبطاقة',
+                          url: courier.selfieWithIdUrl,
+                        },
+                        {
+                          label: `صورة ${courier.vehicleType}`,
+                          url: courier.vehiclePhotoUrl,
+                        },
+                      ];
+                      const uploadedCount = kycItems.filter((i) => i.url).length;
+                      const isRejectOpen = courierRejectOpenId === courier.id;
+
+                      return (
+                        <div key={courier.id} className="p-5 space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-bold text-[#F8FAFC]">
+                                  {courier.name}
+                                </p>
+                                <span
+                                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg ${
+                                    uploadedCount === kycItems.length
+                                      ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40'
+                                      : 'bg-amber-950/60 text-amber-300 border border-amber-500/40'
+                                  }`}
+                                >
+                                  المستندات: {uploadedCount} / {kycItems.length}
+                                </span>
+                                {!requiresLicense && (
+                                  <span className="text-[11px] bg-blue-950/50 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-lg">
+                                    معفي من الرخصة (عجلة)
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-[#94A3B8]">
+                                الهاتف:{' '}
+                                <span
+                                  dir="ltr"
+                                  className="font-mono font-bold tabular-nums"
+                                >
+                                  {courier.phone}
+                                </span>{' '}
+                                {courier.email ? `· ${courier.email}` : ''}
+                              </p>
+                              <p className="text-xs text-[#94A3B8]">
+                                {courier.vehicleType} · نطاق التمركز:{' '}
+                                {courier.neighborhood}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                disabled={busyKey === `approve_${courier.id}`}
+                                onClick={() => void handleApproveClick(courier.id)}
+                                className="py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                              >
+                                <UserCheck className="w-4 h-4" aria-hidden="true" />
+                                <span>
+                                  {busyKey === `approve_${courier.id}`
+                                    ? 'جارٍ الاعتماد...'
+                                    : 'موافقة واعتماد الكابتن'}
+                                </span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCourierRejectOpenId((prev) =>
+                                    prev === courier.id ? null : courier.id
+                                  )
+                                }
+                                className="py-2.5 px-4 rounded-xl bg-rose-950/50 border border-rose-500/40 hover:bg-rose-900/50 text-rose-200 text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                              >
+                                <XCircle className="w-4 h-4" aria-hidden="true" />
+                                <span>رفض مع سبب</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* KYC Document Thumbnails Grid */}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                            {kycItems.map((docItem) => (
+                              <div
+                                key={docItem.label}
+                                className="rounded-xl bg-[#0F172A] border border-[#334155] p-2 space-y-1.5"
+                              >
+                                <p className="text-[11px] font-bold text-[#94A3B8] truncate">
+                                  {docItem.label}
+                                </p>
+                                {docItem.url ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setZoomedKycDoc({
+                                        title: `${courier.name} — ${docItem.label}`,
+                                        url: docItem.url!,
+                                      })
+                                    }
+                                    className="w-full h-24 rounded-lg overflow-hidden border border-[#334155] hover:border-[#FF6B00] cursor-pointer block"
+                                    title="اضغط للتكبير"
+                                  >
+                                    <img
+                                      src={docItem.url}
+                                      alt={docItem.label}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </button>
+                                ) : (
+                                  <div className="w-full h-24 rounded-lg bg-[#1E293B] border border-dashed border-[#334155] flex items-center justify-center text-[10px] text-amber-400 text-center px-1">
+                                    غير مرفوعة
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          {isRejectOpen && (
+                            <div className="p-4 rounded-2xl bg-[#0F172A] border border-rose-500/40 space-y-3">
+                              <label className="block text-xs font-bold text-rose-300">
+                                سبب رفض المستندات (سيظهر للمندوب لإعادة الرفع):
+                              </label>
+                              <div className="flex flex-col sm:flex-row gap-2.5">
+                                <input
+                                  type="text"
+                                  maxLength={220}
+                                  value={courierRejectReasonById[courier.id] || ''}
+                                  onChange={(e) =>
+                                    setCourierRejectReasonById((prev) => ({
+                                      ...prev,
+                                      [courier.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="مثال: صورة السيلفي مع الرخصة غير واضحة أو منتهية الصلاحية"
+                                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#1E293B] border border-[#334155] text-xs text-[#F8FAFC]"
+                                />
+                                <button
+                                  type="button"
+                                  disabled={busyKey === `reject_${courier.id}`}
+                                  onClick={() =>
+                                    void handleRejectCourierClick(courier.id)
+                                  }
+                                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer whitespace-nowrap"
+                                >
+                                  {busyKey === `reject_${courier.id}`
+                                    ? 'جارٍ الإرسال...'
+                                    : 'تأكيد الرفض وإخطار المندوب'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {rejectedCouriers.length > 0 && (
+                <div className="edkawi-soft-card overflow-hidden">
+                  <div className="px-5 py-4 border-b border-[#334155] bg-rose-950/20">
+                    <h3 className="text-sm font-bold text-rose-300">
+                      مناديب مرفوضون / بانتظار إعادة رفع المستندات ({rejectedCouriers.length})
+                    </h3>
+                  </div>
+                  <div className="divide-y divide-[#334155]">
+                    {rejectedCouriers.map((rc) => (
                       <div
-                        key={courier.id}
-                        className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        key={rc.id}
+                        className="p-4 flex flex-wrap items-center justify-between gap-3 text-xs"
                       >
                         <div className="space-y-1">
-                          <p className="text-sm font-bold text-[#F8FAFC]">
-                            {courier.name}
+                          <p className="font-bold text-[#F8FAFC] text-sm">
+                            {rc.name} · <span dir="ltr" className="font-mono">{rc.phone}</span>
                           </p>
-                          <p className="text-xs text-[#94A3B8]">
-                            الهاتف:{' '}
-                            <span
-                              dir="ltr"
-                              className="font-mono font-bold tabular-nums"
-                            >
-                              {courier.phone}
-                            </span>{' '}
-                            {courier.email ? `· ${courier.email}` : ''}
-                          </p>
-                          <p className="text-xs text-[#94A3B8]">
-                            {courier.vehicleType} · نطاق التمركز:{' '}
-                            {courier.neighborhood}
+                          <p className="text-rose-300">
+                            سبب الرفض: {rc.kycRejectionReason || 'مستندات غير مكتملة'}
                           </p>
                         </div>
-
                         <button
                           type="button"
-                          disabled={busyKey === `approve_${courier.id}`}
-                          onClick={() => void handleApproveClick(courier.id)}
-                          className="py-2.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                          disabled={busyKey === `approve_${rc.id}`}
+                          onClick={() => void handleApproveClick(rc.id)}
+                          className="py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
                         >
-                          <UserCheck className="w-4 h-4" aria-hidden="true" />
-                          <span>
-                            {busyKey === `approve_${courier.id}`
-                              ? 'جارٍ الترقية...'
-                              : 'موافقة واعتماد الكابتن'}
-                          </span>
+                          اعتماد الآن
                         </button>
                       </div>
                     ))}
@@ -6802,6 +7052,40 @@ export function AdminPortalView({
             <img
               src={zoomedTopupReceiptUrl}
               alt="إيصال التحويل"
+              className="w-full max-h-[75vh] object-contain rounded-xl bg-[#0F172A]"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* COURIER KYC / STORE LEGAL DOC LIGHTBOX */}
+      {zoomedKycDoc && (
+        <div
+          className="edkawi-modal-backdrop flex items-center justify-center p-4 z-50"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setZoomedKycDoc(null)}
+        >
+          <div
+            className="bg-[#1E293B] border border-[#334155] rounded-2xl p-4 max-w-2xl w-full space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-bold text-[#F8FAFC] truncate">
+                {zoomedKycDoc.title}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setZoomedKycDoc(null)}
+                aria-label="إغلاق المعاينة"
+                className="p-1.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <img
+              src={zoomedKycDoc.url}
+              alt={zoomedKycDoc.title}
               className="w-full max-h-[75vh] object-contain rounded-xl bg-[#0F172A]"
             />
           </div>

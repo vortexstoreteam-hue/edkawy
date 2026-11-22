@@ -22,6 +22,7 @@ import {
   ScanLine,
   Search,
   Settings,
+  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Star,
@@ -254,6 +255,14 @@ export function StorePortalView({
   const [settingsLng, setSettingsLng] = useState<number | undefined>(undefined);
   const [settingsWaterPin, setSettingsWaterPin] = useState(false);
   const [settingsImageUrl, setSettingsImageUrl] = useState('');
+  const [settingsCommercialRegisterNumber, setSettingsCommercialRegisterNumber] =
+    useState('');
+  const [settingsTaxCertificateNumber, setSettingsTaxCertificateNumber] =
+    useState('');
+  const [
+    settingsCommercialRegisterImageUrl,
+    setSettingsCommercialRegisterImageUrl,
+  ] = useState('');
   const [settingsErrors, setSettingsErrors] = useState<Record<string, string>>(
     {}
   );
@@ -284,6 +293,13 @@ export function StorePortalView({
     setSettingsLat(currentStore.lat ?? fallbackCoords.lat);
     setSettingsLng(currentStore.lng ?? fallbackCoords.lng);
     setSettingsImageUrl(currentStore.imageUrl || '');
+    setSettingsCommercialRegisterNumber(
+      currentStore.commercialRegisterNumber || ''
+    );
+    setSettingsTaxCertificateNumber(currentStore.taxCertificateNumber || '');
+    setSettingsCommercialRegisterImageUrl(
+      currentStore.commercialRegisterImageUrl || ''
+    );
   }, [
     currentStore?.id,
     currentStore?.prepTimeMinutes,
@@ -298,6 +314,9 @@ export function StorePortalView({
     currentStore?.lat,
     currentStore?.lng,
     currentStore?.imageUrl,
+    currentStore?.commercialRegisterNumber,
+    currentStore?.taxCertificateNumber,
+    currentStore?.commercialRegisterImageUrl,
   ]);
 
   const menuCategories = useMemo(() => {
@@ -711,6 +730,10 @@ export function StorePortalView({
       lat: settingsLat,
       lng: settingsLng,
       imageUrl: settingsImageUrl.trim() || undefined,
+      commercialRegisterNumber: settingsCommercialRegisterNumber.trim(),
+      taxCertificateNumber: settingsTaxCertificateNumber.trim(),
+      commercialRegisterImageUrl:
+        settingsCommercialRegisterImageUrl.trim() || undefined,
     };
 
     const check = validateStoreSettingsForm(payload);
@@ -2615,7 +2638,89 @@ export function StorePortalView({
                     helperText="ارفع صورة حقيقية عالية الوضوح لمتجرك أو صيدليتك من الموبايل أو الكمبيوتر"
                     value={settingsImageUrl}
                     onChange={setSettingsImageUrl}
+                    maxChars={220000}
                     error={settingsErrors.imageUrl}
+                  />
+                </div>
+
+                {/* Mandatory Legal & Tax Info Displayed to Customers */}
+                <div className="pb-5 border-b border-[#334155] space-y-4">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC] flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#FF6B00]" />
+                      <span>البيانات القانونية والضريبية للمتجر (إجباري)</span>
+                    </h3>
+                    <p className="text-xs text-[#94A3B8] mt-1">
+                      تظهر هذه الأرقام الموثّقة أسفل صفحة متجرك للعملاء تعزيزاً للثقة والامتثال القانوني.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="settings-cr-number"
+                        className="block text-xs font-bold text-[#F8FAFC] mb-1.5"
+                      >
+                        رقم السجل التجاري *
+                      </label>
+                      <input
+                        id="settings-cr-number"
+                        type="text"
+                        dir="ltr"
+                        maxLength={40}
+                        value={settingsCommercialRegisterNumber}
+                        onChange={(e) =>
+                          setSettingsCommercialRegisterNumber(e.target.value)
+                        }
+                        placeholder="مثال: 123456"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                        required
+                      />
+                      {settingsErrors.commercialRegisterNumber && (
+                        <p className="text-xs text-red-400 mt-1">
+                          {settingsErrors.commercialRegisterNumber}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="settings-tax-number"
+                        className="block text-xs font-bold text-[#F8FAFC] mb-1.5"
+                      >
+                        رقم الشهادة الضريبية / البطاقة الضريبية *
+                      </label>
+                      <input
+                        id="settings-tax-number"
+                        type="text"
+                        dir="ltr"
+                        maxLength={40}
+                        value={settingsTaxCertificateNumber}
+                        onChange={(e) =>
+                          setSettingsTaxCertificateNumber(e.target.value)
+                        }
+                        placeholder="مثال: 458-921-703"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                        required
+                      />
+                      {settingsErrors.taxCertificateNumber && (
+                        <p className="text-xs text-red-400 mt-1">
+                          {settingsErrors.taxCertificateNumber}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <DeviceImageInput
+                    label="صورة السجل التجاري المرفقة"
+                    helperText="احتفظ بصورة السجل التجاري الساري محدثة لإدارة إدكاوي"
+                    value={settingsCommercialRegisterImageUrl}
+                    onChange={setSettingsCommercialRegisterImageUrl}
+                    maxWidth={960}
+                    maxHeight={960}
+                    maxChars={220000}
+                    quality={0.76}
+                    error={settingsErrors.commercialRegisterImageUrl}
                   />
                 </div>
 

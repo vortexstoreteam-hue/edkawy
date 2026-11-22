@@ -11,9 +11,13 @@ import {
   AlertCircle,
   Clock,
   Check,
+  FileText,
+  ShieldCheck,
 } from 'lucide-react';
 import { StoreJoinRequestInput } from '../types/edkawi';
 import { submitStoreJoinRequestInFirestore } from '../services/edkawiFirebaseService';
+import { validateStoreLegalFields } from '../utils/orderLogic';
+import { DeviceImageInput } from './DeviceImageInput';
 
 interface StoreJoinViewProps {
   onBackToHome: () => void;
@@ -66,6 +70,8 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
   const [category, setCategory] = useState(CATEGORY_OPTIONS[0].category);
   const [subCategory, setSubCategory] = useState(CATEGORY_OPTIONS[0].subCategories[0]);
   const [neighborhood, setNeighborhood] = useState(EDKU_NEIGHBORHOODS[0]);
+  const [commercialRegisterNumber, setCommercialRegisterNumber] = useState('');
+  const [taxCertificateNumber, setTaxCertificateNumber] = useState('');
   const [commercialImageBase64, setCommercialImageBase64] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -79,22 +85,6 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
     setCategory(nextCat);
     const subs = CATEGORY_OPTIONS.find((c) => c.category === nextCat)?.subCategories || [];
     setSubCategory(subs[0] || '');
-  };
-
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setErrorMsg('حجم الصورة كبير جداً، يرجى اختيار صورة أقل من 2 ميجابايت.');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setCommercialImageBase64(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,6 +105,19 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
       return;
     }
 
+    const legalCheck = validateStoreLegalFields(
+      {
+        commercialRegisterNumber,
+        taxCertificateNumber,
+        commercialRegisterImageUrl: commercialImageBase64,
+      },
+      { requireImage: true }
+    );
+    if (!legalCheck.valid) {
+      setErrorMsg(Object.values(legalCheck.errors)[0]);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload: StoreJoinRequestInput = {
@@ -124,7 +127,9 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
         category,
         subCategory,
         neighborhood,
-        commercialRegisterImage: commercialImageBase64 || undefined,
+        commercialRegisterNumber: commercialRegisterNumber.trim(),
+        taxCertificateNumber: taxCertificateNumber.trim(),
+        commercialRegisterImage: commercialImageBase64,
       };
 
       const reqId = await submitStoreJoinRequestInFirestore(payload);
@@ -348,37 +353,60 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
             </div>
           </div>
 
-          {/* Commercial Register / Store Photo */}
-          <div className="space-y-2 pt-2 border-t border-[#334155]">
-            <label className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
-              <Upload className="w-4 h-4 text-[#FF6B00]" />
-              <span>صورة السجل التجاري أو واجهة المحل (اختياري لسرعة الاعتماد)</span>
-            </label>
-            <div className="flex items-center gap-4">
-              <label className="cursor-pointer bg-[#0F172A] hover:bg-[#0F172A]/80 border border-dashed border-[#334155] hover:border-[#FF6B00] rounded-xl px-4 py-3 text-xs text-[#94A3B8] flex items-center gap-2 transition">
-                <Upload className="w-4 h-4 text-[#FF6B00]" />
-                <span>اختر صورة من جهازك</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageFileChange}
-                  className="hidden"
-                />
-              </label>
-              {commercialImageBase64 && (
-                <div className="flex items-center gap-2 bg-[#0F172A] border border-emerald-500/40 rounded-xl px-3 py-1.5 text-xs text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>تم إرفاق الصورة</span>
-                  <button
-                    type="button"
-                    onClick={() => setCommercialImageBase64('')}
-                    className="text-red-400 hover:text-red-300 mr-2 text-[11px]"
-                  >
-                    حذف
-                  </button>
-                </div>
-              )}
+          {/* Mandatory Commercial Register & Tax Certificate Info */}
+          <div className="space-y-4 pt-3 border-t border-[#334155]">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#FF6B00]">
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <span>التوثيق القانوني والضريبي الإجباري للمتجر</span>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-[#FF6B00]" />
+                  <span>رقم السجل التجاري *</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  dir="ltr"
+                  maxLength={40}
+                  value={commercialRegisterNumber}
+                  onChange={(e) => setCommercialRegisterNumber(e.target.value)}
+                  placeholder="مثال: 123456-CR"
+                  className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] font-mono tabular-nums text-left outline-none transition"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-[#FF6B00]" />
+                  <span>رقم الشهادة / البطاقة الضريبية *</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  dir="ltr"
+                  maxLength={40}
+                  value={taxCertificateNumber}
+                  onChange={(e) => setTaxCertificateNumber(e.target.value)}
+                  placeholder="مثال: 458-921-703"
+                  className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] font-mono tabular-nums text-left outline-none transition"
+                />
+              </div>
+            </div>
+
+            <DeviceImageInput
+              label="صورة السجل التجاري الساري (إجباري) *"
+              helperText="ارفع صورة واضحة لأصل السجل التجاري للمراجعة والاعتماد — تظهر أرقام التوثيق القانوني للعملاء في صفحة متجرك"
+              value={commercialImageBase64}
+              onChange={setCommercialImageBase64}
+              maxWidth={960}
+              maxHeight={960}
+              maxChars={220000}
+              quality={0.76}
+              required
+            />
           </div>
 
           <button

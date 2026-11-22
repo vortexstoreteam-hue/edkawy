@@ -383,6 +383,23 @@
           "maxLength": 100,
           "description": "Store login email address."
         },
+        "commercialRegisterNumber": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 40,
+          "description": "Official Egyptian Commercial Register number of the merchant."
+        },
+        "commercialRegisterImageUrl": {
+          "type": "string",
+          "maxLength": 750000,
+          "description": "Compressed image of the merchant's Commercial Register document."
+        },
+        "taxCertificateNumber": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 40,
+          "description": "Official Tax Registration / Tax Certificate number displayed on the store page."
+        },
         "referredByAgentId": {
           "type": "string",
           "maxLength": 128,
@@ -740,6 +757,15 @@
         "cancelledDeliveries": { "type": "number" },
         "walletBalance": { "type": "number" },
         "totalTipsEgp": { "type": "number" },
+        "nationalIdFrontUrl": { "type": "string", "maxLength": 180000 },
+        "nationalIdBackUrl": { "type": "string", "maxLength": 180000 },
+        "drivingLicenseFrontUrl": { "type": "string", "maxLength": 180000 },
+        "drivingLicenseBackUrl": { "type": "string", "maxLength": 180000 },
+        "vehiclePhotoUrl": { "type": "string", "maxLength": 180000 },
+        "selfieWithIdUrl": { "type": "string", "maxLength": 180000 },
+        "kycSubmittedAtIso": { "type": "string", "maxLength": 40 },
+        "kycRejectionReason": { "type": "string", "maxLength": 240 },
+        "kycReviewedAtIso": { "type": "string", "maxLength": 40 },
         "updatedBy": { "type": "string", "maxLength": 128 },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
@@ -975,7 +1001,7 @@
         "hostUid": { "type": "string", "maxLength": 128 },
         "hostName": { "type": "string", "maxLength": 80 },
         "storeId": { "type": "string", "maxLength": 128 },
-        "storeName": { "type": "string", "maxLength": 80 },
+        "storeName": { "type": "string", "maxLength": 100 },
         "storeDeliveryFee": { "type": "number" },
         "status": { "type": "string", "enum": ["open", "checked_out", "cancelled"], "maxLength": 20 },
         "roomCode": { "type": "string", "maxLength": 20 },
@@ -1662,7 +1688,9 @@
         "neighborhood": { "type": "string", "maxLength": 80 },
         "lat": { "type": "number" },
         "lng": { "type": "number" },
+        "commercialRegisterNumber": { "type": "string", "maxLength": 40 },
         "commercialRegisterImage": { "type": "string", "maxLength": 1000000 },
+        "taxCertificateNumber": { "type": "string", "maxLength": 40 },
         "ownerUid": { "type": "string", "maxLength": 128 },
         "rejectReason": { "type": "string", "maxLength": 300 },
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "maxLength": 20 },

@@ -13,6 +13,8 @@ interface DeviceImageInputProps {
   aspectClassName?: string;
   maxWidth?: number;
   maxHeight?: number;
+  maxChars?: number;
+  quality?: number;
   allowCameraCapture?: boolean;
 }
 
@@ -27,6 +29,8 @@ export const DeviceImageInput: React.FC<DeviceImageInputProps> = ({
   aspectClassName = 'h-40',
   maxWidth = 920,
   maxHeight = 920,
+  maxChars,
+  quality,
   allowCameraCapture = false,
 }) => {
   const inputId = useId();
@@ -43,6 +47,8 @@ export const DeviceImageInput: React.FC<DeviceImageInputProps> = ({
       const compressed = await compressDeviceImageToDataUrl(file, {
         maxWidth,
         maxHeight,
+        maxChars,
+        quality,
       });
       onChange(compressed);
     } catch (err) {

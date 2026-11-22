@@ -43,9 +43,12 @@ service cloud.firestore {
         url.size() <= 750000 &&
         (
           url[0:11] == 'data:image/' ||
-          url[0:8] == 'https://' ||
-          url[0:7] == 'http://'
+          url[0:8] == 'https://'
         );
+    }
+
+    function isValidCourierKycPhoto(url) {
+      return url is string && url.size() <= 180000;
     }
 
     function incoming() {
@@ -57,10 +60,7 @@ service cloud.firestore {
     }
 
     function isSignedIn() {
-      return request.auth != null &&
-        request.auth.uid is string &&
-        request.auth.uid.size() >= 1 &&
-        request.auth.uid.size() <= 128;
+      return request.auth != null;
     }
 
     function isNonAnonymousUser() {
@@ -71,52 +71,39 @@ service cloud.firestore {
       );
     }
 
-    function staffDocMatchesRoles(staffData, roles) {
-      return staffData.get('isActive', false) == true &&
-        staffData.get('role', '') in roles;
-    }
-
     function isStaffRoleIn(roles) {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/staff/$(request.auth.uid)) &&
-        staffDocMatchesRoles(
-          get(/databases/$(database)/documents/staff/$(request.auth.uid)).data,
-          roles
-        );
+      return exists(/databases/$(database)/documents/staff/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.get('isActive', false) == true &&
+        get(/databases/$(database)/documents/staff/$(request.auth.uid)).data.get('role', '') in roles;
     }
 
     function isBootstrappedAdmin() {
-      return isSignedIn() && (
-        (
-          'email' in request.auth.token &&
-          (
-            request.auth.token.email in ['vortexstore.team@gmail.com', 'alaslybys46@gmail.com'] ||
-            request.auth.token.email.lower() in ['vortexstore.team@gmail.com', 'alaslybys46@gmail.com']
-          ) &&
-          ('email_verified' in request.auth.token ? request.auth.token.email_verified == true : true)
-        ) ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-      );
+      return (
+        'email' in request.auth.token &&
+        request.auth.token.email.lower() in ['vortexstore.team@gmail.com', 'alaslybys46@gmail.com'] &&
+        request.auth.token.get('email_verified', true) == true
+      ) ||
+      exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     function isAdmin() {
-      return isBootstrappedAdmin() || isStaffRoleIn(['super_admin']);
+      return isSignedIn() && (isBootstrappedAdmin() || isStaffRoleIn(['super_admin']));
     }
 
     function isSupportStaff() {
-      return isStaffRoleIn(['support_agent', 'super_admin']);
+      return isSignedIn() && isStaffRoleIn(['support_agent', 'super_admin']);
     }
 
     function isOperationsStaff() {
-      return isStaffRoleIn(['operations', 'super_admin']);
+      return isSignedIn() && isStaffRoleIn(['operations', 'super_admin']);
     }
 
     function isOperationsOrAdmin() {
-      return isBootstrappedAdmin() || isStaffRoleIn(['operations', 'super_admin']);
+      return isSignedIn() && (isBootstrappedAdmin() || isStaffRoleIn(['operations', 'super_admin']));
     }
 
     function isSupportOrAdmin() {
-      return isBootstrappedAdmin() || isStaffRoleIn(['support_agent', 'super_admin']);
+      return isSignedIn() && (isBootstrappedAdmin() || isStaffRoleIn(['support_agent', 'super_admin']));
     }
 
     function isActiveSalesAgent() {
@@ -272,7 +259,6 @@ service cloud.firestore {
           'createdAt',
           'updatedAt'
         ]) &&
-        data.role is string && data.role.size() <= 20 &&
         data.role in ['admin', 'store', 'courier', 'customer', 'sales_agent', 'support_agent', 'operations'] &&
         ('customerCode' in data ? isValidCustomerCode(data.customerCode) : true) &&
         ('isBanned' in data ? data.isBanned is bool : true) &&
@@ -314,7 +300,7 @@ service cloud.firestore {
             (!('customerReferralCode' in data) || (data.customerReferralCode is string && data.customerReferralCode.size() <= 24)) &&
             (!('requiresEmailVerification' in data) || data.requiresEmailVerification is bool) &&
             (!('lastReviewPromptAtIso' in data) || (data.lastReviewPromptAtIso is string && data.lastReviewPromptAtIso.size() <= 40)) &&
-            (!('banType' in data) || (data.banType is string && data.banType in ['temporary_24h', 'suspended', 'permanent'])) &&
+            (!('banType' in data) || data.banType in ['temporary_24h', 'suspended', 'permanent']) &&
             (!('banUntilIso' in data) || (data.banUntilIso is string && data.banUntilIso.size() <= 40)) &&
             (!('walletBalance' in data) || (data.walletBalance is number && data.walletBalance >= 0 && data.walletBalance <= 10000000)) &&
             (!('totalSpentEgp' in data) || (data.totalSpentEgp is number && data.totalSpentEgp >= 0 && data.totalSpentEgp <= 10000000)) &&
@@ -366,31 +352,31 @@ service cloud.firestore {
         data.role == 'customer' ||
         (
           data.role == 'admin' && (
-            exists(/databases/$(database)/documents/admins/$(userId)) ||
-            existsAfter(/databases/$(database)/documents/admins/$(userId))
+            existsAfter(/databases/$(database)/documents/admins/$(userId)) ||
+            exists(/databases/$(database)/documents/admins/$(userId))
           )
         ) ||
         (
           data.role == 'courier' && (
-            exists(/databases/$(database)/documents/couriers/$(userId)) ||
-            existsAfter(/databases/$(database)/documents/couriers/$(userId))
+            existsAfter(/databases/$(database)/documents/couriers/$(userId)) ||
+            exists(/databases/$(database)/documents/couriers/$(userId))
           )
         ) ||
         (
           data.role == 'store' &&
           'storeId' in data &&
           isBoundedId(data.storeId) && (
-            isStoreOwnerUid(data.storeId, userId) ||
             (
               existsAfter(/databases/$(database)/documents/stores/$(data.storeId)) &&
               getAfter(/databases/$(database)/documents/stores/$(data.storeId)).data.get('ownerUid', '') == userId
-            )
+            ) ||
+            isStoreOwnerUid(data.storeId, userId)
           )
         ) ||
         (
           data.role == 'sales_agent' && (
-            exists(/databases/$(database)/documents/sales_agents/$(userId)) ||
-            existsAfter(/databases/$(database)/documents/sales_agents/$(userId))
+            existsAfter(/databases/$(database)/documents/sales_agents/$(userId)) ||
+            exists(/databases/$(database)/documents/sales_agents/$(userId))
           )
         ) ||
         (
@@ -424,7 +410,7 @@ service cloud.firestore {
     function isValidBootstrapConfig(data) {
       return data.keys().hasAll(['adminUid', 'updatedAt']) &&
         data.keys().hasOnly(['adminUid', 'updatedAt']) &&
-        isValidId(data.adminUid) &&
+        isBoundedId(data.adminUid) &&
         data.updatedAt is timestamp;
     }
 
@@ -472,7 +458,7 @@ service cloud.firestore {
       return data.keys().hasAll(['targetId', 'targetType', 'targetName', 'reason', 'isBlocked', 'blockedBy', 'updatedAt']) &&
         data.keys().hasOnly(['targetId', 'targetType', 'targetName', 'reason', 'isBlocked', 'blockedBy', 'updatedAt']) &&
         isBoundedId(data.targetId) &&
-        data.targetType is string && data.targetType.size() <= 16 && data.targetType in ['customer', 'courier', 'store'] &&
+        data.targetType in ['customer', 'courier', 'store'] &&
         data.targetName is string && data.targetName.size() >= 1 && data.targetName.size() <= 100 &&
         data.reason is string && data.reason.size() >= 2 && data.reason.size() <= 240 &&
         data.isBlocked is bool &&
@@ -483,10 +469,12 @@ service cloud.firestore {
     function isValidFirstMenuItem(item) {
       return item is map &&
         item.keys().hasAll(['id', 'name', 'price']) &&
-        item.keys().hasOnly(['id', 'name', 'price']) &&
+        item.keys().hasOnly(['id', 'name', 'price', 'description', 'category']) &&
         item.id is string && item.id.size() >= 1 && item.id.size() <= 64 &&
         item.name is string && item.name.size() >= 2 && item.name.size() <= 80 &&
-        item.price is number && item.price > 0 && item.price <= 5000;
+        item.price is number && item.price > 0 && item.price <= 5000 &&
+        (!('description' in item) || (item.description is string && item.description.size() <= 240)) &&
+        (!('category' in item) || (item.category is string && item.category.size() <= 60));
     }
 
     // Blueprint Validation Helper: Store
@@ -531,6 +519,9 @@ service cloud.firestore {
         'menuItems',
         'ownerUid',
         'loginEmail',
+        'commercialRegisterNumber',
+        'commercialRegisterImageUrl',
+        'taxCertificateNumber',
         'referredByAgentId',
         'referredByCode',
         'inviteToken',
@@ -538,7 +529,6 @@ service cloud.firestore {
         'createdAt'
       ]) &&
       data.name is string && data.name.size() >= 2 && data.name.size() <= 80 &&
-      data.category is string && data.category.size() <= 40 &&
       data.category in [
         'أسماك وبحريات',
         'مشويات ومطاعم',
@@ -562,7 +552,6 @@ service cloud.firestore {
       ('ratingSum' in data ? (data.ratingSum is number && data.ratingSum >= 0 && data.ratingSum <= 5000000) : true) &&
       ('lat' in data ? isValidEdkuLat(data.lat) : true) &&
       ('lng' in data ? isValidEdkuLng(data.lng) : true) &&
-      data.imageKey is string && data.imageKey.size() <= 24 &&
       data.imageKey in [
         'seafood',
         'grills',
@@ -586,6 +575,9 @@ service cloud.firestore {
       data.menuItems is list && data.menuItems.size() >= 1 && data.menuItems.size() <= 25 &&
       isValidFirstMenuItem(data.menuItems[0]) &&
       ('ownerUid' in data ? isBoundedId(data.ownerUid) : true) &&
+      ('commercialRegisterNumber' in data ? (data.commercialRegisterNumber is string && data.commercialRegisterNumber.size() >= 3 && data.commercialRegisterNumber.size() <= 40) : true) &&
+      ('commercialRegisterImageUrl' in data ? isValidUploadedImage(data.commercialRegisterImageUrl) : true) &&
+      ('taxCertificateNumber' in data ? (data.taxCertificateNumber is string && data.taxCertificateNumber.size() >= 3 && data.taxCertificateNumber.size() <= 40) : true) &&
       (
         !data.keys().hasAny(['loginEmail', 'referredByAgentId', 'referredByCode', 'inviteToken']) || (
           (!('loginEmail' in data) || (data.loginEmail is string && data.loginEmail.size() <= 100)) &&
@@ -682,7 +674,6 @@ service cloud.firestore {
       data.description is string && data.description.size() >= 4 && data.description.size() <= 220 &&
       data.category is string && data.category.size() >= 2 && data.category.size() <= 40 &&
       data.price is number && data.price > 0 && data.price <= 20000 &&
-      data.imageKey is string && data.imageKey.size() >= 1 && data.imageKey.size() <= 30 &&
       data.imageKey in [
         'seafood',
         'grills',
@@ -802,9 +793,7 @@ service cloud.firestore {
       data.deliveryNeighborhood is string && data.deliveryNeighborhood.size() <= 80 &&
       data.deliveryAddress is string && data.deliveryAddress.size() <= 250 &&
       data.totalAmount is number && data.totalAmount >= 0 &&
-      data.paymentMethod is string && data.paymentMethod.size() <= 30 &&
       data.paymentMethod in ['cash', 'wallet', 'visa', 'cash_on_delivery'] &&
-      data.status is string && data.status.size() <= 40 &&
       data.status in [
         'awaiting_pharmacy_quote',
         'awaiting_customer_approval',
@@ -821,7 +810,7 @@ service cloud.firestore {
         'cancelled'
       ] &&
       data.createdAt is timestamp &&
-      (!('orderType' in data) || data.orderType == null || (data.orderType is string && data.orderType.size() <= 30 && data.orderType in ['standard', 'pharmacy_prescription', 'custom_errand'])) &&
+      (!('orderType' in data) || data.orderType == null || data.orderType in ['standard', 'pharmacy_prescription', 'custom_errand']) &&
       (!('storeOwnerId' in data) || data.storeOwnerId == null || (data.storeOwnerId is string && data.storeOwnerId.size() <= 128)) &&
       (!('storeLat' in data) || data.storeLat == null || data.storeLat is number) &&
       (!('storeLng' in data) || data.storeLng == null || data.storeLng is number) &&
@@ -837,7 +826,7 @@ service cloud.firestore {
       (!('updatedAt' in data) || data.updatedAt == null || data.updatedAt is timestamp) &&
       (!('cancelledByCourierIds' in data) || data.cancelledByCourierIds == null || (data.cancelledByCourierIds is list && data.cancelledByCourierIds.size() <= 20 && (data.cancelledByCourierIds.size() == 0 || (data.cancelledByCourierIds[0] is string && data.cancelledByCourierIds[0].size() <= 128)))) &&
       (!('isTestSimulation' in data) || data.isTestSimulation == null || data.isTestSimulation is bool) &&
-      (!('zoneId' in data) || data.zoneId == null || (data.zoneId is string && data.zoneId.size() <= 20 && data.zoneId in ['zone_1', 'zone_2', 'zone_3', 'zone_4', 'zone_5'])) &&
+      (!('zoneId' in data) || data.zoneId == null || data.zoneId in ['zone_1', 'zone_2', 'zone_3', 'zone_4', 'zone_5']) &&
       (!('zoneName' in data) || data.zoneName == null || (data.zoneName is string && data.zoneName.size() <= 80)) &&
       (!('smallOrderFee' in data) || data.smallOrderFee == null || (data.smallOrderFee is number && data.smallOrderFee >= 0 && data.smallOrderFee <= 20)) &&
       (!('groupSessionId' in data) || data.groupSessionId == null || (data.groupSessionId is string && data.groupSessionId.size() <= 128)) &&
@@ -1015,7 +1004,7 @@ service cloud.firestore {
       (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 300)) &&
       (!('cancelledByCourierIds' in data) || data.cancelledByCourierIds == null || (data.cancelledByCourierIds is list && data.cancelledByCourierIds.size() <= 20 && (data.cancelledByCourierIds.size() == 0 || (data.cancelledByCourierIds[0] is string && data.cancelledByCourierIds[0].size() <= 128)))) &&
       (!('isTestSimulation' in data) || data.isTestSimulation == null || data.isTestSimulation is bool) &&
-      (!('zoneId' in data) || data.zoneId == null || (data.zoneId is string && data.zoneId.size() <= 20 && data.zoneId in ['zone_1', 'zone_2', 'zone_3', 'zone_4', 'zone_5'])) &&
+      (!('zoneId' in data) || data.zoneId == null || data.zoneId in ['zone_1', 'zone_2', 'zone_3', 'zone_4', 'zone_5']) &&
       (!('zoneName' in data) || data.zoneName == null || (data.zoneName is string && data.zoneName.size() <= 80)) &&
       (!('smallOrderFee' in data) || data.smallOrderFee == null || (data.smallOrderFee is number && data.smallOrderFee >= 0 && data.smallOrderFee <= 20)) &&
       (!('rejectedBy' in data) || data.rejectedBy == null || (data.rejectedBy is list && data.rejectedBy.size() <= 30 && (data.rejectedBy.size() == 0 || (data.rejectedBy[0] is string && data.rejectedBy[0].size() <= 128)))) &&
@@ -1161,6 +1150,15 @@ service cloud.firestore {
         'cancelledDeliveries',
         'walletBalance',
         'totalTipsEgp',
+        'nationalIdFrontUrl',
+        'nationalIdBackUrl',
+        'drivingLicenseFrontUrl',
+        'drivingLicenseBackUrl',
+        'vehiclePhotoUrl',
+        'selfieWithIdUrl',
+        'kycSubmittedAtIso',
+        'kycRejectionReason',
+        'kycReviewedAtIso',
         'createdAt',
         'updatedBy',
         'updatedAt'
@@ -1168,7 +1166,6 @@ service cloud.firestore {
       data.name is string && data.name.size() >= 2 && data.name.size() <= 80 &&
       data.phone is string && data.phone.size() >= 8 && data.phone.size() <= 20 &&
       ('email' in data ? (data.email is string && data.email.size() >= 3 && data.email.size() <= 100) : true) &&
-      data.vehicleType is string && data.vehicleType.size() <= 30 &&
       data.vehicleType in ['دراجة نارية', 'سكوتر كهربائي', 'دراجة هوائية'] &&
       data.neighborhood is string && data.neighborhood.size() >= 2 && data.neighborhood.size() <= 80 &&
       ('lat' in data ? isValidEdkuLat(data.lat) : true) &&
@@ -1177,11 +1174,20 @@ service cloud.firestore {
       ('reviewCount' in data ? (data.reviewCount is number && data.reviewCount >= 0 && data.reviewCount <= 1000000) : true) &&
       ('ratingSum' in data ? (data.ratingSum is number && data.ratingSum >= 0 && data.ratingSum <= 5000000) : true) &&
       data.isAvailable is bool &&
-      ('approvalStatus' in data ? (data.approvalStatus is string && data.approvalStatus.size() <= 20 && data.approvalStatus in ['pending', 'approved', 'rejected']) : true) &&
+      ('approvalStatus' in data ? data.approvalStatus in ['pending', 'approved', 'rejected'] : true) &&
       data.completedDeliveries is number && data.completedDeliveries >= 0 && data.completedDeliveries <= 100000 &&
       ('cancelledDeliveries' in data ? (data.cancelledDeliveries is number && data.cancelledDeliveries >= 0 && data.cancelledDeliveries <= 100000) : true) &&
       ('walletBalance' in data ? (data.walletBalance is number && data.walletBalance >= 0 && data.walletBalance <= 10000000) : true) &&
       ('totalTipsEgp' in data ? (data.totalTipsEgp is number && data.totalTipsEgp >= 0 && data.totalTipsEgp <= 10000000) : true) &&
+      ('nationalIdFrontUrl' in data ? isValidCourierKycPhoto(data.nationalIdFrontUrl) : true) &&
+      ('nationalIdBackUrl' in data ? isValidCourierKycPhoto(data.nationalIdBackUrl) : true) &&
+      ('drivingLicenseFrontUrl' in data ? isValidCourierKycPhoto(data.drivingLicenseFrontUrl) : true) &&
+      ('drivingLicenseBackUrl' in data ? isValidCourierKycPhoto(data.drivingLicenseBackUrl) : true) &&
+      ('vehiclePhotoUrl' in data ? isValidCourierKycPhoto(data.vehiclePhotoUrl) : true) &&
+      ('selfieWithIdUrl' in data ? isValidCourierKycPhoto(data.selfieWithIdUrl) : true) &&
+      ('kycSubmittedAtIso' in data ? (data.kycSubmittedAtIso is string && data.kycSubmittedAtIso.size() <= 40) : true) &&
+      ('kycRejectionReason' in data ? (data.kycRejectionReason is string && data.kycRejectionReason.size() <= 240) : true) &&
+      ('kycReviewedAtIso' in data ? (data.kycReviewedAtIso is string && data.kycReviewedAtIso.size() <= 40) : true) &&
       ('createdAt' in data ? data.createdAt is timestamp : true) &&
       isBoundedId(data.updatedBy) &&
       data.updatedAt is timestamp;
@@ -1217,7 +1223,6 @@ service cloud.firestore {
         'updatedAt'
       ]) &&
       data.name is string && data.name.size() >= 2 && data.name.size() <= 80 &&
-      data.vehicleType is string && data.vehicleType.size() <= 30 &&
       data.vehicleType in ['دراجة نارية', 'سكوتر كهربائي', 'دراجة هوائية'] &&
       data.neighborhood is string && data.neighborhood.size() >= 2 && data.neighborhood.size() <= 80 &&
       ('lat' in data ? isValidEdkuLat(data.lat) : true) &&
@@ -1226,7 +1231,6 @@ service cloud.firestore {
       ('reviewCount' in data ? (data.reviewCount is number && data.reviewCount >= 0 && data.reviewCount <= 1000000) : true) &&
       ('ratingSum' in data ? (data.ratingSum is number && data.ratingSum >= 0 && data.ratingSum <= 5000000) : true) &&
       data.isAvailable is bool &&
-      data.approvalStatus is string && data.approvalStatus.size() <= 20 &&
       data.approvalStatus in ['pending', 'approved', 'rejected'] &&
       data.completedDeliveries is number && data.completedDeliveries >= 0 && data.completedDeliveries <= 100000 &&
       ('cancelledDeliveries' in data ? (data.cancelledDeliveries is number && data.cancelledDeliveries >= 0 && data.cancelledDeliveries <= 100000) : true) &&
@@ -1302,7 +1306,6 @@ service cloud.firestore {
       data.title is string && data.title.size() >= 2 && data.title.size() <= 90 &&
       data.subtitle is string && data.subtitle.size() >= 2 && data.subtitle.size() <= 180 &&
       data.badgeText is string && data.badgeText.size() >= 2 && data.badgeText.size() <= 40 &&
-      data.imageKey is string && data.imageKey.size() <= 30 &&
       data.imageKey in [
         'promo_seafood',
         'promo_grills',
@@ -1399,7 +1402,6 @@ service cloud.firestore {
       ('audience' in data ? (data.audience is string && data.audience.size() <= 24) : true) &&
       data.title is string && data.title.size() >= 2 && data.title.size() <= 100 &&
       data.body is string && data.body.size() >= 2 && data.body.size() <= 300 &&
-      data.type is string && data.type.size() <= 24 &&
       data.type in ['order_update', 'promo', 'system'] &&
       ('orderId' in data ? (data.orderId is string && data.orderId.size() <= 128) : true) &&
       data.isRead is bool &&
@@ -1424,11 +1426,9 @@ service cloud.firestore {
         'createdBy',
         'createdAt'
       ]) &&
-      data.audience is string && data.audience.size() <= 20 &&
       data.audience in ['all', 'customer', 'store', 'courier'] &&
       data.title is string && data.title.size() >= 2 && data.title.size() <= 100 &&
       data.body is string && data.body.size() >= 2 && data.body.size() <= 300 &&
-      data.type is string && data.type.size() <= 24 &&
       data.type in ['order_update', 'promo', 'system'] &&
       isBoundedId(data.createdBy) &&
       data.createdAt is timestamp;
@@ -1466,7 +1466,6 @@ service cloud.firestore {
       data.title is string && data.title.size() >= 2 && data.title.size() <= 90 &&
       data.subtitle is string && data.subtitle.size() >= 2 && data.subtitle.size() <= 180 &&
       data.badgeText is string && data.badgeText.size() >= 2 && data.badgeText.size() <= 40 &&
-      data.campaignType is string && data.campaignType.size() <= 32 &&
       data.campaignType in ['streak_5', 'happy_hour', 'points_multiplier', 'neighborhood_challenge', 'mystery_box'] &&
       ('multiplier' in data ? (data.multiplier is number && data.multiplier >= 1 && data.multiplier <= 10) : true) &&
       ('discountPercent' in data ? (data.discountPercent is number && data.discountPercent >= 0 && data.discountPercent <= 90) : true) &&
@@ -1492,6 +1491,17 @@ service cloud.firestore {
         item.name is string && item.name.size() <= 100 &&
         item.price is number && item.price >= 0 && item.price <= 20000 &&
         item.quantity is number && item.quantity >= 1 && item.quantity <= 50;
+    }
+
+    function isValidFirstSharedCartChatMessage(msg) {
+      return msg is map &&
+        msg.keys().hasAll(['id', 'senderUid', 'senderName', 'text', 'timestampIso']) &&
+        msg.keys().hasOnly(['id', 'senderUid', 'senderName', 'text', 'timestampIso']) &&
+        msg.id is string && msg.id.size() >= 1 && msg.id.size() <= 128 &&
+        msg.senderUid is string && msg.senderUid.size() >= 1 && msg.senderUid.size() <= 128 &&
+        msg.senderName is string && msg.senderName.size() >= 1 && msg.senderName.size() <= 80 &&
+        msg.text is string && msg.text.size() >= 1 && msg.text.size() <= 300 &&
+        msg.timestampIso is string && msg.timestampIso.size() <= 40;
     }
 
     function isValidSharedCart(data) {
@@ -1524,10 +1534,9 @@ service cloud.firestore {
       isBoundedId(data.storeId) &&
       data.storeName is string && data.storeName.size() >= 1 && data.storeName.size() <= 100 &&
       data.storeDeliveryFee is number && data.storeDeliveryFee >= 0 && data.storeDeliveryFee <= 500 &&
-      data.status is string && data.status.size() <= 20 &&
       data.status in ['open', 'checked_out', 'cancelled'] &&
       (!('roomCode' in data) || (data.roomCode is string && data.roomCode.size() <= 20)) &&
-      (!('chatMessages' in data) || (data.chatMessages is list && data.chatMessages.size() <= 100)) &&
+      (!('chatMessages' in data) || (data.chatMessages is list && data.chatMessages.size() <= 100 && (data.chatMessages.size() == 0 || isValidFirstSharedCartChatMessage(data.chatMessages[0])))) &&
       data.items is list && data.items.size() <= 40 &&
       (data.items.size() == 0 || isValidFirstSharedCartItem(data.items[0])) &&
       data.createdAt is timestamp &&
@@ -1554,7 +1563,9 @@ service cloud.firestore {
         'neighborhood',
         'lat',
         'lng',
+        'commercialRegisterNumber',
         'commercialRegisterImage',
+        'taxCertificateNumber',
         'ownerUid',
         'rejectReason',
         'status',
@@ -1569,7 +1580,9 @@ service cloud.firestore {
       data.neighborhood is string && data.neighborhood.size() <= 80 &&
       (!('lat' in data) || data.lat is number) &&
       (!('lng' in data) || data.lng is number) &&
+      (!('commercialRegisterNumber' in data) || (data.commercialRegisterNumber is string && data.commercialRegisterNumber.size() >= 3 && data.commercialRegisterNumber.size() <= 40)) &&
       (!('commercialRegisterImage' in data) || (data.commercialRegisterImage is string && data.commercialRegisterImage.size() <= 1000000)) &&
+      (!('taxCertificateNumber' in data) || (data.taxCertificateNumber is string && data.taxCertificateNumber.size() >= 3 && data.taxCertificateNumber.size() <= 40)) &&
       (!('ownerUid' in data) || isBoundedId(data.ownerUid)) &&
       (!('rejectReason' in data) || (data.rejectReason is string && data.rejectReason.size() <= 300)) &&
       data.status in ['pending', 'approved', 'rejected'] &&
@@ -1591,7 +1604,6 @@ service cloud.firestore {
     function isValidRegisteredAccount(data) {
       return data.keys().hasAll(['role', 'updatedAt']) &&
         data.keys().hasOnly(['role', 'updatedAt']) &&
-        data.role is string && data.role.size() <= 16 &&
         data.role in ['customer', 'courier', 'store', 'sales_agent'] &&
         data.updatedAt is timestamp;
     }
@@ -1616,19 +1628,19 @@ service cloud.firestore {
         isValidUserProfile(incoming()) &&
         incoming().createdAt == request.time &&
         incoming().updatedAt == request.time && (
-          isAdmin() ||
           (
             !('isBanned' in incoming() && incoming().isBanned == true) &&
             !('banReason' in incoming()) &&
             isVerifiedSelfRoleAssignment(userId, incoming())
-          )
+          ) ||
+          isAdmin()
         )
       );
       allow update: if (
         isSignedIn() &&
         isValidId(userId) &&
         isValidUserProfile(incoming()) &&
-        incoming().createdAt == existing().createdAt &&
+        (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt) &&
         incoming().updatedAt == request.time && (
           // Action 1: Self profile update preserving role & storeId (and immutable customerCode once set)
           (
@@ -1892,14 +1904,14 @@ service cloud.firestore {
         isValidStore(incoming()) &&
         incoming().createdBy == request.auth.uid &&
         incoming().createdAt == request.time && (
-          isAdmin() ||
           (
             isNonAnonymousUser() &&
             'ownerUid' in incoming() &&
             incoming().ownerUid == request.auth.uid &&
             'inviteToken' in incoming() &&
             isValidPendingInviteAcceptance(incoming().inviteToken, 'store')
-          )
+          ) ||
+          isAdmin()
         )
       );
 
@@ -1909,7 +1921,7 @@ service cloud.firestore {
         isValidStore(incoming()) &&
         incoming().createdBy == existing().createdBy &&
         ('ownerUid' in existing() ? ('ownerUid' in incoming() && incoming().ownerUid == existing().ownerUid) : true) &&
-        incoming().createdAt == existing().createdAt && (
+        (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt) && (
           // Action 1: Store Owner operational & map/image updates
           (
             (existing().createdBy == request.auth.uid || ('ownerUid' in existing() ? existing().ownerUid == request.auth.uid : false)) &&
@@ -1931,6 +1943,9 @@ service cloud.firestore {
               'isManuallyClosed',
               'prepTimeMinutes',
               'minOrderAmount',
+              'commercialRegisterNumber',
+              'commercialRegisterImageUrl',
+              'taxCertificateNumber',
               'menuItems',
               'lat',
               'lng'
@@ -1997,7 +2012,7 @@ service cloud.firestore {
         isValidProduct(incoming()) &&
         incoming().storeId == existing().storeId &&
         incoming().createdBy == existing().createdBy &&
-        incoming().createdAt == existing().createdAt && (
+        (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt) && (
           (
             (
               existing().createdBy == request.auth.uid ||
@@ -2091,6 +2106,7 @@ service cloud.firestore {
         isValidCourier(incoming()) &&
         incoming().updatedBy == existing().updatedBy &&
         incoming().updatedAt == request.time && (
+          // Action 1: Self profile & availability update (preserving approvalStatus)
           (
             courierId == request.auth.uid &&
             (
@@ -2113,6 +2129,27 @@ service cloud.firestore {
               'cancelledDeliveries',
               'walletBalance',
               'totalTipsEgp',
+              'updatedAt'
+            ])
+          ) ||
+          // Action 2: Self KYC document upload or rejected resubmission (forces pending + unavailable)
+          (
+            courierId == request.auth.uid &&
+            existing().get('approvalStatus', 'pending') in ['pending', 'rejected'] &&
+            incoming().get('approvalStatus', 'pending') == 'pending' &&
+            incoming().isAvailable == false &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'vehicleType',
+              'approvalStatus',
+              'isAvailable',
+              'nationalIdFrontUrl',
+              'nationalIdBackUrl',
+              'drivingLicenseFrontUrl',
+              'drivingLicenseBackUrl',
+              'vehiclePhotoUrl',
+              'selfieWithIdUrl',
+              'kycSubmittedAtIso',
+              'kycRejectionReason',
               'updatedAt'
             ])
           ) ||
@@ -2175,6 +2212,19 @@ service cloud.firestore {
               'isAvailable',
               'completedDeliveries',
               'cancelledDeliveries',
+              'updatedAt'
+            ])
+          ) ||
+          // Action 1b: Self KYC resubmission transitions directory approvalStatus rejected -> pending while unavailable
+          (
+            courierId == request.auth.uid &&
+            existing().approvalStatus in ['pending', 'rejected'] &&
+            incoming().approvalStatus == 'pending' &&
+            incoming().isAvailable == false &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'vehicleType',
+              'approvalStatus',
+              'isAvailable',
               'updatedAt'
             ])
           ) ||
@@ -2438,7 +2488,6 @@ service cloud.firestore {
         incoming().createdBy == request.auth.uid &&
         incoming().createdAt == request.time &&
         incoming().updatedAt == request.time && (
-          isAdmin() ||
           (
             isNonAnonymousUser() &&
             'ownerUid' in incoming() &&
@@ -2446,7 +2495,8 @@ service cloud.firestore {
             incoming().discountPercent <= 50 &&
             incoming().maxDiscountEgp <= 200 &&
             (!('isUsed' in incoming()) || incoming().isUsed == false)
-          )
+          ) ||
+          isAdmin()
         )
       );
 
@@ -2456,7 +2506,7 @@ service cloud.firestore {
         isValidCoupon(incoming()) &&
         incoming().code == existing().code &&
         incoming().createdBy == existing().createdBy &&
-        incoming().createdAt == existing().createdAt &&
+        (!('createdAt' in existing()) || incoming().createdAt == existing().createdAt) &&
         incoming().updatedAt == request.time && (
           (
             isNonAnonymousUser() &&
@@ -2592,14 +2642,20 @@ service cloud.firestore {
       );
 
       allow update: if (
-        isSignedIn() &&
+        isNonAnonymousUser() &&
         isValidId(cartId) &&
         isValidSharedCart(incoming()) &&
         incoming().hostUid == existing().hostUid &&
         incoming().storeId == existing().storeId &&
         incoming().createdAt == existing().createdAt &&
         incoming().updatedAt == request.time &&
-        existing().status == 'open' && (
+        existing().status == 'open' &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'items',
+          'chatMessages',
+          'status',
+          'updatedAt'
+        ]) && (
           incoming().status == 'open' ||
           incoming().hostUid == request.auth.uid
         )
@@ -2753,14 +2809,13 @@ service cloud.firestore {
         'createdAt',
         'updatedAt'
       ]) &&
-      isValidId(data.id) &&
+      isBoundedId(data.id) &&
       data.name is string && data.name.size() >= 2 && data.name.size() <= 80 &&
       data.email is string && data.email.size() >= 5 && data.email.size() <= 100 &&
-      data.role is string && data.role.size() <= 20 &&
       data.role in ['super_admin', 'support_agent', 'operations'] &&
       data.isActive is bool &&
       data.openTicketCount is number && data.openTicketCount >= 0 && data.openTicketCount <= 100000 &&
-      isValidId(data.createdBy) &&
+      isBoundedId(data.createdBy) &&
       data.createdAt is timestamp &&
       data.updatedAt is timestamp;
     }
@@ -2780,7 +2835,7 @@ service cloud.firestore {
         'openTicketCount',
         'updatedAt'
       ]) &&
-      isValidId(data.staffId) &&
+      isBoundedId(data.staffId) &&
       data.name is string && data.name.size() >= 2 && data.name.size() <= 80 &&
       data.isActive is bool &&
       data.openTicketCount is number && data.openTicketCount >= 0 && data.openTicketCount <= 100000 &&
@@ -2821,17 +2876,14 @@ service cloud.firestore {
         'createdAt',
         'lastUpdated'
       ]) &&
-      isValidId(data.userId) &&
+      isBoundedId(data.userId) &&
       data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 80 &&
       data.userPhone is string && data.userPhone.size() <= 20 &&
       ('userEmail' in data ? (data.userEmail is string && data.userEmail.size() <= 100) : true) &&
-      data.userRole is string && data.userRole.size() <= 20 &&
       data.userRole in ['customer', 'store', 'courier'] &&
       data.subject is string && data.subject.size() >= 3 && data.subject.size() <= 100 &&
-      data.category is string && data.category.size() <= 30 &&
       data.category in ['طلب', 'دفع', 'مشكلة تقنية', 'أخرى'] &&
       data.details is string && data.details.size() >= 6 && data.details.size() <= 1000 &&
-      data.status is string && data.status.size() <= 16 &&
       data.status in ['open', 'closed'] &&
       data.assignedTo is string && data.assignedTo.size() <= 128 &&
       data.assignedToName is string && data.assignedToName.size() <= 80 &&
@@ -2868,12 +2920,10 @@ service cloud.firestore {
         'createdAt',
         'lastUpdated'
       ]) &&
-      isValidId(data.ticketId) &&
-      isValidId(data.userId) &&
+      isBoundedId(data.ticketId) &&
+      isBoundedId(data.userId) &&
       data.subject is string && data.subject.size() >= 3 && data.subject.size() <= 100 &&
-      data.category is string && data.category.size() <= 30 &&
       data.category in ['طلب', 'دفع', 'مشكلة تقنية', 'أخرى'] &&
-      data.status is string && data.status.size() <= 16 &&
       data.status in ['open', 'closed'] &&
       data.assignedTo is string && data.assignedTo.size() <= 128 &&
       data.assignedToName is string && data.assignedToName.size() <= 80 &&
@@ -2902,10 +2952,9 @@ service cloud.firestore {
         'participants',
         'timestamp'
       ]) &&
-      isValidId(data.ticketId) &&
-      isValidId(data.senderId) &&
+      isBoundedId(data.ticketId) &&
+      isBoundedId(data.senderId) &&
       data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 80 &&
-      data.senderRole is string && data.senderRole.size() <= 20 &&
       data.senderRole in ['user', 'admin', 'support_agent'] &&
       data.text is string && data.text.size() >= 1 && data.text.size() <= 1500 &&
       data.participants is list &&
@@ -3174,7 +3223,6 @@ service cloud.firestore {
       ]) &&
       isBoundedId(data.adminId) &&
       data.adminName is string && data.adminName.size() >= 1 && data.adminName.size() <= 80 &&
-      data.actionType is string && data.actionType.size() <= 40 &&
       data.actionType in [
         'ban_customer',
         'unban_customer',
@@ -3227,7 +3275,7 @@ service cloud.firestore {
         isValidAuditLog(incoming()) &&
         incoming().adminId == request.auth.uid &&
         incoming().createdAt == request.time &&
-        (isOperationsOrAdmin() || isSupportOrAdmin() || isAdmin())
+        (isOperationsOrAdmin() || isSupportStaff())
       );
       allow update, delete: if false;
     }
@@ -3257,7 +3305,6 @@ service cloud.firestore {
         'updatedBy',
         'updatedAt'
       ]) &&
-      data.id is string && data.id.size() <= 20 &&
       data.id in ['zone_1', 'zone_2', 'zone_3', 'zone_4', 'zone_5'] &&
       data.name is string && data.name.size() >= 3 && data.name.size() <= 80 &&
       data.distanceLabel is string && data.distanceLabel.size() >= 2 && data.distanceLabel.size() <= 40 &&
@@ -3327,7 +3374,6 @@ service cloud.firestore {
       ]) &&
       data.id is string && data.id.size() >= 2 && data.id.size() <= 40 &&
       data.name is string && data.name.size() >= 2 && data.name.size() <= 50 &&
-      data.storeCategory is string && data.storeCategory.size() <= 40 &&
       data.storeCategory in [
         'أسماك وبحريات',
         'مشويات ومطاعم',
@@ -3416,7 +3462,6 @@ service cloud.firestore {
       isBoundedId(data.storeId) &&
       data.storeName is string && data.storeName.size() >= 1 && data.storeName.size() <= 100 &&
       data.storeDeliveryFee is number && data.storeDeliveryFee >= 0 && data.storeDeliveryFee <= 500 &&
-      data.status is string && data.status.size() <= 20 &&
       data.status in ['open', 'checked_out', 'cancelled'] &&
       data.participants is list && data.participants.size() >= 1 && data.participants.size() <= 25 &&
       data.participants[0] is string && data.participants[0].size() <= 128 &&
@@ -3590,10 +3635,15 @@ service cloud.firestore {
         allow delete: if (
           isSignedIn() &&
           isValidId(sessionId) &&
-          isValidId(itemId) &&
-          isGroupSessionOpenForMember(sessionId) && (
-            existing().participantUid == request.auth.uid ||
-            get(/databases/$(database)/documents/group_sessions/$(sessionId)).data.get('hostUid', '') == request.auth.uid ||
+          isValidId(itemId) && (
+            (
+              existing().participantUid == request.auth.uid &&
+              isGroupSessionOpenForMember(sessionId)
+            ) ||
+            (
+              isGroupSessionOpenForMember(sessionId) &&
+              get(/databases/$(database)/documents/group_sessions/$(sessionId)).data.get('hostUid', '') == request.auth.uid
+            ) ||
             isAdmin()
           )
         );
@@ -3655,18 +3705,16 @@ service cloud.firestore {
         'createdAt',
         'updatedAt'
       ]) &&
-      isValidId(data.id) &&
+      isBoundedId(data.id) &&
       data.email is string && data.email.size() >= 5 && data.email.size() <= 100 &&
-      data.userType is string && data.userType.size() <= 20 &&
       data.userType in ['store', 'customer', 'courier', 'sales_agent'] &&
-      isValidId(data.token) && data.token.size() >= 16 &&
-      data.status is string && data.status.size() <= 16 &&
+      isBoundedId(data.token) && data.token.size() >= 16 &&
       data.status in ['pending', 'accepted', 'expired'] &&
       data.expiresAtMs is number && data.expiresAtMs > 0 &&
       data.expiresAtIso is string && data.expiresAtIso.size() <= 40 &&
       isBoundedId(data.invitedBy) &&
       (!('invitedByName' in data) || (data.invitedByName is string && data.invitedByName.size() <= 80)) &&
-      (!('invitedByRole' in data) || (data.invitedByRole is string && data.invitedByRole.size() <= 20 && data.invitedByRole in ['admin', 'sales_agent'])) &&
+      (!('invitedByRole' in data) || data.invitedByRole in ['admin', 'sales_agent']) &&
       (!('agentId' in data) || isBoundedId(data.agentId)) &&
       (!('referralCode' in data) || (data.referralCode is string && data.referralCode.size() <= 24)) &&
       (!('acceptedByUid' in data) || isBoundedId(data.acceptedByUid)) &&
@@ -3701,17 +3749,15 @@ service cloud.firestore {
         'createdAt',
         'updatedAt'
       ]) &&
-      isValidId(data.token) && data.token.size() >= 16 &&
+      isBoundedId(data.token) && data.token.size() >= 16 &&
       data.maskedEmail is string && data.maskedEmail.size() >= 3 && data.maskedEmail.size() <= 100 &&
-      data.userType is string && data.userType.size() <= 20 &&
       data.userType in ['store', 'customer', 'courier', 'sales_agent'] &&
-      data.status is string && data.status.size() <= 16 &&
       data.status in ['pending', 'accepted', 'expired'] &&
       data.expiresAtMs is number && data.expiresAtMs > 0 &&
       data.expiresAtIso is string && data.expiresAtIso.size() <= 40 &&
       isBoundedId(data.invitedBy) &&
       (!('invitedByName' in data) || (data.invitedByName is string && data.invitedByName.size() <= 80)) &&
-      (!('invitedByRole' in data) || (data.invitedByRole is string && data.invitedByRole.size() <= 20 && data.invitedByRole in ['admin', 'sales_agent'])) &&
+      (!('invitedByRole' in data) || data.invitedByRole in ['admin', 'sales_agent']) &&
       (!('referralCode' in data) || (data.referralCode is string && data.referralCode.size() <= 24)) &&
       data.createdAt is timestamp &&
       data.updatedAt is timestamp;
@@ -3720,8 +3766,7 @@ service cloud.firestore {
     function isValidInvitationLock(data) {
       return data.keys().hasAll(['token', 'status', 'expiresAtMs', 'invitedBy', 'updatedAt']) &&
         data.keys().hasOnly(['token', 'status', 'expiresAtMs', 'invitedBy', 'updatedAt']) &&
-        isValidId(data.token) && data.token.size() >= 16 &&
-        data.status is string && data.status.size() <= 16 &&
+        isBoundedId(data.token) && data.token.size() >= 16 &&
         data.status in ['pending', 'accepted', 'expired'] &&
         data.expiresAtMs is number && data.expiresAtMs > 0 &&
         isBoundedId(data.invitedBy) &&
@@ -3878,9 +3923,14 @@ service cloud.firestore {
         isValidHexHash(emailHash) &&
         isValidInvitationLock(incoming()) &&
         incoming().updatedAt == request.time && (
+          (
+            incoming().status == 'accepted' &&
+            isValidId(incoming().token) &&
+            incoming().token.size() >= 16 &&
+            existsAfter(/databases/$(database)/documents/invitations/$(incoming().token))
+          ) ||
           isAdmin() ||
-          isActiveSalesAgent() ||
-          incoming().status == 'accepted'
+          isActiveSalesAgent()
         )
       );
 
@@ -3914,7 +3964,7 @@ service cloud.firestore {
         'createdAt',
         'updatedAt'
       ]) &&
-      isValidId(data.id) &&
+      isBoundedId(data.id) &&
       data.name is string && data.name.size() >= 2 && data.name.size() <= 80 &&
       data.email is string && data.email.size() >= 5 && data.email.size() <= 100 &&
       isValidEgyptPhone(data.phone) &&
@@ -3959,7 +4009,7 @@ service cloud.firestore {
         'createdAt',
         'updatedAt'
       ]) &&
-      isValidId(data.id) &&
+      isBoundedId(data.id) &&
       data.name is string && data.name.size() >= 2 && data.name.size() <= 80 &&
       data.referralCode is string && data.referralCode.size() >= 6 && data.referralCode.size() <= 24 &&
       data.commissionRatePercent is number && data.commissionRatePercent >= 0 && data.commissionRatePercent <= 50 &&
@@ -3991,14 +4041,14 @@ service cloud.firestore {
         incoming().createdAt == request.time &&
         incoming().updatedAt == request.time &&
         existsAfter(/databases/$(database)/documents/salesAgentDirectory/$(agentId)) && (
-          isAdmin() ||
           (
             agentId == request.auth.uid &&
             incoming().createdBy == request.auth.uid &&
             incoming().isActive == true &&
             'inviteToken' in incoming() &&
             isValidPendingInviteAcceptance(incoming().inviteToken, 'sales_agent')
-          )
+          ) ||
+          isAdmin()
         )
       );
 
@@ -4043,12 +4093,12 @@ service cloud.firestore {
         incoming().createdAt == request.time &&
         incoming().updatedAt == request.time &&
         existsAfter(/databases/$(database)/documents/sales_agents/$(agentId)) && (
-          isAdmin() ||
           (
             agentId == request.auth.uid &&
             incoming().createdBy == request.auth.uid &&
             incoming().commissionRatePercent == 5
-          )
+          ) ||
+          isAdmin()
         )
       );
 
@@ -4146,8 +4196,8 @@ service cloud.firestore {
         isValidId(code) &&
         isValidReferralCodeEntry(incoming()) &&
         incoming().code == code && (
-          isAdmin() ||
-          incoming().agentId == request.auth.uid
+          incoming().agentId == request.auth.uid ||
+          isAdmin()
         )
       );
       allow delete: if isSignedIn() && isValidId(code) && (
@@ -4186,15 +4236,13 @@ service cloud.firestore {
         'joinedAt',
         'updatedAt'
       ]) &&
-      isValidId(data.id) &&
-      isValidId(data.agentId) &&
+      isBoundedId(data.id) &&
+      isBoundedId(data.agentId) &&
       data.referralCode is string && data.referralCode.size() >= 6 && data.referralCode.size() <= 24 &&
-      isValidId(data.referredUid) &&
+      isBoundedId(data.referredUid) &&
       (!('referredStoreId' in data) || isBoundedId(data.referredStoreId)) &&
       data.accountName is string && data.accountName.size() >= 1 && data.accountName.size() <= 80 &&
-      data.accountType is string && data.accountType.size() <= 20 &&
       data.accountType in ['store', 'customer', 'courier'] &&
-      data.status is string && data.status.size() <= 16 &&
       data.status in ['active', 'inactive'] &&
       data.completedOrdersCount is number && data.completedOrdersCount >= 0 && data.completedOrdersCount <= 1000000 &&
       data.totalSalesVolumeEgp is number && data.totalSalesVolumeEgp >= 0 && data.totalSalesVolumeEgp <= 100000000 &&
@@ -4290,18 +4338,16 @@ service cloud.firestore {
         'createdAt',
         'updatedAt'
       ]) &&
-      isValidId(data.id) &&
-      isValidId(data.orderId) &&
-      isValidId(data.agentId) &&
+      isBoundedId(data.id) &&
+      isBoundedId(data.orderId) &&
+      isBoundedId(data.agentId) &&
       data.referralCode is string && data.referralCode.size() >= 6 && data.referralCode.size() <= 24 &&
       isBoundedId(data.referredEntityId) &&
       data.referredEntityName is string && data.referredEntityName.size() >= 1 && data.referredEntityName.size() <= 80 &&
-      data.referredEntityType is string && data.referredEntityType.size() <= 20 &&
       data.referredEntityType in ['store', 'customer'] &&
       data.orderTotalEgp is number && data.orderTotalEgp >= 0 && data.orderTotalEgp <= 1000000 &&
       data.commissionRatePercent is number && data.commissionRatePercent > 0 && data.commissionRatePercent <= 50 &&
       data.amountEgp is number && data.amountEgp > 0 && data.amountEgp <= 500000 &&
-      data.status is string && data.status.size() <= 16 &&
       data.status in ['pending', 'settled'] &&
       data.maturesAtMs is number && data.maturesAtMs > 0 &&
       (!('settledAtIso' in data) || (data.settledAtIso is string && data.settledAtIso.size() <= 40)) &&
@@ -4386,15 +4432,13 @@ service cloud.firestore {
         'createdAt',
         'updatedAt'
       ]) &&
-      isValidId(data.id) &&
-      isValidId(data.agentId) &&
+      isBoundedId(data.id) &&
+      isBoundedId(data.agentId) &&
       data.agentName is string && data.agentName.size() >= 2 && data.agentName.size() <= 80 &&
       data.agentEmail is string && data.agentEmail.size() >= 5 && data.agentEmail.size() <= 100 &&
       data.amount is number && data.amount >= 100 && data.amount <= 1000000 &&
-      data.method is string && data.method.size() <= 24 &&
       data.method in ['vodafone_cash', 'instapay'] &&
       data.accountDetails is string && data.accountDetails.size() >= 4 && data.accountDetails.size() <= 120 &&
-      data.status is string && data.status.size() <= 16 &&
       data.status in ['pending', 'completed', 'rejected'] &&
       (!('rejectionReason' in data) || (data.rejectionReason is string && data.rejectionReason.size() <= 240)) &&
       (!('processedBy' in data) || isBoundedId(data.processedBy)) &&
@@ -4423,13 +4467,11 @@ service cloud.firestore {
         'createdAt',
         'updatedAt'
       ]) &&
-      isValidId(data.id) &&
-      isValidId(data.agentId) &&
+      isBoundedId(data.id) &&
+      isBoundedId(data.agentId) &&
       data.agentName is string && data.agentName.size() >= 2 && data.agentName.size() <= 80 &&
       data.amount is number && data.amount >= 100 && data.amount <= 1000000 &&
-      data.method is string && data.method.size() <= 24 &&
       data.method in ['vodafone_cash', 'instapay'] &&
-      data.status is string && data.status.size() <= 16 &&
       data.status in ['pending', 'completed', 'rejected'] &&
       data.createdAt is timestamp &&
       data.updatedAt is timestamp;
@@ -4546,16 +4588,16 @@ service cloud.firestore {
         'createdAt',
         'updatedAt'
       ]) &&
-      isValidId(data.id) &&
-      isValidId(data.userId) &&
+      isBoundedId(data.id) &&
+      isBoundedId(data.userId) &&
       data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 80 &&
       data.userPhone is string && data.userPhone.size() <= 20 &&
       data.amount is number && data.amount >= 10 && data.amount <= 50000 &&
-      data.method is string && data.method in ['vodafone_cash', 'instapay'] &&
+      data.method in ['vodafone_cash', 'instapay'] &&
       data.senderPhone is string && data.senderPhone.size() >= 4 && data.senderPhone.size() <= 40 &&
       data.referenceNumber is string && data.referenceNumber.size() >= 2 && data.referenceNumber.size() <= 80 &&
       isValidUploadedImage(data.receiptImageUrl) &&
-      data.status is string && data.status in ['pending', 'approved', 'rejected'] &&
+      data.status in ['pending', 'approved', 'rejected'] &&
       (!('adminNote' in data) || (data.adminNote is string && data.adminNote.size() <= 240)) &&
       (!('processedBy' in data) || isBoundedId(data.processedBy)) &&
       data.createdAt is timestamp &&
@@ -4624,9 +4666,9 @@ service cloud.firestore {
         'createdBy',
         'createdAt'
       ]) &&
-      isValidId(data.id) &&
-      isValidId(data.userId) &&
-      data.type is string && data.type in ['topup_credit', 'order_debit', 'order_refund'] &&
+      isBoundedId(data.id) &&
+      isBoundedId(data.userId) &&
+      data.type in ['topup_credit', 'order_debit', 'order_refund'] &&
       data.amount is number && data.amount > 0 && data.amount <= 100000 &&
       data.balanceAfter is number && data.balanceAfter >= 0 && data.balanceAfter <= 10000000 &&
       data.description is string && data.description.size() >= 2 && data.description.size() <= 200 &&
@@ -4652,12 +4694,12 @@ service cloud.firestore {
         isValidWalletTransaction(incoming()) &&
         incoming().id == txId &&
         incoming().createdAt == request.time && (
-          isAdmin() ||
           (
             incoming().userId == request.auth.uid &&
             incoming().createdBy == request.auth.uid &&
             incoming().type in ['order_debit', 'order_refund']
-          )
+          ) ||
+          isAdmin()
         )
       );
       allow update: if false;
@@ -4684,11 +4726,11 @@ service cloud.firestore {
         'createdBy',
         'createdAt'
       ]) &&
-      isValidId(data.id) &&
+      isBoundedId(data.id) &&
       data.text is string && data.text.size() >= 4 && data.text.size() <= 160 &&
       data.neighborhood is string && data.neighborhood.size() >= 1 && data.neighborhood.size() <= 60 &&
       data.storeName is string && data.storeName.size() >= 1 && data.storeName.size() <= 80 &&
-      data.eventType is string && data.eventType in ['new_order', 'promo', 'delivery'] &&
+      data.eventType in ['new_order', 'promo', 'delivery'] &&
       isBoundedId(data.createdBy) &&
       data.createdAt is timestamp;
     }

@@ -264,6 +264,9 @@ export interface StoreRecord {
   menuItems: MenuItem[];
   ownerUid?: string;
   loginEmail?: string;
+  commercialRegisterNumber?: string;
+  commercialRegisterImageUrl?: string;
+  taxCertificateNumber?: string;
   referredByAgentId?: string;
   referredByCode?: string;
   createdBy: string;
@@ -283,6 +286,9 @@ export interface StoreOperationalSettingsInput {
   lat?: number;
   lng?: number;
   imageUrl?: string;
+  commercialRegisterNumber?: string;
+  commercialRegisterImageUrl?: string;
+  taxCertificateNumber?: string;
 }
 
 export interface StoreCredentialRecord {
@@ -330,6 +336,9 @@ export interface NewStoreInput {
   deliveryTimeMinutes: number;
   imageKey?: StoreImageKey;
   imageUrl: string;
+  commercialRegisterNumber?: string;
+  commercialRegisterImageUrl?: string;
+  taxCertificateNumber?: string;
   lat?: number;
   lng?: number;
   firstItemName: string;
@@ -350,6 +359,9 @@ export interface AdminCreateStoreInput {
   deliveryFee?: number;
   deliveryTimeMinutes?: number;
   imageUrl: string;
+  commercialRegisterNumber?: string;
+  commercialRegisterImageUrl?: string;
+  taxCertificateNumber?: string;
   lat?: number;
   lng?: number;
   firstItemName?: string;
@@ -538,6 +550,15 @@ export type CourierVehicleType =
   | 'سكوتر كهربائي'
   | 'دراجة هوائية';
 
+export interface CourierKycDocumentsInput {
+  nationalIdFrontUrl: string;
+  nationalIdBackUrl: string;
+  drivingLicenseFrontUrl?: string;
+  drivingLicenseBackUrl?: string;
+  vehiclePhotoUrl: string;
+  selfieWithIdUrl: string;
+}
+
 export interface CourierRecord {
   id: string;
   name: string;
@@ -556,6 +577,15 @@ export interface CourierRecord {
   approvalStatus: CourierApprovalStatus;
   completedDeliveries: number;
   cancelledDeliveries?: number;
+  nationalIdFrontUrl?: string;
+  nationalIdBackUrl?: string;
+  drivingLicenseFrontUrl?: string;
+  drivingLicenseBackUrl?: string;
+  vehiclePhotoUrl?: string;
+  selfieWithIdUrl?: string;
+  kycSubmittedAtIso?: string;
+  kycRejectionReason?: string;
+  kycReviewedAtIso?: string;
   updatedBy: string;
   updatedAtIso: string;
 }
@@ -579,6 +609,12 @@ export interface CourierRegisterInput {
   neighborhood: string;
   lat?: number;
   lng?: number;
+  nationalIdFrontUrl?: string;
+  nationalIdBackUrl?: string;
+  drivingLicenseFrontUrl?: string;
+  drivingLicenseBackUrl?: string;
+  vehiclePhotoUrl?: string;
+  selfieWithIdUrl?: string;
 }
 
 export type AdminCreateCourierInput = CourierRegisterInput;
@@ -803,7 +839,9 @@ export interface StoreJoinRequestRecord {
   neighborhood: string;
   lat?: number;
   lng?: number;
+  commercialRegisterNumber?: string;
   commercialRegisterImage?: string;
+  taxCertificateNumber?: string;
   ownerUid?: string;
   rejectReason?: string;
   status: 'pending' | 'approved' | 'rejected';
@@ -820,7 +858,9 @@ export interface StoreJoinRequestInput {
   neighborhood: string;
   lat?: number;
   lng?: number;
+  commercialRegisterNumber?: string;
   commercialRegisterImage?: string;
+  taxCertificateNumber?: string;
 }
 
 
@@ -1306,12 +1346,21 @@ export interface InvitationRegisterPayload {
   address?: string;
   lat?: number;
   lng?: number;
-  // Store-specific optional registration fields
+  // Store-specific registration fields
   storeCategory?: StoreCategory;
   storeDescription?: string;
   isHomeFood?: boolean;
-  // Courier-specific optional registration fields
+  commercialRegisterNumber?: string;
+  commercialRegisterImageUrl?: string;
+  taxCertificateNumber?: string;
+  // Courier-specific registration & KYC fields
   vehicleType?: CourierVehicleType;
+  nationalIdFrontUrl?: string;
+  nationalIdBackUrl?: string;
+  drivingLicenseFrontUrl?: string;
+  drivingLicenseBackUrl?: string;
+  vehiclePhotoUrl?: string;
+  selfieWithIdUrl?: string;
 }
 
 export interface InvitationEmailApiResponse {

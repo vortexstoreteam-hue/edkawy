@@ -19,7 +19,9 @@ import {
   Plus,
   Search,
   Share2,
+  ShieldCheck,
   Star,
+  Trash2,
   Truck,
   Users,
 } from 'lucide-react';
@@ -62,6 +64,7 @@ interface StoreMenuViewProps {
   isLoadingProducts: boolean;
   productsError: string | null;
   cart: CartItem[];
+  currentUserUid?: string;
   isGuestCustomer?: boolean;
   userProfile?: UserProfileRecord | null;
   defaultCustomerName?: string;
@@ -73,6 +76,11 @@ interface StoreMenuViewProps {
   onUpsertSharedCartItem?: (
     cartId: string,
     product: ProductRecord,
+    delta: number
+  ) => Promise<void>;
+  onUpdateSharedCartEntryQuantity?: (
+    cartId: string,
+    entryId: string,
     delta: number
   ) => Promise<void>;
   onCheckoutSharedCart?: (sharedCart: SharedCartRecord) => void;
@@ -97,6 +105,7 @@ export function StoreMenuView({
   isLoadingProducts,
   productsError,
   cart,
+  currentUserUid = '',
   isGuestCustomer = false,
   userProfile = null,
   defaultCustomerName = '',
@@ -106,6 +115,7 @@ export function StoreMenuView({
   activeSharedCart = null,
   onStartGroupOrder,
   onUpsertSharedCartItem,
+  onUpdateSharedCartEntryQuantity,
   onCheckoutSharedCart,
   onLeaveSharedCart,
   onSubmitPharmacyOrder,
@@ -590,20 +600,75 @@ export function StoreMenuView({
                             {group.subtotal} ج.م
                           </span>
                         </div>
-                        <div className="space-y-1 text-xs text-slate-200">
-                          {group.entries.map((entry) => (
-                            <div
-                              key={entry.entryId}
-                              className="flex items-center justify-between gap-2"
-                            >
-                              <span>
-                                {entry.name} × {entry.quantity}
-                              </span>
-                              <span className="font-mono tabular-nums text-slate-300">
-                                {entry.price * entry.quantity} ج.م
-                              </span>
-                            </div>
-                          ))}
+                        <div className="space-y-2 text-xs text-slate-200">
+                          {group.entries.map((entry) => {
+                            const canModify =
+                              Boolean(onUpdateSharedCartEntryQuantity) &&
+                              activeSharedCart.status === 'open' &&
+                              (entry.participantUid === currentUserUid ||
+                                activeSharedCart.hostUid === currentUserUid);
+                            return (
+                              <div
+                                key={entry.entryId}
+                                className="flex items-center justify-between gap-2 bg-[#0F172A]/60 rounded-xl px-2.5 py-1.5 border border-[#334155]/60"
+                              >
+                                <span className="truncate">
+                                  {entry.name} × {entry.quantity}
+                                </span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="font-mono tabular-nums text-slate-300">
+                                    {entry.price * entry.quantity} ج.م
+                                  </span>
+                                  {canModify && onUpdateSharedCartEntryQuantity && (
+                                    <div className="inline-flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          void onUpdateSharedCartEntryQuantity(
+                                            activeSharedCart.id,
+                                            entry.entryId,
+                                            1
+                                          )
+                                        }
+                                        aria-label={`زيادة ${entry.name}`}
+                                        className="w-6 h-6 rounded-lg bg-[#FF6B00] hover:bg-[#E55F00] text-white flex items-center justify-center cursor-pointer"
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          void onUpdateSharedCartEntryQuantity(
+                                            activeSharedCart.id,
+                                            entry.entryId,
+                                            -1
+                                          )
+                                        }
+                                        aria-label={`إنقاص ${entry.name}`}
+                                        className="w-6 h-6 rounded-lg bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-white flex items-center justify-center cursor-pointer"
+                                      >
+                                        <Minus className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          void onUpdateSharedCartEntryQuantity(
+                                            activeSharedCart.id,
+                                            entry.entryId,
+                                            -entry.quantity
+                                          )
+                                        }
+                                        aria-label={`حذف ${entry.name}`}
+                                        className="w-6 h-6 rounded-lg bg-rose-950/60 border border-rose-500/40 text-rose-300 hover:bg-rose-900/60 flex items-center justify-center cursor-pointer"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
@@ -1326,6 +1391,91 @@ export function StoreMenuView({
                   )}
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Store Legal & Tax Identification Disclosure Footer Block */}
+        {(store.taxCertificateNumber || store.commercialRegisterNumber) && (
+          <section
+            aria-label="البيانات القانونية والضريبية الموثّقة للمتجر"
+            className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 space-y-4"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/15 border border-[#FF6B00]/30 text-[#FF6B00] flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-[#F8FAFC]">
+                    البيانات القانونية والضريبية الموثّقة للمتجر
+                  </h2>
+                  <p className="text-xs text-[#94A3B8]">
+                    نشاط تجاري موثّق ومعتمد رسمياً لدى إدارة منصة إدكاوي
+                  </p>
+                </div>
+              </div>
+              <span className="px-3 py-1.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-xs font-bold text-emerald-300">
+                متجر موثّق قانونياً
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {store.taxCertificateNumber && (
+                <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-4 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-[#94A3B8]">
+                      الرقم الضريبي (الشهادة الضريبية)
+                    </p>
+                    <p
+                      dir="ltr"
+                      className="text-sm sm:text-base font-mono font-bold text-[#F8FAFC] tabular-nums text-left mt-0.5 truncate"
+                    >
+                      {store.taxCertificateNumber}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard
+                        ?.writeText(store.taxCertificateNumber || '')
+                        .catch(() => {});
+                    }}
+                    aria-label="نسخ الرقم الضريبي"
+                    className="p-2 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer shrink-0"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {store.commercialRegisterNumber && (
+                <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-4 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-[#94A3B8]">
+                      رقم السجل التجاري
+                    </p>
+                    <p
+                      dir="ltr"
+                      className="text-sm sm:text-base font-mono font-bold text-[#F8FAFC] tabular-nums text-left mt-0.5 truncate"
+                    >
+                      {store.commercialRegisterNumber}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard
+                        ?.writeText(store.commercialRegisterNumber || '')
+                        .catch(() => {});
+                    }}
+                    aria-label="نسخ رقم السجل التجاري"
+                    className="p-2 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer shrink-0"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </section>
         )}

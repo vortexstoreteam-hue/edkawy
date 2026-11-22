@@ -104,6 +104,7 @@ import {
   updateCustomerAccountDetailsInFirestore,
   updateOrderCourierLocationInFirestore,
   updateProductStockInFirestore,
+  updateSharedCartEntryQuantityInFirestore,
   updateStoreDeliveryFeeByAdminInFirestore,
   updateStoreSettingsInFirestore,
   updateSystemMaintenanceByAdminInFirestore,
@@ -1077,33 +1078,49 @@ function EdkawiWorkspace() {
     autostartPreviewSession,
   ]);
 
-  // Listen to Collaborative Shared Cart when activeGroupCartId is present
+  // Listen to Collaborative Shared Cart when activeGroupCartId is present (non-anonymous users only)
   useEffect(() => {
     if (
       !activeGroupCartId ||
       !authReady ||
       !user ||
+      user.isAnonymous ||
+      autostartPreviewSession ||
       activePortal !== 'customer'
     ) {
       setActiveSharedCart(null);
       return;
     }
 
-    const unsubShared = listenToSharedCart(activeGroupCartId, (shared) => {
-      setActiveSharedCart(shared);
-      if (
-        shared &&
-        shared.status === 'open' &&
-        autoOpenedSharedStoreRef.current !== shared.id
-      ) {
-        autoOpenedSharedStoreRef.current = shared.id;
-        setSelectedStoreId(shared.storeId);
-        setActiveView('store_menu');
+    const unsubShared = listenToSharedCart(
+      activeGroupCartId,
+      (shared) => {
+        setActiveSharedCart(shared);
+        if (
+          shared &&
+          shared.status === 'open' &&
+          autoOpenedSharedStoreRef.current !== shared.id &&
+          !currentPath.startsWith('/group/')
+        ) {
+          autoOpenedSharedStoreRef.current = shared.id;
+          setSelectedStoreId(shared.storeId);
+          setActiveView('store_menu');
+        }
+      },
+      (err) => {
+        showNotice(formatAppErrorMessage(err, 'تعذر مزامنة السلة الجماعية.'));
       }
-    });
+    );
 
     return () => unsubShared();
-  }, [activeGroupCartId, authReady, user, activePortal]);
+  }, [
+    activeGroupCartId,
+    authReady,
+    user,
+    autostartPreviewSession,
+    activePortal,
+    currentPath,
+  ]);
 
   // Attach courier dispatch listener dynamically when courier's approvalStatus === 'approved'
   useEffect(() => {
@@ -1280,6 +1297,96 @@ function EdkawiWorkspace() {
     !user || Boolean(user.isAnonymous) || autostartPreviewSession;
   const cartItemCount = cart.reduce((sum, entry) => sum + entry.quantity, 0);
 
+  const pendingGroupRoomCode = useMemo(() => {
+    const m = currentPath.match(/^\/group\/([A-Za-z0-9_-]+)/);
+    return m && m[1] ? m[1].toUpperCase() : null;
+  }, [currentPath]);
+
+  const [savedPendingGroupJoin, setSavedPendingGroupJoin] = useState<boolean>(
+    () => {
+      if (typeof window === 'undefined') return false;
+      try {
+        return Boolean(
+          window.sessionStorage.getItem('edkawy_pending_group_target')
+        );
+      } catch {
+        return false;
+      }
+    }
+  );
+
+  // Persist pending group link (?groupCart=... or /group/:roomCode) before auth so friend returns right inside it
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (pendingGroupRoomCode) {
+      if (isGuestCustomer) {
+        try {
+          window.sessionStorage.setItem(
+            'edkawy_pending_group_target',
+            JSON.stringify({ type: 'room', value: pendingGroupRoomCode })
+          );
+          setSavedPendingGroupJoin(true);
+        } catch {
+          // Ignore storage error
+        }
+      }
+    } else if (activeGroupCartId && isGuestCustomer) {
+      try {
+        window.sessionStorage.setItem(
+          'edkawy_pending_group_target',
+          JSON.stringify({ type: 'cart', value: activeGroupCartId })
+        );
+        setSavedPendingGroupJoin(true);
+      } catch {
+        // Ignore storage error
+      }
+    }
+  }, [pendingGroupRoomCode, activeGroupCartId, isGuestCustomer]);
+
+  function consumePendingGroupTargetIfCustomer(role?: PortalRole): boolean {
+    if (role && role !== 'customer') return false;
+    if (typeof window === 'undefined') return false;
+    try {
+      const raw = window.sessionStorage.getItem('edkawy_pending_group_target');
+      if (!raw) return false;
+      window.sessionStorage.removeItem('edkawy_pending_group_target');
+      setSavedPendingGroupJoin(false);
+      const parsed = JSON.parse(raw) as { type?: string; value?: string };
+      if (parsed?.type === 'room' && parsed.value) {
+        navigateToPath(`/group/${parsed.value}`);
+        return true;
+      }
+      if (parsed?.type === 'cart' && parsed.value) {
+        autoOpenedSharedStoreRef.current = null;
+        setActiveGroupCartId(parsed.value);
+        syncGroupCartUrlParam(parsed.value);
+        return true;
+      }
+    } catch {
+      // Ignore storage error
+    }
+    return false;
+  }
+
+  // Auto-restore pending Group Cart / Room after reload / OAuth once authenticated
+  useEffect(() => {
+    if (
+      !authReady ||
+      !roleReady ||
+      pendingAuthTransition ||
+      isGuestCustomer ||
+      activePortal !== 'customer'
+    ) {
+      return;
+    }
+    consumePendingGroupTargetIfCustomer('customer');
+  }, [authReady, roleReady, pendingAuthTransition, isGuestCustomer, activePortal]);
+
+  const hasPendingGroupJoin =
+    Boolean(pendingGroupRoomCode) ||
+    Boolean(activeGroupCartId) ||
+    savedPendingGroupJoin;
+
   const activeCustomerStores = useMemo(
     () => allStores.filter((s) => s.isActive),
     [allStores]
@@ -1411,6 +1518,13 @@ function EdkawiWorkspace() {
       }
       if (
         resolvedRole === 'customer' &&
+        consumePendingGroupTargetIfCustomer('customer')
+      ) {
+        pendingReturnToCheckoutRef.current = false;
+        setHasPendingCartForCheckout(false);
+        showNotice('تم تسجيل الدخول وفتح السلة الجماعية بنجاح!');
+      } else if (
+        resolvedRole === 'customer' &&
         pendingReturnToCheckoutRef.current &&
         cart.length > 0
       ) {
@@ -1451,10 +1565,14 @@ function EdkawiWorkspace() {
           setOnboardingSkippedSession(false);
           setShowOnboardingModal(true);
         }
-        setActiveView('checkout');
-        showNotice(
-          'تم تسجيل الدخول بحساب Google بنجاح — يمكنك تأكيد طلبك الآن.'
-        );
+        if (consumePendingGroupTargetIfCustomer('customer')) {
+          showNotice('تم تسجيل الدخول بحساب Google وفتح السلة الجماعية بنجاح!');
+        } else {
+          setActiveView('checkout');
+          showNotice(
+            'تم تسجيل الدخول بحساب Google بنجاح — يمكنك تأكيد طلبك الآن.'
+          );
+        }
       } else {
         setCart([]);
         setActiveView('stores');
@@ -1492,12 +1610,16 @@ function EdkawiWorkspace() {
       setHasPendingCartForCheckout(false);
       setActivePortal(result.role);
       if (result.role === 'customer') {
-        setActiveView('checkout');
-        showNotice(
-          mode === 'register'
-            ? 'تم إنشاء حسابك بنجاح — يمكنك تأكيد طلبك الآن.'
-            : 'تم تسجيل الدخول بنجاح — يمكنك تأكيد طلبك الآن.'
-        );
+        if (consumePendingGroupTargetIfCustomer('customer')) {
+          showNotice('تم تسجيل الدخول وفتح السلة الجماعية بنجاح!');
+        } else {
+          setActiveView('checkout');
+          showNotice(
+            mode === 'register'
+              ? 'تم إنشاء حسابك بنجاح — يمكنك تأكيد طلبك الآن.'
+              : 'تم تسجيل الدخول بنجاح — يمكنك تأكيد طلبك الآن.'
+          );
+        }
       } else {
         setCart([]);
         setActiveView('stores');
@@ -1692,7 +1814,10 @@ function EdkawiWorkspace() {
     product: ProductRecord,
     delta: number
   ) {
-    if (!user) return;
+    if (!user || user.isAnonymous) {
+      showNotice('سجّل الدخول بحسابك أولاً للإضافة إلى السلة الجماعية.');
+      throw new Error('سجّل الدخول بحسابك أولاً للإضافة إلى السلة الجماعية.');
+    }
     const participantName =
       userProfile?.name || user.displayName || 'مشارك في الطلب';
     await upsertSharedCartItemInFirestore(
@@ -1702,6 +1827,22 @@ function EdkawiWorkspace() {
       product,
       delta
     );
+  }
+
+  async function handleUpdateSharedCartEntryQuantity(
+    cartId: string,
+    entryId: string,
+    delta: number
+  ) {
+    if (!user || user.isAnonymous) {
+      showNotice('سجّل الدخول بحسابك أولاً لتعديل السلة الجماعية.');
+      return;
+    }
+    try {
+      await updateSharedCartEntryQuantityInFirestore(cartId, entryId, delta);
+    } catch (err) {
+      showNotice(formatAppErrorMessage(err, 'تعذر تحديث كمية الصنف في السلة الجماعية.'));
+    }
   }
 
   function handleCheckoutSharedCart(sharedCart: SharedCartRecord) {
@@ -2347,10 +2488,22 @@ function EdkawiWorkspace() {
     return createdCred;
   }
 
-  async function handleApproveCourierByAdmin(courierId: string) {
+  async function handleApproveCourierByAdmin(
+    courierId: string,
+    nextStatus: CourierApprovalStatus = 'approved',
+    rejectionReason?: string
+  ) {
     if (!user) return;
-    await approveCourierByAdminInFirestore(courierId);
-    showNotice('تمت الموافقة على الكابتن واعتماد حسابه بنجاح!');
+    await approveCourierByAdminInFirestore(
+      courierId,
+      nextStatus,
+      rejectionReason
+    );
+    showNotice(
+      nextStatus === 'rejected'
+        ? 'تم رفض مستندات الكابتن وإخطاره بالسبب للتعديل.'
+        : 'تمت الموافقة على الكابتن واعتماد حسابه بنجاح!'
+    );
   }
 
   async function handleCreateCourierByAdmin(
@@ -2740,15 +2893,28 @@ function EdkawiWorkspace() {
     );
   }
 
-  // Collaborative Group Order Split-View Room: /group/:roomCode
+  // Collaborative Group Order Split-View Room: /group/:roomCode (Requires non-anonymous account!)
   const groupRoomMatch = currentPath.match(/^\/group\/([A-Za-z0-9_-]+)/);
-  if (groupRoomMatch && groupRoomMatch[1]) {
+  if (
+    groupRoomMatch &&
+    groupRoomMatch[1] &&
+    isAuthenticated &&
+    !isGuestCustomer &&
+    activePortal === 'customer'
+  ) {
     return (
       <GroupOrderRoomView
         roomCode={groupRoomMatch[1].toUpperCase()}
         currentUser={userProfile}
         onBackToHome={() => {
           navigateToPath('/');
+        }}
+        onOpenStoreMenu={(storeId, cartId) => {
+          autoOpenedSharedStoreRef.current = cartId;
+          setActiveGroupCartId(cartId);
+          setSelectedStoreId(storeId);
+          setActiveView('store_menu');
+          navigateToPath(`/?groupCart=${cartId}`);
         }}
         onProceedToCheckout={(sharedCart) => {
           handleCheckoutSharedCart(sharedCart);
@@ -2975,7 +3141,7 @@ function EdkawiWorkspace() {
       )}
 
       <main className="flex-1 w-full min-w-0">
-        {!isAuthenticated || (Boolean(pendingInviteToken) && isGuestCustomer) ? (
+        {!isAuthenticated || ((Boolean(pendingInviteToken) || hasPendingGroupJoin) && isGuestCustomer) ? (
           <AuthScreen
             onAuthTransitionStart={handleAuthTransitionStart}
             onAuthTransitionEnd={(resolvedRole, needsProfileCompletion) => {
@@ -2990,6 +3156,7 @@ function EdkawiWorkspace() {
             }}
             onFallbackGuestPreview={handleEnterGuestPreviewFallback}
             hasPendingCartForCheckout={hasPendingCartForCheckout}
+            hasPendingGroupJoin={hasPendingGroupJoin}
             onOpenLegalModal={handleOpenLegalModal}
             inviteToken={pendingInviteToken}
             onClearInviteToken={handleClearInviteTokenAndUrl}
@@ -3181,6 +3348,7 @@ function EdkawiWorkspace() {
             isLoadingProducts={isLoadingProducts}
             productsError={productsError}
             cart={cart}
+            currentUserUid={user?.uid || ''}
             isGuestCustomer={isGuestCustomer}
             userProfile={userProfile}
             defaultCustomerName={userProfile?.name || user?.displayName || ''}
@@ -3198,6 +3366,7 @@ function EdkawiWorkspace() {
             }
             onStartGroupOrder={handleStartGroupOrder}
             onUpsertSharedCartItem={handleUpsertSharedCartItem}
+            onUpdateSharedCartEntryQuantity={handleUpdateSharedCartEntryQuantity}
             onCheckoutSharedCart={handleCheckoutSharedCart}
             onLeaveSharedCart={handleLeaveSharedCart}
             onSubmitPharmacyOrder={handleSubmitPharmacyOrder}
