@@ -55,17 +55,17 @@ export const EdkawySplashScreen: React.FC<EdkawySplashScreenProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.02 }}
           transition={{ duration: 0.5, ease: 'easeInOut' }}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-between p-6 sm:p-10 select-none overflow-hidden bg-gradient-to-b from-[#0F172A] via-[#1E293B] to-[#0A0F1D] text-white"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-between p-6 sm:p-10 select-none overflow-hidden bg-gradient-to-b from-[#10192D] via-[#1E293B] to-[#0A0F1D] text-white"
           dir="rtl"
         >
           {/* Ambient Glowing Orbs */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/4 -right-24 w-96 h-96 rounded-full bg-[#FF6B00]/15 blur-3xl"
+            className="pointer-events-none absolute top-1/4 -right-24 w-96 h-96 rounded-full bg-[#FF7100]/15 blur-3xl"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute bottom-1/4 -left-24 w-96 h-96 rounded-full bg-[#FF6B00]/10 blur-3xl"
+            className="pointer-events-none absolute bottom-1/4 -left-24 w-96 h-96 rounded-full bg-[#FF7100]/10 blur-3xl"
           />
 
           {/* Top Badge */}
@@ -76,7 +76,7 @@ export const EdkawySplashScreen: React.FC<EdkawySplashScreenProps> = ({
             className="pt-4 flex items-center gap-2"
           >
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-orange-200 backdrop-blur-md shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-[#FF6B00]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#FF7100]" />
               <span>منصة مدينة إدكو الرقمية الموحدة</span>
             </span>
           </motion.div>
@@ -92,7 +92,7 @@ export const EdkawySplashScreen: React.FC<EdkawySplashScreenProps> = ({
                 damping: 20,
                 delay: 0.1,
               }}
-              className="relative p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-[0_0_50px_rgba(255,107,0,0.25)]"
+              className="relative p-5 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-[0_0_50px_rgba(255, 113, 0,0.25)]"
             >
               <AdkawyLogo variant="stacked" />
             </motion.div>
@@ -120,7 +120,7 @@ export const EdkawySplashScreen: React.FC<EdkawySplashScreenProps> = ({
             >
               <div className="w-full h-2.5 rounded-full bg-slate-800/80 p-0.5 overflow-hidden border border-white/10 shadow-inner">
                 <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-[#FF6B00] via-[#FF8533] to-[#FFA066] shadow-[0_0_12px_#FF6B00]"
+                  className="h-full rounded-full bg-gradient-to-r from-[#FF7100] via-[#FF8533] to-[#FFA066] shadow-[0_0_12px_#FF7100]"
                   initial={{ width: '10%' }}
                   animate={{ width: `${progress}%` }}
                   transition={{ ease: 'easeOut', duration: 0.3 }}

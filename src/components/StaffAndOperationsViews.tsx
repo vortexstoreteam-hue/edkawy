@@ -128,7 +128,7 @@ export const AdminStaffManagementSection: React.FC<
             setFormError(null);
             setShowAddModal(true);
           }}
-          className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+          className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
           <span>إضافة عضو جديد</span>
@@ -151,7 +151,7 @@ export const AdminStaffManagementSection: React.FC<
           <div className="overflow-x-auto">
             <table className="w-full text-right border-collapse">
               <thead>
-                <tr className="border-b border-[#334155] bg-[#0F172A] text-xs font-bold text-[#94A3B8]">
+                <tr className="border-b border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8]">
                   <th className="py-3.5 px-4">الاسم</th>
                   <th className="py-3.5 px-4">البريد الإلكتروني</th>
                   <th className="py-3.5 px-4">الدور الوظيفي</th>
@@ -164,7 +164,7 @@ export const AdminStaffManagementSection: React.FC<
                 {staffMembers.map((member) => (
                   <tr
                     key={member.id}
-                    className="hover:bg-[#0F172A]/50 transition-colors"
+                    className="hover:bg-[#10192D]/50 transition-colors"
                   >
                     <td className="py-3.5 px-4 font-bold text-[#F8FAFC]">
                       {member.name}
@@ -238,9 +238,9 @@ export const AdminStaffManagementSection: React.FC<
           aria-label="إضافة عضو جديد لفريق العمل"
         >
           <div className="w-full max-w-lg rounded-2xl bg-[#1E293B] border border-[#334155] shadow-2xl overflow-hidden">
-            <div className="px-5 py-4 bg-[#0F172A] border-b border-[#334155] text-[#F8FAFC] flex items-center justify-between">
+            <div className="px-5 py-4 bg-[#10192D] border-b border-[#334155] text-[#F8FAFC] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Plus className="w-5 h-5 text-[#FF6B00]" />
+                <Plus className="w-5 h-5 text-[#FF7100]" />
                 <h3 className="text-base font-bold text-[#F8FAFC]">
                   إضافة عضو جديد لفريق إدكاوي
                 </h3>
@@ -265,7 +265,7 @@ export const AdminStaffManagementSection: React.FC<
                   onChange={(e) => setName(e.target.value)}
                   placeholder="مثال: أحمد محمود"
                   maxLength={80}
-                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
                 />
               </div>
 
@@ -280,7 +280,7 @@ export const AdminStaffManagementSection: React.FC<
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="agent@edkawy.com"
                   maxLength={100}
-                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8] text-left"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8] text-left"
                 />
               </div>
 
@@ -295,7 +295,7 @@ export const AdminStaffManagementSection: React.FC<
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   maxLength={64}
-                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8] text-left"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8] text-left"
                 />
               </div>
 
@@ -306,7 +306,7 @@ export const AdminStaffManagementSection: React.FC<
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as StaffRole)}
-                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC]"
                 >
                   <option value="support_agent">
                     مسؤول دعم فني (يرى تذاكر الدعم المحولة إليه فقط)
@@ -328,14 +328,14 @@ export const AdminStaffManagementSection: React.FC<
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs font-bold text-[#F8FAFC] cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-xs font-bold text-[#F8FAFC] cursor-pointer"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="min-h-[44px] inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+                  className="min-h-[44px] inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   {creating ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -396,7 +396,7 @@ export const SupportAgentPortalView: React.FC<SupportAgentPortalViewProps> = ({
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] pb-16">
+    <div className="min-h-screen bg-[#10192D] text-[#F8FAFC] pb-16">
       <header className="sticky top-0 z-40 bg-[#1E293B]/95 backdrop-blur-md border-b border-[#334155] px-4 sm:px-8 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -410,9 +410,9 @@ export const SupportAgentPortalView: React.FC<SupportAgentPortalViewProps> = ({
             <button
               type="button"
               onClick={() => setConfirmLogoutOpen(true)}
-              className="min-h-[42px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer"
+              className="min-h-[42px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <LogOut className="w-4 h-4 text-[#FF6B00]" />
+              <LogOut className="w-4 h-4 text-[#FF7100]" />
               <span>تسجيل الخروج</span>
             </button>
           </div>
@@ -422,7 +422,7 @@ export const SupportAgentPortalView: React.FC<SupportAgentPortalViewProps> = ({
       <main className="max-w-7xl mx-auto px-4 sm:px-8 pt-6 space-y-5">
         <div className="rounded-2xl bg-[#1E293B] border border-[#334155] text-[#F8FAFC] p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[#FF6B00] text-white flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-[#FF7100] text-white flex items-center justify-center shrink-0">
               <Headphones className="w-6 h-6" />
             </div>
             <div>
@@ -434,7 +434,7 @@ export const SupportAgentPortalView: React.FC<SupportAgentPortalViewProps> = ({
               </p>
             </div>
           </div>
-          <div className="text-sm font-bold text-[#FF6B00] tabular-nums whitespace-nowrap shrink-0">
+          <div className="text-sm font-bold text-[#FF7100] tabular-nums whitespace-nowrap shrink-0">
             إجمالي التذاكر المسندة: {assignedTickets.length}
           </div>
         </div>
@@ -525,7 +525,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
   }, [orders, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] pb-16">
+    <div className="min-h-screen bg-[#10192D] text-[#F8FAFC] pb-16">
       <header className="sticky top-0 z-40 bg-[#1E293B]/95 backdrop-blur-md border-b border-[#334155] px-4 sm:px-8 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -539,9 +539,9 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
             <button
               type="button"
               onClick={() => setConfirmLogoutOpen(true)}
-              className="min-h-[42px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer"
+              className="min-h-[42px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <LogOut className="w-4 h-4 text-[#FF6B00]" />
+              <LogOut className="w-4 h-4 text-[#FF7100]" />
               <span>تسجيل الخروج</span>
             </button>
           </div>
@@ -559,7 +559,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
           </div>
           <div className="rounded-2xl border border-[#334155] bg-[#1E293B] p-4">
             <p className="text-xs text-[#94A3B8]">جاهزة للاستلام أو تسعير مشوار</p>
-            <p className="mt-1 text-2xl font-bold text-[#FF6B00] tabular-nums">
+            <p className="mt-1 text-2xl font-bold text-[#FF7100] tabular-nums">
               {
                 orders.filter(
                   (o) =>
@@ -591,7 +591,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
               onClick={() => setActiveTab('orders')}
               className={`min-h-[42px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer ${
                 activeTab === 'orders'
-                  ? 'bg-[#FF6B00] text-white'
+                  ? 'bg-[#FF7100] text-white'
                   : 'text-[#F8FAFC]'
               }`}
             >
@@ -603,7 +603,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
               onClick={() => setActiveTab('couriers')}
               className={`min-h-[42px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer ${
                 activeTab === 'couriers'
-                  ? 'bg-[#FF6B00] text-white'
+                  ? 'bg-[#FF7100] text-white'
                   : 'text-[#F8FAFC]'
               }`}
             >
@@ -631,7 +631,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-right border-collapse">
                 <thead>
-                  <tr className="border-b border-[#334155] bg-[#0F172A] text-xs font-bold text-[#94A3B8]">
+                  <tr className="border-b border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8]">
                     <th className="py-3.5 px-4">الطلب / المتجر</th>
                     <th className="py-3.5 px-4">العميل والمنطقة</th>
                     <th className="py-3.5 px-4">الإجمالي</th>
@@ -648,7 +648,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
                     return (
                       <tr
                         key={order.id}
-                        className="hover:bg-[#0F172A]/50 transition-colors"
+                        className="hover:bg-[#10192D]/50 transition-colors"
                       >
                         <td className="py-3.5 px-4">
                           <p className="font-bold text-[#F8FAFC]">
@@ -671,7 +671,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
                             ? `${order.totalAmount} ج.م`
                             : 'بانتظار التسعير'}
                         </td>
-                        <td className="py-3.5 px-4 text-xs font-bold text-[#FF6B00]">
+                        <td className="py-3.5 px-4 text-xs font-bold text-[#FF7100]">
                           {getOrderStatusLabel(order.status)}
                         </td>
                         <td className="py-3.5 px-4">
@@ -695,7 +695,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
                                   setBusyId(null);
                                 }
                               }}
-                              className="min-h-[38px] px-2.5 py-1.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs text-[#F8FAFC]"
+                              className="min-h-[38px] px-2.5 py-1.5 rounded-2xl border border-[#334155] bg-[#10192D] text-xs text-[#F8FAFC]"
                             >
                               <option value="">
                                 {order.courierName
@@ -751,7 +751,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-right border-collapse">
                 <thead>
-                  <tr className="border-b border-[#334155] bg-[#0F172A] text-xs font-bold text-[#94A3B8]">
+                  <tr className="border-b border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8]">
                     <th className="py-3.5 px-4">الكابتن</th>
                     <th className="py-3.5 px-4">المركبة والمنطقة</th>
                     <th className="py-3.5 px-4">التوصيلات المكتملة</th>
@@ -761,7 +761,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
                 </thead>
                 <tbody className="divide-y divide-[#334155] text-sm">
                   {couriers.map((courier) => (
-                    <tr key={courier.id} className="hover:bg-[#0F172A]/50">
+                    <tr key={courier.id} className="hover:bg-[#10192D]/50">
                       <td className="py-3.5 px-4 font-bold text-[#F8FAFC]">
                         {courier.name}
                       </td>
@@ -789,7 +789,7 @@ export const OperationsPortalView: React.FC<OperationsPortalViewProps> = ({
                             onClick={() =>
                               onUpdateCourierApproval(courier.id, 'approved')
                             }
-                            className="min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer"
+                            className="min-h-[36px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>اعتماد الكابتن</span>

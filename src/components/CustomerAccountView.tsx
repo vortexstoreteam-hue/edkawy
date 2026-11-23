@@ -643,7 +643,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
         className="max-w-3xl mx-auto p-6 pb-28 edkawi-page-enter space-y-6"
       >
         <div className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#FF6B00]/15 text-[#FF6B00] flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-[#FF7100]/15 text-[#FF7100] flex items-center justify-center mx-auto">
             <UserIcon className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold text-[#F8FAFC]">حسابي في إدكاوي</h1>
@@ -654,7 +654,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             <button
               type="button"
               onClick={onOpenAuthModal}
-              className="min-h-[48px] px-6 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-base font-bold cursor-pointer"
+              className="min-h-[48px] px-6 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-base font-bold cursor-pointer"
             >
               تسجيل الدخول أو إنشاء حساب
             </button>
@@ -662,9 +662,9 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenLegalModal('privacy')}
-                className="min-h-[48px] px-5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm font-bold flex items-center gap-2 cursor-pointer"
+                className="min-h-[48px] px-5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm font-bold flex items-center gap-2 cursor-pointer"
               >
-                <Scale className="w-4 h-4 text-[#FF6B00]" />
+                <Scale className="w-4 h-4 text-[#FF7100]" />
                 <span>الخصوصية والشروط</span>
               </button>
             )}
@@ -727,7 +727,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
       <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 space-y-5 shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <div className="w-16 h-16 rounded-2xl bg-[#FF6B00] text-white flex items-center justify-center text-2xl font-bold shrink-0 shadow-md">
+            <div className="w-16 h-16 rounded-2xl bg-[#FF7100] text-white flex items-center justify-center text-2xl font-bold shrink-0 shadow-md">
               {resolvedName.slice(0, 1)}
             </div>
             <div className="min-w-0 space-y-1">
@@ -736,12 +736,12 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
               </h1>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#94A3B8]">
                 <span className="inline-flex items-center gap-1.5 tabular-nums">
-                  <Phone className="w-4 h-4 text-[#FF6B00]" />
+                  <Phone className="w-4 h-4 text-[#FF7100]" />
                   {resolvedPhone}
                 </span>
                 <span aria-hidden="true">·</span>
                 <span className="inline-flex items-center gap-1.5 truncate">
-                  <Mail className="w-4 h-4 text-[#FF6B00]" />
+                  <Mail className="w-4 h-4 text-[#FF7100]" />
                   {resolvedEmail}
                 </span>
               </div>
@@ -751,9 +751,9 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
           <button
             type="button"
             onClick={() => setIsEditingProfile((prev) => !prev)}
-            className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] hover:border-[#FF6B00] text-sm font-bold text-[#F8FAFC] inline-flex items-center gap-2 cursor-pointer shrink-0"
+            className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] hover:border-[#FF7100] text-sm font-bold text-[#F8FAFC] inline-flex items-center gap-2 cursor-pointer shrink-0"
           >
-            <Pencil className="w-4 h-4 text-[#FF6B00]" />
+            <Pencil className="w-4 h-4 text-[#FF7100]" />
             <span>{isEditingProfile ? 'إلغاء' : 'تعديل'}</span>
           </button>
         </div>
@@ -764,7 +764,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             <p className="text-xs font-semibold text-[#94A3B8]">كود العميل</p>
             <span
               dir="ltr"
-              className="font-mono text-xl font-bold tracking-wider tabular-nums text-[#FF6B00]"
+              className="font-mono text-xl font-bold tracking-wider tabular-nums text-[#FF7100]"
             >
               {resolvedCustomerCode || 'جارٍ التوليد...'}
             </span>
@@ -779,7 +779,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
               setCopiedCustomerCode(true);
               window.setTimeout(() => setCopiedCustomerCode(false), 2200);
             }}
-            className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer shrink-0"
+            className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer shrink-0"
           >
             {copiedCustomerCode ? (
               <>
@@ -810,7 +810,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 placeholder="مثال: أحمد محمد"
-                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC]"
               />
             </div>
             <div>
@@ -824,14 +824,14 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
                 placeholder="01012345678"
-                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-right tabular-nums text-[#F8FAFC]"
+                className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-right tabular-nums text-[#F8FAFC]"
               />
             </div>
             <div className="sm:col-span-2 flex justify-end">
               <button
                 type="submit"
                 disabled={isSavingProfile}
-                className="min-h-[46px] px-6 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-base font-bold inline-flex items-center gap-2 cursor-pointer"
+                className="min-h-[46px] px-6 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-base font-bold inline-flex items-center gap-2 cursor-pointer"
               >
                 <Check className="w-4 h-4" />
                 <span>{isSavingProfile ? 'جارٍ الحفظ...' : 'حفظ التغييرات'}</span>
@@ -876,7 +876,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                       setEmailOtpBusy(null);
                     }
                   }}
-                  className="min-h-[40px] px-3.5 py-1.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs font-bold cursor-pointer whitespace-nowrap"
+                  className="min-h-[40px] px-3.5 py-1.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs font-bold cursor-pointer whitespace-nowrap"
                 >
                   {emailOtpBusy === 'request'
                     ? 'جارٍ الإرسال...'
@@ -906,7 +906,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                       setEmailOtpBusy(null);
                     }
                   }}
-                  className="min-h-[40px] px-3.5 py-1.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-bold cursor-pointer whitespace-nowrap"
+                  className="min-h-[40px] px-3.5 py-1.5 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-bold cursor-pointer whitespace-nowrap"
                 >
                   {emailOtpBusy === 'link'
                     ? 'جارٍ الإرسال...'
@@ -965,13 +965,13 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                     setEmailOtpCode(e.target.value.replace(/\D/g, '').slice(0, 4))
                   }
                   placeholder="أدخل كود ٤ أرقام"
-                  className="min-h-[42px] w-44 px-3.5 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm font-mono text-center tabular-nums text-[#F8FAFC]"
+                  className="min-h-[42px] w-44 px-3.5 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-sm font-mono text-center tabular-nums text-[#F8FAFC]"
                   required
                 />
                 <button
                   type="submit"
                   disabled={emailOtpBusy !== null || emailOtpCode.length !== 4}
-                  className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs font-bold cursor-pointer"
+                  className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs font-bold cursor-pointer"
                 >
                   {emailOtpBusy === 'verify' ? 'جارٍ التحقق...' : 'تأكيد الكود'}
                 </button>
@@ -985,7 +985,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
       <section className="rounded-2xl bg-[#1E293B] border border-[#334155] text-[#F8FAFC] p-6 space-y-5 shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 text-xs font-bold text-[#FF6B00]">
+            <div className="inline-flex items-center gap-2 text-xs font-bold text-[#FF7100]">
               <Award className="w-4 h-4" />
               <span>نقاط ومكافآت إدكاوي</span>
             </div>
@@ -1007,9 +1007,9 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
               <button
                 type="button"
                 onClick={onOpenDailySpin}
-                className="min-h-[44px] px-4 py-2 rounded-2xl bg-[#0F172A] hover:border-[#FF6B00] border border-[#334155] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                className="min-h-[44px] px-4 py-2 rounded-2xl bg-[#10192D] hover:border-[#FF7100] border border-[#334155] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
               >
-                <Coins className="w-4 h-4 text-[#FF6B00]" />
+                <Coins className="w-4 h-4 text-[#FF7100]" />
                 <span>عجلة الحظ</span>
               </button>
             )}
@@ -1018,7 +1018,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
               type="button"
               disabled={isRedeemingPoints || currentPoints < 100}
               onClick={handleRedeemPointsClick}
-              className="min-h-[44px] px-5 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-45 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
+              className="min-h-[44px] px-5 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-45 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
             >
               <Gift className="w-4 h-4" />
               <span>
@@ -1033,12 +1033,12 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
         </div>
 
         {redeemedCouponCode && (
-          <div className="rounded-2xl bg-[#0F172A] border border-[#334155] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="rounded-2xl bg-[#10192D] border border-[#334155] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-0.5">
               <p className="text-xs text-[#94A3B8]">
                 قسيمة الخصم جاهزة للاستخدام عند الطلب:
               </p>
-              <p className="text-base font-extrabold tracking-wider text-[#FF6B00] font-mono">
+              <p className="text-base font-extrabold tracking-wider text-[#FF7100] font-mono">
                 {redeemedCouponCode}
               </p>
             </div>
@@ -1049,7 +1049,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 setCopiedCode(true);
                 setTimeout(() => setCopiedCode(false), 2000);
               }}
-              className="min-h-[38px] px-3.5 py-1.5 rounded-2xl bg-[#FF6B00] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              className="min-h-[38px] px-3.5 py-1.5 rounded-2xl bg-[#FF7100] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
             >
               <Copy className="w-3.5 h-3.5" />
               <span>{copiedCode ? 'تم النسخ!' : 'نسخ الكود'}</span>
@@ -1059,7 +1059,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
 
         <div className="pt-4 border-t border-[#334155] flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#FF6B00]">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#FF7100]">
               <Flame className="w-4 h-4" />
               <span>تحدي ٥ طلبات متتالية: {currentStreak} / 5</span>
             </div>
@@ -1077,8 +1077,8 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                   key={step}
                   className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-extrabold tabular-nums border ${
                     completed
-                      ? 'bg-[#FF6B00] border-[#FF6B00] text-white'
-                      : 'bg-[#0F172A] border-[#334155] text-[#94A3B8]'
+                      ? 'bg-[#FF7100] border-[#FF7100] text-white'
+                      : 'bg-[#10192D] border-[#334155] text-[#94A3B8]'
                   }`}
                 >
                   {completed ? <Check className="w-4 h-4" /> : step}
@@ -1098,16 +1098,16 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             onClick={() => switchSectionAndScroll('wallet')}
             className={`w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 transition-colors cursor-pointer ${
               activeSection === 'wallet'
-                ? 'bg-[#0F172A]/80'
-                : 'hover:bg-[#0F172A]/60'
+                ? 'bg-[#10192D]/80'
+                : 'hover:bg-[#10192D]/60'
             }`}
           >
             <span className="inline-flex items-center gap-3 text-base font-bold text-[#F8FAFC]">
-              <Wallet className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <Wallet className="w-5 h-5 text-[#FF7100] shrink-0" />
               <span>محفظتي والشحن</span>
             </span>
             <span className="inline-flex items-center gap-2 shrink-0">
-              <span className="text-xs font-bold text-[#FF6B00] tabular-nums">
+              <span className="text-xs font-bold text-[#FF7100] tabular-nums">
                 {(userProfile?.walletBalance ?? 0).toFixed(0)} ج.م
               </span>
               <ChevronLeft className="w-5 h-5 text-[#94A3B8]" />
@@ -1121,10 +1121,10 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
               setIsEditingProfile(true);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 hover:bg-[#0F172A]/60 transition-colors cursor-pointer"
+            className="w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 hover:bg-[#10192D]/60 transition-colors cursor-pointer"
           >
             <span className="inline-flex items-center gap-3 text-base font-bold text-[#F8FAFC]">
-              <Pencil className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <Pencil className="w-5 h-5 text-[#FF7100] shrink-0" />
               <span>تعديل البيانات</span>
             </span>
             <ChevronLeft className="w-5 h-5 text-[#94A3B8] shrink-0" />
@@ -1136,12 +1136,12 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             onClick={() => switchSectionAndScroll('addresses')}
             className={`w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 transition-colors cursor-pointer ${
               activeSection === 'addresses'
-                ? 'bg-[#0F172A]/80'
-                : 'hover:bg-[#0F172A]/60'
+                ? 'bg-[#10192D]/80'
+                : 'hover:bg-[#10192D]/60'
             }`}
           >
             <span className="inline-flex items-center gap-3 text-base font-bold text-[#F8FAFC]">
-              <MapPin className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <MapPin className="w-5 h-5 text-[#FF7100] shrink-0" />
               <span>عناويني</span>
             </span>
             <span className="inline-flex items-center gap-2 shrink-0">
@@ -1158,12 +1158,12 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             onClick={() => switchSectionAndScroll('favorites')}
             className={`w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 transition-colors cursor-pointer ${
               activeSection === 'favorites'
-                ? 'bg-[#0F172A]/80'
-                : 'hover:bg-[#0F172A]/60'
+                ? 'bg-[#10192D]/80'
+                : 'hover:bg-[#10192D]/60'
             }`}
           >
             <span className="inline-flex items-center gap-3 text-base font-bold text-[#F8FAFC]">
-              <Heart className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <Heart className="w-5 h-5 text-[#FF7100] shrink-0" />
               <span>المفضلة</span>
             </span>
             <span className="inline-flex items-center gap-2 shrink-0">
@@ -1184,10 +1184,10 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 window.scrollTo({ top: 300, behavior: 'smooth' });
               }
             }}
-            className="w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 hover:bg-[#0F172A]/60 transition-colors cursor-pointer"
+            className="w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 hover:bg-[#10192D]/60 transition-colors cursor-pointer"
           >
             <span className="inline-flex items-center gap-3 text-base font-bold text-[#F8FAFC]">
-              <Flame className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <Flame className="w-5 h-5 text-[#FF7100] shrink-0" />
               <span>الإعلانات</span>
             </span>
             <ChevronLeft className="w-5 h-5 text-[#94A3B8] shrink-0" />
@@ -1199,12 +1199,12 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             onClick={() => switchSectionAndScroll('support')}
             className={`w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 transition-colors cursor-pointer ${
               activeSection === 'support'
-                ? 'bg-[#0F172A]/80'
-                : 'hover:bg-[#0F172A]/60'
+                ? 'bg-[#10192D]/80'
+                : 'hover:bg-[#10192D]/60'
             }`}
           >
             <span className="inline-flex items-center gap-3 text-base font-bold text-[#F8FAFC]">
-              <Headphones className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <Headphones className="w-5 h-5 text-[#FF7100] shrink-0" />
               <span>الدعم</span>
             </span>
             <ChevronLeft className="w-5 h-5 text-[#94A3B8] shrink-0" />
@@ -1221,10 +1221,10 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }
             }}
-            className="w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 hover:bg-[#0F172A]/60 transition-colors cursor-pointer"
+            className="w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 hover:bg-[#10192D]/60 transition-colors cursor-pointer"
           >
             <span className="inline-flex items-center gap-3 text-base font-bold text-[#F8FAFC]">
-              <Store className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <Store className="w-5 h-5 text-[#FF7100] shrink-0" />
               <span>انضمام المتاجر</span>
             </span>
             <ChevronLeft className="w-5 h-5 text-[#94A3B8] shrink-0" />
@@ -1236,12 +1236,12 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             onClick={() => switchSectionAndScroll('privacy')}
             className={`w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 transition-colors cursor-pointer ${
               activeSection === 'privacy'
-                ? 'bg-[#0F172A]/80'
-                : 'hover:bg-[#0F172A]/60'
+                ? 'bg-[#10192D]/80'
+                : 'hover:bg-[#10192D]/60'
             }`}
           >
             <span className="inline-flex items-center gap-3 text-base font-bold text-[#F8FAFC]">
-              <Lock className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <Lock className="w-5 h-5 text-[#FF7100] shrink-0" />
               <span>الخصوصية وحذف الحساب</span>
             </span>
             <ChevronLeft className="w-5 h-5 text-[#94A3B8] shrink-0" />
@@ -1251,10 +1251,10 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
           <button
             type="button"
             onClick={() => setIsSignOutConfirmOpen(true)}
-            className="w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 hover:bg-[#0F172A]/60 transition-colors cursor-pointer"
+            className="w-full min-h-[56px] px-5 py-4 flex items-center justify-between gap-4 hover:bg-[#10192D]/60 transition-colors cursor-pointer"
           >
             <span className="inline-flex items-center gap-3 text-base font-bold text-[#F8FAFC]">
-              <LogOut className="w-5 h-5 text-[#FF6B00] shrink-0" />
+              <LogOut className="w-5 h-5 text-[#FF7100] shrink-0" />
               <span>تسجيل خروج</span>
             </span>
             <ChevronLeft className="w-5 h-5 text-[#94A3B8] shrink-0" />
@@ -1283,7 +1283,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             <div className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 space-y-5 shadow-lg">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <span className="inline-flex items-center gap-2 text-xs font-bold text-[#FF6B00]">
+                  <span className="inline-flex items-center gap-2 text-xs font-bold text-[#FF7100]">
                     <Wallet className="w-4 h-4" />
                     <span>رصيد محفظة إدكاوي</span>
                   </span>
@@ -1299,13 +1299,13 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 </div>
 
                 {resolvedCustomerCode && (
-                  <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-4 space-y-2 min-w-[240px]">
+                  <div className="rounded-2xl bg-[#10192D] border border-[#334155] p-4 space-y-2 min-w-[240px]">
                     <p className="text-xs font-bold text-[#F8FAFC] flex items-center gap-1.5">
-                      <Share2 className="w-4 h-4 text-[#FF6B00]" />
+                      <Share2 className="w-4 h-4 text-[#FF7100]" />
                       <span>شارك كود الدعوة الخاص بك</span>
                     </p>
                     <div className="flex items-center justify-between gap-2">
-                      <span dir="ltr" className="font-mono text-sm font-bold text-[#FF6B00]">
+                      <span dir="ltr" className="font-mono text-sm font-bold text-[#FF7100]">
                         {resolvedCustomerCode}
                       </span>
                       <button
@@ -1323,7 +1323,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                           setCopiedReferralLink(true);
                           window.setTimeout(() => setCopiedReferralLink(false), 2200);
                         }}
-                        className="min-h-[36px] px-3 py-1.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                        className="min-h-[36px] px-3 py-1.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                       >
                         {copiedReferralLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{copiedReferralLink ? 'تم النسخ' : 'نسخ ومشاركة'}</span>
@@ -1341,7 +1341,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             >
               <div className="space-y-1">
                 <h2 className="text-xl font-bold text-[#F8FAFC] flex items-center gap-2">
-                  <Receipt className="w-5 h-5 text-[#FF6B00]" />
+                  <Receipt className="w-5 h-5 text-[#FF7100]" />
                   <span>طلب شحن المحفظة (فودافون كاش / إنستاباي)</span>
                 </h2>
                 <p className="text-xs text-[#94A3B8] leading-relaxed">
@@ -1362,8 +1362,8 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                     onClick={() => setTopupMethod(opt.id)}
                     className={`min-h-[46px] px-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-bold cursor-pointer transition-colors ${
                       topupMethod === opt.id
-                        ? 'bg-[#FF6B00] border-[#FF6B00] text-white'
-                        : 'bg-[#0F172A] border-[#334155] text-[#F8FAFC] hover:border-[#FF6B00]'
+                        ? 'bg-[#FF7100] border-[#FF7100] text-white'
+                        : 'bg-[#10192D] border-[#334155] text-[#F8FAFC] hover:border-[#FF7100]'
                     }`}
                   >
                     {opt.label}
@@ -1375,8 +1375,8 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 <div
                   className={`rounded-2xl border p-4 flex items-center justify-between gap-3 transition-colors ${
                     topupMethod === 'vodafone_cash'
-                      ? 'bg-[#FF6B00]/10 border-[#FF6B00]'
-                      : 'bg-[#0F172A] border-[#334155]'
+                      ? 'bg-[#FF7100]/10 border-[#FF7100]'
+                      : 'bg-[#10192D] border-[#334155]'
                   }`}
                 >
                   <div className="space-y-0.5">
@@ -1398,7 +1398,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                       setCopiedTransferNum('vodafone');
                       window.setTimeout(() => setCopiedTransferNum(null), 2000);
                     }}
-                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer shrink-0"
                   >
                     {copiedTransferNum === 'vodafone' ? (
                       <>
@@ -1407,7 +1407,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3.5 h-3.5 text-[#FF6B00]" />
+                        <Copy className="w-3.5 h-3.5 text-[#FF7100]" />
                         <span>نسخ</span>
                       </>
                     )}
@@ -1417,8 +1417,8 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 <div
                   className={`rounded-2xl border p-4 flex items-center justify-between gap-3 transition-colors ${
                     topupMethod === 'instapay'
-                      ? 'bg-[#FF6B00]/10 border-[#FF6B00]'
-                      : 'bg-[#0F172A] border-[#334155]'
+                      ? 'bg-[#FF7100]/10 border-[#FF7100]'
+                      : 'bg-[#10192D] border-[#334155]'
                   }`}
                 >
                   <div className="space-y-0.5">
@@ -1440,7 +1440,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                       setCopiedTransferNum('instapay');
                       window.setTimeout(() => setCopiedTransferNum(null), 2000);
                     }}
-                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+                    className="min-h-[38px] px-3 py-1.5 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer shrink-0"
                   >
                     {copiedTransferNum === 'instapay' ? (
                       <>
@@ -1449,7 +1449,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3.5 h-3.5 text-[#FF6B00]" />
+                        <Copy className="w-3.5 h-3.5 text-[#FF7100]" />
                         <span>نسخ</span>
                       </>
                     )}
@@ -1470,7 +1470,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                     value={topupAmount}
                     onChange={(e) => setTopupAmount(e.target.value)}
                     placeholder="100"
-                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] tabular-nums"
+                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] tabular-nums"
                   />
                 </div>
                 <div>
@@ -1486,7 +1486,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                     value={topupSenderPhone}
                     onChange={(e) => setTopupSenderPhone(e.target.value)}
                     placeholder={topupMethod === 'instapay' ? 'name@instapay' : '01012345678'}
-                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] text-right placeholder:text-[#94A3B8]"
+                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] text-right placeholder:text-[#94A3B8]"
                   />
                 </div>
                 <div>
@@ -1500,7 +1500,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                     value={topupReference}
                     onChange={(e) => setTopupReference(e.target.value)}
                     placeholder="TXN-984512"
-                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] text-right placeholder:text-[#94A3B8]"
+                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] text-right placeholder:text-[#94A3B8]"
                   />
                 </div>
               </div>
@@ -1517,7 +1517,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
               <button
                 type="submit"
                 disabled={isSubmittingTopup}
-                className="w-full min-h-[48px] px-6 py-3 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full min-h-[48px] px-6 py-3 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmittingTopup && <Loader2 className="w-4 h-4 animate-spin" />}
                 <span>{isSubmittingTopup ? 'جارٍ إرسال الطلب...' : 'إرسال طلب الشحن للمراجعة'}</span>
@@ -1538,11 +1538,11 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                   {walletTopups.map((req) => (
                     <div
                       key={req.id}
-                      className="rounded-2xl bg-[#0F172A] border border-[#334155] p-4 flex flex-wrap items-center justify-between gap-3"
+                      className="rounded-2xl bg-[#10192D] border border-[#334155] p-4 flex flex-wrap items-center justify-between gap-3"
                     >
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-[#F8FAFC]">
-                          <span className="tabular-nums text-[#FF6B00]">{req.amount} ج.م</span>
+                          <span className="tabular-nums text-[#FF7100]">{req.amount} ج.م</span>
                           <span className="text-[#94A3B8]">·</span>
                           <span>{req.method === 'instapay' ? 'إنستاباي' : 'فودافون كاش'}</span>
                         </div>
@@ -1593,7 +1593,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                     return (
                       <div
                         key={tx.id}
-                        className="rounded-2xl bg-[#0F172A] border border-[#334155] p-4 flex items-center justify-between gap-3"
+                        className="rounded-2xl bg-[#10192D] border border-[#334155] p-4 flex items-center justify-between gap-3"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div
@@ -1651,13 +1651,13 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                   {savedAddresses.map((addr) => (
                     <div
                       key={addr.id}
-                      className="rounded-2xl bg-[#0F172A] border border-[#334155] p-4 flex flex-wrap items-center justify-between gap-3"
+                      className="rounded-2xl bg-[#10192D] border border-[#334155] p-4 flex flex-wrap items-center justify-between gap-3"
                     >
                       <div className="space-y-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-[#F8FAFC]">
                           <span>{addr.label}</span>
                           <span className="text-[#94A3B8]">·</span>
-                          <span className="text-xs font-bold text-[#FF6B00]">
+                          <span className="text-xs font-bold text-[#FF7100]">
                             {addr.neighborhood}
                           </span>
                           {addr.isDefault && (
@@ -1677,7 +1677,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleSetDefaultAddress(addr)}
-                            className="min-h-[40px] px-3.5 py-1.5 rounded-2xl border border-[#334155] bg-[#1E293B] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] cursor-pointer"
+                            className="min-h-[40px] px-3.5 py-1.5 rounded-2xl border border-[#334155] bg-[#1E293B] hover:border-[#FF7100] text-xs font-bold text-[#F8FAFC] cursor-pointer"
                           >
                             تعيين كافتراضي
                           </button>
@@ -1686,7 +1686,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                           type="button"
                           onClick={() => handleStartEditAddress(addr)}
                           aria-label={`تعديل ${addr.label}`}
-                          className="min-h-[40px] min-w-[40px] rounded-2xl border border-[#334155] bg-[#1E293B] hover:border-[#FF6B00] text-[#FF6B00] flex items-center justify-center cursor-pointer"
+                          className="min-h-[40px] min-w-[40px] rounded-2xl border border-[#334155] bg-[#1E293B] hover:border-[#FF7100] text-[#FF7100] flex items-center justify-center cursor-pointer"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
@@ -1713,9 +1713,9 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-xl font-bold text-[#F8FAFC] flex items-center gap-2">
                   {editingAddressId ? (
-                    <Pencil className="w-5 h-5 text-[#FF6B00]" />
+                    <Pencil className="w-5 h-5 text-[#FF7100]" />
                   ) : (
-                    <Plus className="w-5 h-5 text-[#FF6B00]" />
+                    <Plus className="w-5 h-5 text-[#FF7100]" />
                   )}
                   <span>{editingAddressId ? 'تعديل العنوان المحفوظ' : 'إضافة عنوان جديد'}</span>
                 </h3>
@@ -1725,7 +1725,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                     <button
                       type="button"
                       onClick={handleCancelEditAddress}
-                      className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#94A3B8] hover:text-[#F8FAFC] text-xs font-bold cursor-pointer"
+                      className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-[#94A3B8] hover:text-[#F8FAFC] text-xs font-bold cursor-pointer"
                     >
                       إلغاء التعديل
                     </button>
@@ -1734,7 +1734,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                     type="button"
                     onClick={handleUseCurrentGps}
                     disabled={locatingGps}
-                    className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                    className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
                   >
                     {locatingGps ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1797,7 +1797,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                       setNewAddrLng(coords.lng);
                       setNewAddrWaterPin(false);
                     }}
-                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm font-semibold text-[#F8FAFC]"
+                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm font-semibold text-[#F8FAFC]"
                   >
                     {EDKU_NEIGHBORHOODS.map((area) => (
                       <option key={area} value={area}>
@@ -1816,7 +1816,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                     value={newAddrLabel}
                     onChange={(e) => setNewAddrLabel(e.target.value)}
                     placeholder="المنزل / العمل"
-                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
                   />
                 </div>
               </div>
@@ -1831,14 +1831,14 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                   value={newAddrText}
                   onChange={(e) => setNewAddrText(e.target.value)}
                   placeholder="مثال: شارع الجيش، أمام مسجد إدكو، الدور الثالث"
-                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isAddingAddress || newAddrWaterPin}
-                className="w-full min-h-[50px] px-6 py-3 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-lg font-bold cursor-pointer"
+                className="w-full min-h-[50px] px-6 py-3 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-lg font-bold cursor-pointer"
               >
                 {isAddingAddress
                   ? 'جارٍ الحفظ...'
@@ -1864,7 +1864,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
             {/* Privacy Card */}
             <div className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/15 text-[#FF6B00] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-[#FF7100]/15 text-[#FF7100] flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <h2 className="text-2xl font-bold text-[#F8FAFC]">
@@ -1881,21 +1881,21 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenLegalModal('privacy')}
-                    className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] cursor-pointer"
+                    className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] hover:border-[#FF7100] text-xs font-bold text-[#F8FAFC] cursor-pointer"
                   >
                     سياسة الخصوصية و GPS
                   </button>
                   <button
                     type="button"
                     onClick={() => onOpenLegalModal('terms')}
-                    className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] cursor-pointer"
+                    className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] hover:border-[#FF7100] text-xs font-bold text-[#F8FAFC] cursor-pointer"
                   >
                     الشروط والأحكام
                   </button>
                   <button
                     type="button"
                     onClick={() => onOpenLegalModal('pharmacy')}
-                    className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] cursor-pointer"
+                    className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] hover:border-[#FF7100] text-xs font-bold text-[#F8FAFC] cursor-pointer"
                   >
                     سياسة الصيدليات
                   </button>
@@ -1955,7 +1955,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                   return (
                     <div
                       key={store.id}
-                      className="rounded-2xl border border-[#334155] bg-[#0F172A] overflow-hidden flex items-center gap-4 p-4"
+                      className="rounded-2xl border border-[#334155] bg-[#10192D] overflow-hidden flex items-center gap-4 p-4"
                     >
                       <ResilientImage
                         src={store.imageUrl || ''}
@@ -1971,8 +1971,8 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                           {store.name}
                         </h3>
                         <div className="flex items-center gap-2 text-xs text-[#94A3B8] tabular-nums">
-                          <span className="inline-flex items-center gap-1 font-bold text-[#FF6B00]">
-                            <Star className="w-3.5 h-3.5 fill-[#FF6B00] text-[#FF6B00]" />
+                          <span className="inline-flex items-center gap-1 font-bold text-[#FF7100]">
+                            <Star className="w-3.5 h-3.5 fill-[#FF7100] text-[#FF7100]" />
                             {store.rating.toFixed(1)}
                           </span>
                           <span>·</span>
@@ -1982,7 +1982,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onSelectStore(store)}
-                            className="px-3.5 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold cursor-pointer"
+                            className="px-3.5 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold cursor-pointer"
                           >
                             {store.category === 'صيدليات'
                               ? 'طلب روشتة'
@@ -2014,7 +2014,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
       <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <h3 className="text-base font-bold text-[#F8FAFC] flex items-center gap-2">
-            <Star className="w-4 h-4 fill-[#FF6B00] text-[#FF6B00]" />
+            <Star className="w-4 h-4 fill-[#FF7100] text-[#FF7100]" />
             <span>قيّم تجربتك مع إدكاوي على Google Play</span>
           </h3>
           <p className="text-xs text-[#94A3B8]">
@@ -2025,7 +2025,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
           href={GOOGLE_PLAY_STORE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="min-h-[44px] px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
+          className="min-h-[44px] px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
         >
           <span>قيّم التطبيق</span>
           <ExternalLink className="w-4 h-4" />
@@ -2037,7 +2037,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
         <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-[#94A3B8]">
           <span className="font-bold text-[#F8FAFC]">إدكاوي - منصة مدينة إدكو</span>
           <span>·</span>
-          <span className="font-mono font-bold text-[#FF6B00]">
+          <span className="font-mono font-bold text-[#FF7100]">
             الإصدار {APP_VERSION}
           </span>
           <span>·</span>
@@ -2064,7 +2064,7 @@ export const CustomerAccountView: React.FC<CustomerAccountViewProps> = ({
                 type="button"
                 disabled={isDeletingAccount}
                 onClick={() => setIsDeleteAccountModalOpen(false)}
-                className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm font-bold cursor-pointer"
+                className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm font-bold cursor-pointer"
               >
                 إلغاء
               </button>

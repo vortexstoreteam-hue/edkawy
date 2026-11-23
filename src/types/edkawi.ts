@@ -897,20 +897,26 @@ export interface AiAssistantApiResponse {
   error?: string;
 }
 
+export interface AdminSetupStatusResult {
+  ok: boolean;
+  setupRequired: boolean;
+  source: 'env' | 'initial_setup' | 'unconfigured';
+  adminEmail: string;
+}
+
 export interface AdminOtpRequestResult {
   ok: boolean;
-  delivery?: 'edkawy_mail' | 'gmail' | 'server_otp_fallback';
+  delivery?: 'edkawy_mail' | 'gmail';
   recipient?: string;
   expiresInSeconds?: number;
-  fallbackOtpCode?: string;
-  smtpSetupHint?: string;
+  smtpConfigured?: boolean;
+  setupRequired?: boolean;
   error?: string;
 }
 
 export interface AdminOtpVerifyResult {
   ok: boolean;
   adminEmail?: string;
-  adminBootstrapGate?: string;
   verifiedAt?: string;
   error?: string;
 }
@@ -1053,10 +1059,9 @@ export interface SupportMessageRecord {
 
 export interface EmailVerificationRequestResult {
   ok: boolean;
-  delivery?: 'smtp' | 'firebase_link_fallback' | string;
+  delivery?: 'smtp' | string;
   sentViaSmtp?: boolean;
   maskedEmail?: string;
-  fallbackOtpCode?: string;
   digits?: number;
   retryAfterSeconds?: number;
   lockedUntilIso?: string;
@@ -1586,6 +1591,7 @@ export interface FinancialTransactionRecord {
   restaurantNetAmount?: number;
   deliveryFeeAmount?: number;
   notes: string;
+  isTestSimulation?: boolean;
   createdBy: string;
   createdAtIso: string;
 }

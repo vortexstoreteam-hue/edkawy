@@ -33,14 +33,14 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
       ? 'bg-red-600 hover:bg-red-700 text-white'
       : tone === 'warning'
       ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
-      : 'bg-[#FF6B00] hover:bg-[#E55F00] text-white';
+      : 'bg-[#FF7100] hover:bg-[#E66600] text-white';
 
   const iconWrapClass =
     tone === 'danger'
       ? 'bg-red-950/60 border-red-500/40 text-red-400'
       : tone === 'warning'
       ? 'bg-amber-950/60 border-amber-500/40 text-amber-400'
-      : 'bg-[#FF6B00]/15 border-[#FF6B00]/40 text-[#FF6B00]';
+      : 'bg-[#FF7100]/15 border-[#FF7100]/40 text-[#FF7100]';
 
   return (
     <div
@@ -73,7 +73,7 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
             disabled={isProcessing}
             onClick={onCancel}
             aria-label="إغلاق"
-            className="min-h-[38px] min-w-[38px] rounded-2xl border border-[#334155] bg-[#0F172A] text-[#94A3B8] hover:text-[#F8FAFC] flex items-center justify-center cursor-pointer disabled:opacity-50"
+            className="min-h-[38px] min-w-[38px] rounded-2xl border border-[#334155] bg-[#10192D] text-[#94A3B8] hover:text-[#F8FAFC] flex items-center justify-center cursor-pointer disabled:opacity-50"
           >
             <X className="w-4 h-4" />
           </button>
@@ -95,7 +95,7 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
             type="button"
             disabled={isProcessing}
             onClick={onCancel}
-            className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] hover:border-[#FF6B00] text-[#F8FAFC] text-sm font-bold cursor-pointer disabled:opacity-50"
+            className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] hover:border-[#FF7100] text-[#F8FAFC] text-sm font-bold cursor-pointer disabled:opacity-50"
           >
             {cancelLabel}
           </button>

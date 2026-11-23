@@ -1083,15 +1083,14 @@
     },
     "AdminRecord": {
       "title": "AdminRecord",
-      "description": "Trusted administrator marker document verified via server OTP gate for vortexstore.team@gmail.com.",
+      "description": "Trusted administrator marker document verified via Firebase Auth email_verified + allowlisted admin identity.",
       "type": "object",
       "properties": {
         "role": { "type": "string", "enum": ["admin"], "maxLength": 16 },
-        "email": { "type": "string", "enum": ["vortexstore.team@gmail.com"], "maxLength": 100 },
-        "activationGate": { "type": "string", "maxLength": 80 },
+        "email": { "type": "string", "enum": ["vortexstore.team@gmail.com", "alaslybys46@gmail.com"], "maxLength": 100 },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["role", "email", "activationGate", "createdAt"]
+      "required": ["role", "email", "createdAt"]
     },
     "BootstrapConfig": {
       "title": "BootstrapConfig",
@@ -1805,10 +1804,10 @@
         "collectionCustody": { "type": "number" },
         "courierDues": { "type": "number" },
         "handedOverAmount": { "type": "number" },
-        "totalPaidDues": { "type": "number" },
+        "totalDuesPaid": { "type": "number" },
         "totalOrdersDelivered": { "type": "number" },
-        "lastOrderAtIso": { "type": "string", "maxLength": 40 },
         "lastHandoverAtIso": { "type": "string", "maxLength": 40 },
+        "lastDuesPaidAtIso": { "type": "string", "maxLength": 40 },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["courierId", "courierName", "collectionCustody", "courierDues", "handedOverAmount", "totalOrdersDelivered", "updatedAt"]
@@ -1819,11 +1818,6 @@
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 128 },
-        "orderId": { "type": "string", "maxLength": 128 },
-        "storeId": { "type": "string", "maxLength": 128 },
-        "storeName": { "type": "string", "maxLength": 100 },
-        "courierId": { "type": "string", "maxLength": 128 },
-        "courierName": { "type": "string", "maxLength": 80 },
         "type": {
           "type": "string",
           "enum": [
@@ -1838,15 +1832,25 @@
           ],
           "maxLength": 40
         },
+        "orderId": { "type": "string", "maxLength": 128 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeOwnerId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 100 },
+        "courierId": { "type": "string", "maxLength": 128 },
+        "courierName": { "type": "string", "maxLength": 80 },
+        "receiptId": { "type": "string", "maxLength": 128 },
+        "settlementId": { "type": "string", "maxLength": 128 },
         "amount": { "type": "number" },
-        "direction": { "type": "string", "enum": ["credit", "debit", "neutral"], "maxLength": 16 },
-        "description": { "type": "string", "maxLength": 300 },
-        "referenceId": { "type": "string", "maxLength": 128 },
-        "createdBy": { "type": "string", "maxLength": 128 },
+        "subtotalAmount": { "type": "number" },
+        "commissionAmount": { "type": "number" },
+        "restaurantNetAmount": { "type": "number" },
+        "deliveryFeeAmount": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 300 },
         "isTestSimulation": { "type": "boolean" },
+        "createdBy": { "type": "string", "maxLength": 128 },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "type", "amount", "description", "createdBy", "createdAt"]
+      "required": ["id", "type", "amount", "notes", "createdBy", "createdAt"]
     },
     "TreasuryReceipt": {
       "title": "TreasuryReceipt",
@@ -1857,20 +1861,19 @@
         "receiptNumber": { "type": "string", "maxLength": 40 },
         "courierId": { "type": "string", "maxLength": 128 },
         "courierName": { "type": "string", "maxLength": 80 },
+        "ordersCount": { "type": "number" },
+        "orderIds": { "type": "array" },
         "expectedAmount": { "type": "number" },
         "actualAmount": { "type": "number" },
         "varianceAmount": { "type": "number" },
-        "courierDuesPaid": { "type": "number" },
-        "orderIds": { "type": "array" },
-        "notes": { "type": "string", "maxLength": 300 },
+        "courierDuesSnapshot": { "type": "number" },
+        "duesPaidSeparately": { "type": "number" },
         "receivedByUid": { "type": "string", "maxLength": 128 },
         "receivedByName": { "type": "string", "maxLength": 80 },
-        "exceptionId": { "type": "string", "maxLength": 128 },
-        "isTestSimulation": { "type": "boolean" },
-        "createdAtIso": { "type": "string", "maxLength": 40 },
+        "notes": { "type": "string", "maxLength": 300 },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "receiptNumber", "courierId", "courierName", "expectedAmount", "actualAmount", "varianceAmount", "receivedByUid", "receivedByName", "createdAtIso", "createdAt"]
+      "required": ["id", "receiptNumber", "courierId", "courierName", "expectedAmount", "actualAmount", "varianceAmount", "receivedByUid", "receivedByName", "createdAt"]
     },
     "RestaurantSettlement": {
       "title": "RestaurantSettlement",
@@ -1879,26 +1882,28 @@
       "properties": {
         "id": { "type": "string", "maxLength": 128 },
         "storeId": { "type": "string", "maxLength": 128 },
+        "storeOwnerId": { "type": "string", "maxLength": 128 },
         "storeName": { "type": "string", "maxLength": 100 },
         "settlementDateKey": { "type": "string", "maxLength": 16 },
-        "cutoffTime": { "type": "string", "maxLength": 16 },
+        "cutoffLabel": { "type": "string", "maxLength": 64 },
+        "ordersCount": { "type": "number" },
         "orderIds": { "type": "array" },
-        "orderCount": { "type": "number" },
-        "grossProductsSubtotal": { "type": "number" },
-        "commissionAmount": { "type": "number" },
-        "netPayableAmount": { "type": "number" },
-        "status": { "type": "string", "enum": ["pending_review", "paid"], "maxLength": 24 },
-        "paymentMethod": { "type": "string", "enum": ["cash", "vodafone_cash", "instapay", "bank_transfer"], "maxLength": 24 },
+        "grossProductsSales": { "type": "number" },
+        "commissionRate": { "type": "number" },
+        "edkawyCommission": { "type": "number" },
+        "restaurantNetPayable": { "type": "number" },
+        "deliveryFeesTotal": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending_review", "paid", "disputed"], "maxLength": 24 },
+        "paymentMethod": { "type": "string", "enum": ["cash_at_hq", "vodafone_cash", "instapay", "bank_transfer"], "maxLength": 24 },
         "transferReference": { "type": "string", "maxLength": 80 },
         "notes": { "type": "string", "maxLength": 300 },
         "paidAtIso": { "type": "string", "maxLength": 40 },
-        "settledByUid": { "type": "string", "maxLength": 128 },
-        "settledByName": { "type": "string", "maxLength": 80 },
-        "isTestSimulation": { "type": "boolean" },
+        "paidByUid": { "type": "string", "maxLength": 128 },
+        "paidByName": { "type": "string", "maxLength": 80 },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "storeId", "storeName", "settlementDateKey", "orderCount", "grossProductsSubtotal", "commissionAmount", "netPayableAmount", "status", "createdAt", "updatedAt"]
+      "required": ["id", "storeId", "storeName", "settlementDateKey", "ordersCount", "grossProductsSales", "edkawyCommission", "restaurantNetPayable", "status", "createdAt", "updatedAt"]
     },
     "FinancialException": {
       "title": "FinancialException",
@@ -1906,7 +1911,14 @@
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 128 },
-        "type": {
+        "orderId": { "type": "string", "maxLength": 128 },
+        "receiptId": { "type": "string", "maxLength": 128 },
+        "storeId": { "type": "string", "maxLength": 128 },
+        "storeOwnerId": { "type": "string", "maxLength": 128 },
+        "storeName": { "type": "string", "maxLength": 100 },
+        "courierId": { "type": "string", "maxLength": 128 },
+        "courierName": { "type": "string", "maxLength": 80 },
+        "exceptionType": {
           "type": "string",
           "enum": [
             "cancelled_before_prep",
@@ -1918,29 +1930,19 @@
           ],
           "maxLength": 40
         },
-        "orderId": { "type": "string", "maxLength": 128 },
-        "storeId": { "type": "string", "maxLength": 128 },
-        "storeName": { "type": "string", "maxLength": 100 },
-        "courierId": { "type": "string", "maxLength": 128 },
-        "courierName": { "type": "string", "maxLength": 80 },
-        "customerId": { "type": "string", "maxLength": 128 },
         "disputedAmount": { "type": "number" },
-        "adjustedAmount": { "type": "number" },
-        "responsibleParty": { "type": "string", "enum": ["store", "courier", "customer", "edkawy", "none"], "maxLength": 24 },
-        "status": { "type": "string", "enum": ["pending_review", "resolved_no_deduction", "resolved_with_adjustment"], "maxLength": 32 },
+        "responsibleParty": { "type": "string", "enum": ["store", "courier", "customer", "edkawy", "shared", "none"], "maxLength": 24 },
         "holdSettlement": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending_review", "resolved_no_deduction", "resolved_with_adjustment"], "maxLength": 32 },
         "description": { "type": "string", "maxLength": 400 },
-        "resolutionNote": { "type": "string", "maxLength": 400 },
-        "createdByUid": { "type": "string", "maxLength": 128 },
-        "createdByName": { "type": "string", "maxLength": 80 },
+        "adminResolutionNote": { "type": "string", "maxLength": 400 },
         "resolvedByUid": { "type": "string", "maxLength": 128 },
         "resolvedByName": { "type": "string", "maxLength": 80 },
         "resolvedAtIso": { "type": "string", "maxLength": 40 },
-        "isTestSimulation": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "type", "disputedAmount", "status", "description", "createdByUid", "createdAt", "updatedAt"]
+      "required": ["id", "exceptionType", "disputedAmount", "status", "description", "createdBy", "createdAt"]
     }
   },
   "firestore": {

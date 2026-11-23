@@ -75,13 +75,13 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
       aria-labelledby="edkawy-legal-center-title"
     >
       <div
-        className="w-full max-w-4xl max-h-[90dvh] bg-[#0F172A] rounded-2xl border border-[#334155] shadow-2xl flex flex-col overflow-hidden"
+        className="w-full max-w-4xl max-h-[90dvh] bg-[#10192D] rounded-2xl border border-[#334155] shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <header className="px-6 py-4 bg-[#1E293B] border-b border-[#334155] text-[#F8FAFC] flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-[#FF6B00] text-white flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-[#FF7100] text-white flex items-center justify-center shrink-0">
               <Scale className="w-5 h-5" />
             </div>
             <div className="min-w-0">
@@ -101,7 +101,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="إغلاق المركز القانوني"
-            className="min-h-[42px] min-w-[42px] rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] flex items-center justify-center cursor-pointer shrink-0"
+            className="min-h-[42px] min-w-[42px] rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] flex items-center justify-center cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -125,8 +125,8 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                 onClick={() => setActiveTab(tab.id)}
                 className={`min-h-[40px] px-4 py-2 rounded-2xl text-xs font-bold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
                   selected
-                    ? 'bg-[#FF6B00] text-white shadow-sm'
-                    : 'bg-[#1E293B] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#FF6B00]'
+                    ? 'bg-[#FF7100] text-white shadow-sm'
+                    : 'bg-[#1E293B] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#FF7100]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -269,7 +269,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                       href="https://maps.google.com/help/terms_maps/?utm_campaign=gmp_mcp_codeassist_v1_aistudio"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#FF6B00] hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#FF7100] hover:underline"
                     >
                       <span>شروط خدمة خرائط Google</span>
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -278,7 +278,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
                       href="https://policies.google.com/privacy?utm_campaign=gmp_mcp_codeassist_v1_aistudio"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#FF6B00] hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#FF7100] hover:underline"
                     >
                       <span>سياسة خصوصية Google</span>
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -301,21 +301,21 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
               </div>
 
               <div className="space-y-4">
-                <section className="p-4 rounded-2xl bg-[#1E293B] border border-[#FF6B00]/40 space-y-2">
-                  <h4 className="font-bold text-[#FF6B00]">
+                <section className="p-4 rounded-2xl bg-[#1E293B] border border-[#FF7100]/40 space-y-2">
+                  <h4 className="font-bold text-[#FF7100]">
                     ١. قنوات الدفع وشحن محفظة إدكاوي الرسمية
                   </h4>
                   <p className="text-[#94A3B8]">
                     تتيح المنصة الدفع نقداً عند الاستلام (Cash on Delivery) أو عبر رصيد <strong className="text-[#F8FAFC]">محفظة إدكاوي</strong>. لشحن المحفظة، يتم التحويل حصراً على الأرقام الرسمية التالية مع <strong className="text-[#F8FAFC]">إرفاق صورة إيصال التحويل (إجباري)</strong> للمراجعة والاعتماد الفوري من الإدارة:
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
-                    <div className="p-3 rounded-xl bg-[#0F172A] border border-[#334155]">
+                    <div className="p-3 rounded-xl bg-[#10192D] border border-[#334155]">
                       <span className="text-[#94A3B8] block">فودافون كاش (Vodafone Cash):</span>
                       <span dir="ltr" className="font-mono font-bold text-[#F8FAFC] text-sm">
                         01032874716
                       </span>
                     </div>
-                    <div className="p-3 rounded-xl bg-[#0F172A] border border-[#334155]">
+                    <div className="p-3 rounded-xl bg-[#10192D] border border-[#334155]">
                       <span className="text-[#94A3B8] block">إنستا باي (InstaPay):</span>
                       <span dir="ltr" className="font-mono font-bold text-[#F8FAFC] text-sm">
                         01226522676
@@ -441,7 +441,7 @@ export const LegalPagesModal: React.FC<LegalPagesModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-[42px] px-5 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold cursor-pointer"
+            className="min-h-[42px] px-5 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold cursor-pointer"
           >
             فهمت وموافق — إغلاق
           </button>
@@ -475,19 +475,19 @@ export const MaintenanceModeScreen: React.FC<MaintenanceModeScreenProps> = ({
   return (
     <div
       dir="rtl"
-      className="min-h-[100dvh] bg-[#0F172A] flex flex-col items-center justify-center p-6"
+      className="min-h-[100dvh] bg-[#10192D] flex flex-col items-center justify-center p-6"
     >
       <div className="w-full max-w-lg rounded-2xl bg-[#1E293B] border border-[#334155] p-6 sm:p-8 text-center space-y-6 shadow-2xl">
         <div className="flex justify-center">
           <AdkawyLogo variant="navbar" />
         </div>
 
-        <div className="w-16 h-16 rounded-2xl bg-[#FF6B00]/15 text-[#FF6B00] flex items-center justify-center mx-auto">
+        <div className="w-16 h-16 rounded-2xl bg-[#FF7100]/15 text-[#FF7100] flex items-center justify-center mx-auto">
           <Wrench className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
-          <span className="inline-block text-xs font-bold text-[#FF6B00]">
+          <span className="inline-block text-xs font-bold text-[#FF7100]">
             وضع الصيانة والتحديث المؤقت
           </span>
           <h1 className="text-2xl font-bold text-[#F8FAFC] headline-balance">
@@ -504,7 +504,7 @@ export const MaintenanceModeScreen: React.FC<MaintenanceModeScreenProps> = ({
             <button
               type="button"
               onClick={onSignOut}
-              className="min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+              className="min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span>تسجيل الخروج</span>
@@ -513,7 +513,7 @@ export const MaintenanceModeScreen: React.FC<MaintenanceModeScreenProps> = ({
             <button
               type="button"
               onClick={onOpenAdminLogin}
-              className="min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+              className="min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
             >
               <LogIn className="w-4 h-4" />
               <span>دخول الإدارة</span>
@@ -523,9 +523,9 @@ export const MaintenanceModeScreen: React.FC<MaintenanceModeScreenProps> = ({
           <button
             type="button"
             onClick={() => onOpenLegalModal('terms')}
-            className="min-h-[46px] px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+            className="min-h-[46px] px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Scale className="w-4 h-4 text-[#FF6B00]" />
+            <Scale className="w-4 h-4 text-[#FF7100]" />
             <span>الشروط والسياسات</span>
           </button>
         </div>
@@ -552,7 +552,7 @@ export const BlockedAccountScreen: React.FC<BlockedAccountScreenProps> = ({
   return (
     <div
       dir="rtl"
-      className="min-h-[100dvh] bg-[#0F172A] flex flex-col items-center justify-center p-6"
+      className="min-h-[100dvh] bg-[#10192D] flex flex-col items-center justify-center p-6"
     >
       <div className="w-full max-w-lg rounded-2xl bg-[#1E293B] border-2 border-red-500/40 p-6 sm:p-8 text-center space-y-6 shadow-2xl">
         <div className="flex justify-center">
@@ -591,7 +591,7 @@ export const BlockedAccountScreen: React.FC<BlockedAccountScreenProps> = ({
           <button
             type="button"
             onClick={onSignOut}
-            className="min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+            className="min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>تسجيل الخروج</span>
@@ -600,9 +600,9 @@ export const BlockedAccountScreen: React.FC<BlockedAccountScreenProps> = ({
           <button
             type="button"
             onClick={() => onOpenLegalModal('partners')}
-            className="min-h-[46px] px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+            className="min-h-[46px] px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Scale className="w-4 h-4 text-[#FF6B00]" />
+            <Scale className="w-4 h-4 text-[#FF7100]" />
             <span>سياسة الحسابات والحظر</span>
           </button>
         </div>

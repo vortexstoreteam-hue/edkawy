@@ -9,15 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --orange: #FF6B00;
-      --orange-hover: #E55F00;
+      --orange: #FF7100;
+      --orange-hover: #E66600;
       --navy: #1E293B;
       --bg: #F6F8FB;
       --surface: #FFFFFF;
       --border: rgba(226, 232, 240, 0.82);
       --muted: #64748B;
       --radius: 20px;
-      --shadow-soft: 0 10px 30px -10px rgba(15, 23, 42, 0.07), 0 2px 8px -2px rgba(15, 23, 42, 0.03);
+      --shadow-soft: 0 10px 30px -10px rgba(16, 25, 45, 0.07), 0 2px 8px -2px rgba(16, 25, 45, 0.03);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -32,7 +32,7 @@
       backdrop-filter: blur(18px) saturate(180%);
       -webkit-backdrop-filter: blur(18px) saturate(180%);
       border-bottom: 1px solid var(--border);
-      box-shadow: 0 4px 24px -6px rgba(15, 23, 42, 0.05);
+      box-shadow: 0 4px 24px -6px rgba(16, 25, 45, 0.05);
       padding: 0.85rem 1.5rem;
       display: flex;
       align-items: center;
@@ -83,15 +83,15 @@
     }
     .card-interactive:hover {
       transform: translateY(-3px);
-      box-shadow: 0 20px 42px -12px rgba(15, 23, 42, 0.11);
+      box-shadow: 0 20px 42px -12px rgba(16, 25, 45, 0.11);
     }
     .hero-banner {
       border-radius: 24px;
       padding: 2rem;
       margin-bottom: 1.75rem;
       color: #FFF;
-      background: linear-gradient(135deg, #FF6B00 0%, #F25C00 55%, #B83B00 100%);
-      box-shadow: 0 22px 54px -14px rgba(255, 107, 0, 0.38);
+      background: linear-gradient(135deg, #FF7100 0%, #F25C00 55%, #B83B00 100%);
+      box-shadow: 0 22px 54px -14px rgba(255, 113, 0, 0.38);
     }
     .hero-banner h1 { color: #FFF; font-size: 1.8rem; margin-bottom: 0.5rem; }
     .kpi-grid {
@@ -104,7 +104,7 @@
     .store-cover {
       height: 180px;
       border-radius: 24px;
-      background: linear-gradient(135deg, #1E293B 0%, #FF6B00 100%);
+      background: linear-gradient(135deg, #1E293B 0%, #FF7100 100%);
     }
     .store-overlap { margin: -2.8rem 1rem 1.5rem; position: relative; z-index: 10; }
     .product-row-card { display: flex; align-items: stretch; gap: 1rem; padding: 1.15rem; }
@@ -168,9 +168,9 @@
     .btn-giant { min-height: 58px; font-size: 1.02rem; width: 100%; }
     .btn:active { transform: scale(0.98); }
     .btn-primary {
-      background: linear-gradient(90deg, #FF6B00, #FF8533);
+      background: linear-gradient(90deg, #FF7100, #FF8533);
       color: #FFF;
-      box-shadow: 0 8px 20px -4px rgba(255, 107, 0, 0.4);
+      box-shadow: 0 8px 20px -4px rgba(255, 113, 0, 0.4);
     }
     .btn-navy { background: var(--navy); color: #FFF; }
     .btn-outline { background: #FFF; color: var(--navy); border-color: var(--border); }

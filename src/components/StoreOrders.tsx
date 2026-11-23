@@ -22,7 +22,12 @@ import {
 } from '../services/edkawiFirebaseService';
 import { auth, db } from '../firebase';
 import { collection, query, where, onSnapshot, Unsubscribe } from 'firebase/firestore';
-import { formatAppErrorMessage, getPaymentMethodLabel } from '../utils/orderLogic';
+import {
+  DEFAULT_EDKAWY_COMMISSION_RATE,
+  formatAppErrorMessage,
+  getOrderFinancialSnapshot,
+  getPaymentMethodLabel,
+} from '../utils/orderLogic';
 import toast from 'react-hot-toast';
 
 interface StoreOrdersProps {
@@ -79,6 +84,12 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
       (snapshot) => {
         const liveOrders: OrderRecord[] = snapshot.docs.map((d) => {
           const data = d.data();
+          const createdAtIso =
+            typeof data.createdAt?.toDate === 'function'
+              ? data.createdAt.toDate().toISOString()
+              : typeof data.createdAtIso === 'string' && data.createdAtIso
+              ? data.createdAtIso
+              : new Date().toISOString();
           return {
             id: d.id,
             storeId: String(data.storeId || storeId),
@@ -94,9 +105,30 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
             subtotal: Number(data.subtotal || 0),
             deliveryFee: Number(data.deliveryFee || 0),
             totalAmount: Number(data.totalAmount || 0),
+            commissionRate:
+              typeof data.commissionRate === 'number'
+                ? data.commissionRate
+                : undefined,
+            commissionAmount:
+              typeof data.commissionAmount === 'number'
+                ? data.commissionAmount
+                : undefined,
+            restaurantNet:
+              typeof data.restaurantNet === 'number'
+                ? data.restaurantNet
+                : undefined,
+            courierDeliveryCompensation:
+              typeof data.courierDeliveryCompensation === 'number'
+                ? data.courierDeliveryCompensation
+                : undefined,
+            isFinancialSettled: Boolean(data.isFinancialSettled),
+            settlementId:
+              typeof data.settlementId === 'string'
+                ? data.settlementId
+                : undefined,
             status: (data.status as OrderStatus) || 'pending',
             paymentMethod: data.paymentMethod || 'cash_on_delivery',
-            createdAtIso: data.createdAtIso || new Date().toISOString(),
+            createdAtIso,
             prepTimeMinutes: data.prepTimeMinutes,
             courierId: data.courierId,
             courierName: data.courierName,
@@ -195,7 +227,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#F8FAFC] flex items-center gap-2">
-            <ChefHat className="w-6 h-6 text-[#FF6B00]" />
+            <ChefHat className="w-6 h-6 text-[#FF7100]" />
             <span>طلبات متجر: {storeName}</span>
           </h1>
           <p className="text-xs sm:text-sm text-[#94A3B8] mt-1">
@@ -205,7 +237,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
 
         {/* Live Pending Alert */}
         {categorizedOrders.pending.length > 0 && (
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FF6B00]/15 border border-[#FF6B00]/40 text-[#FF6B00] text-xs font-bold animate-pulse">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FF7100]/15 border border-[#FF7100]/40 text-[#FF7100] text-xs font-bold animate-pulse">
             <Bell className="w-4 h-4" />
             <span>لديك {categorizedOrders.pending.length} طلب جديد بانتظار موافقتك!</span>
           </div>
@@ -219,7 +251,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
           onClick={() => setActiveTab('pending')}
           className={`py-2.5 px-3 rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === 'pending'
-              ? 'bg-[#FF6B00] text-white shadow-md'
+              ? 'bg-[#FF7100] text-white shadow-md'
               : 'text-[#94A3B8] hover:text-[#F8FAFC]'
           }`}
         >
@@ -278,7 +310,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
       {/* Loading */}
       {isLoading && (
         <div className="py-16 text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-[#FF6B00] animate-spin mx-auto" />
+          <Loader2 className="w-8 h-8 text-[#FF7100] animate-spin mx-auto" />
           <p className="text-sm font-semibold text-[#94A3B8]">
             جارٍ الاتصال بنظام المطبخ وإحضار الطلبات...
           </p>
@@ -323,7 +355,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
                   {/* Top Bar */}
                   <div className="flex items-center justify-between gap-2 border-b border-[#334155] pb-3">
                     <div>
-                      <span className="font-mono text-xs font-bold text-[#FF6B00]">
+                      <span className="font-mono text-xs font-bold text-[#FF7100]">
                         #{order.id.slice(-6).toUpperCase()}
                       </span>
                       <span className="text-xs text-[#94A3B8] mr-2">
@@ -331,7 +363,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
                       </span>
                     </div>
 
-                    <span className="text-xs font-bold px-3 py-1 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC]">
+                    <span className="text-xs font-bold px-3 py-1 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC]">
                       {order.status === 'confirmed'
                         ? 'طلب مؤكد 🔔'
                         : order.status === 'pending'
@@ -353,18 +385,18 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
                     </div>
                     {order.customerPhone && (
                       <div className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-[#FF6B00]" />
+                        <Phone className="w-3.5 h-3.5 text-[#FF7100]" />
                         <span dir="ltr">{order.customerPhone}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-[#FF6B00]" />
+                      <MapPin className="w-3.5 h-3.5 text-[#FF7100]" />
                       <span>{order.deliveryNeighborhood} · {order.deliveryAddress}</span>
                     </div>
                   </div>
 
                   {/* Order Items List */}
-                  <div className="p-3.5 rounded-2xl bg-[#0F172A] border border-[#334155] space-y-2">
+                  <div className="p-3.5 rounded-2xl bg-[#10192D] border border-[#334155] space-y-2">
                     <div className="text-xs font-bold text-[#F8FAFC]">
                       الأصناف المطلوبة:
                     </div>
@@ -372,7 +404,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
                       {order.items.map((it, idx) => (
                         <li key={idx} className="flex items-center justify-between">
                           <span className="text-[#F8FAFC]">
-                            <strong className="text-[#FF6B00] ml-1">{it.quantity}×</strong> {it.name}
+                            <strong className="text-[#FF7100] ml-1">{it.quantity}×</strong> {it.name}
                             {it.variantLabel && (
                               <span className="text-[11px] text-[#94A3B8] mr-1">({it.variantLabel})</span>
                             )}
@@ -393,22 +425,40 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
                 </div>
 
                 {/* Actions & Price */}
-                <div className="pt-3 border-t border-[#334155] flex items-center justify-between gap-3">
-                  <div>
-                    <span className="text-xs text-[#94A3B8]">الإجمالي: </span>
-                    <span className="text-base font-extrabold text-[#FF6B00] tabular-nums">
-                      {order.totalAmount} ج.م
-                    </span>
-                  </div>
+                <div className="pt-3 border-t border-[#334155] flex flex-wrap items-center justify-between gap-3">
+                  {(() => {
+                    const snap = getOrderFinancialSnapshot(
+                      order,
+                      DEFAULT_EDKAWY_COMMISSION_RATE
+                    );
+                    const pct = Math.round(snap.commissionRate * 100);
+                    return (
+                      <div className="space-y-0.5">
+                        <div>
+                          <span className="text-xs text-[#94A3B8]">الإجمالي: </span>
+                          <span className="text-base font-extrabold text-[#FF7100] tabular-nums">
+                            {order.totalAmount} ج.م
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-mono tabular-nums text-[#94A3B8]">
+                          صافي المتجر ({100 - pct}%):{' '}
+                          <span className="text-emerald-400 font-bold">
+                            {snap.restaurantNet} ج.م
+                          </span>{' '}
+                          · عمولة إدكاوي ({pct}%): {snap.commissionAmount} ج.م
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setPrintingOrder(order)}
                       aria-label="طباعة بون المطبخ"
-                      className="min-h-[40px] px-3 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] hover:border-[#FF6B00] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                      className="min-h-[40px] px-3 py-2 rounded-2xl border border-[#334155] bg-[#10192D] hover:border-[#FF7100] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                     >
-                      <Printer className="w-3.5 h-3.5 text-[#FF6B00]" />
+                      <Printer className="w-3.5 h-3.5 text-[#FF7100]" />
                       <span>بون المطبخ</span>
                     </button>
 
@@ -417,7 +467,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
                         <button
                           type="button"
                           onClick={() => setAcceptingOrderId(order.id)}
-                          className="min-h-[40px] px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold cursor-pointer shadow-sm"
+                          className="min-h-[40px] px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold cursor-pointer shadow-sm"
                         >
                           قبول وتحضير
                         </button>
@@ -477,8 +527,8 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
                   onClick={() => setPrepTimeMinutes(mins)}
                   className={`py-2.5 rounded-2xl text-xs font-bold border transition-colors cursor-pointer ${
                     prepTimeMinutes === mins
-                      ? 'bg-[#FF6B00] border-[#FF6B00] text-white'
-                      : 'bg-[#0F172A] border-[#334155] text-[#F8FAFC]'
+                      ? 'bg-[#FF7100] border-[#FF7100] text-white'
+                      : 'bg-[#10192D] border-[#334155] text-[#F8FAFC]'
                   }`}
                 >
                   {mins} دقيقة
@@ -490,7 +540,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
               <button
                 type="button"
                 onClick={() => setAcceptingOrderId(null)}
-                className="px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                className="px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
               >
                 إلغاء
               </button>
@@ -498,7 +548,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
                 type="button"
                 disabled={isSubmittingAccept}
                 onClick={handleAcceptOrder}
-                className="min-h-[42px] px-6 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                className="min-h-[42px] px-6 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
               >
                 {isSubmittingAccept && <Loader2 className="w-4 h-4 animate-spin" />}
                 <span>تأكيد وقبول ({prepTimeMinutes} دقيقة)</span>
@@ -521,7 +571,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
               <button
                 type="button"
                 onClick={() => setRejectingOrderId(null)}
-                className="min-h-[36px] min-w-[36px] rounded-2xl border border-[#334155] bg-[#0F172A] text-[#94A3B8] hover:text-[#F8FAFC] flex items-center justify-center cursor-pointer"
+                className="min-h-[36px] min-w-[36px] rounded-2xl border border-[#334155] bg-[#10192D] text-[#94A3B8] hover:text-[#F8FAFC] flex items-center justify-center cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -534,13 +584,13 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="مثال: الصنف غير متوفر حالياً أو ضغط العمل في المطبخ..."
-              className="w-full px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
             />
             <div className="flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setRejectingOrderId(null)}
-                className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
               >
                 تراجع
               </button>
@@ -564,14 +614,14 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
             <div className="flex items-center justify-between border-b border-[#334155] pb-3">
               <div>
                 <h3 className="text-base font-bold text-[#F8FAFC]">بون مطبخ — {storeName}</h3>
-                <p className="text-xs font-mono text-[#FF6B00]">
+                <p className="text-xs font-mono text-[#FF7100]">
                   #{printingOrder.id.slice(-6).toUpperCase()}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setPrintingOrder(null)}
-                className="no-print min-h-[36px] min-w-[36px] rounded-2xl border border-[#334155] bg-[#0F172A] text-[#94A3B8] hover:text-[#F8FAFC] flex items-center justify-center cursor-pointer"
+                className="no-print min-h-[36px] min-w-[36px] rounded-2xl border border-[#334155] bg-[#10192D] text-[#94A3B8] hover:text-[#F8FAFC] flex items-center justify-center cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -584,11 +634,11 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
               <p>الدفع: {getPaymentMethodLabel(printingOrder.paymentMethod)}</p>
             </div>
 
-            <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-3.5 space-y-2">
+            <div className="rounded-2xl bg-[#10192D] border border-[#334155] p-3.5 space-y-2">
               {printingOrder.items.map((it, idx) => (
                 <div key={idx} className="flex items-center justify-between text-xs text-[#F8FAFC]">
                   <span>
-                    <strong className="text-[#FF6B00] ml-1">{it.quantity}×</strong>
+                    <strong className="text-[#FF7100] ml-1">{it.quantity}×</strong>
                     {it.name} {it.variantLabel ? `(${it.variantLabel})` : ''}
                   </span>
                   <span className="tabular-nums font-bold">{it.price * it.quantity} ج.م</span>
@@ -604,7 +654,7 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
 
             <div className="flex items-center justify-between pt-2 border-t border-[#334155]">
               <span className="text-xs font-bold text-[#94A3B8]">الإجمالي</span>
-              <span className="text-lg font-extrabold text-[#FF6B00] tabular-nums">
+              <span className="text-lg font-extrabold text-[#FF7100] tabular-nums">
                 {printingOrder.totalAmount} ج.م
               </span>
             </div>
@@ -613,14 +663,14 @@ export const StoreOrders: React.FC<StoreOrdersProps> = ({
               <button
                 type="button"
                 onClick={() => setPrintingOrder(null)}
-                className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs font-bold text-[#F8FAFC] cursor-pointer"
+                className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-xs font-bold text-[#F8FAFC] cursor-pointer"
               >
                 إغلاق
               </button>
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="min-h-[42px] px-5 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer"
+                className="min-h-[42px] px-5 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 <span>طباعة البون</span>

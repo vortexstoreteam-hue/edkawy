@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 import {
   deleteCurrentAccountCompletely,
-  incrementCourierWalletBalance,
   rejectOrderByCourierInFirestore,
   submitCourierKycInFirestore,
 } from '../services/edkawiFirebaseService';
@@ -38,12 +37,15 @@ import {
   CourierProfileInput,
   CourierRecord,
   CourierVehicleType,
+  DriverWalletRecord,
   OrderRecord,
   StoreRecord,
+  TreasuryReceiptRecord,
 } from '../types/edkawi';
 import {
   COURIER_VEHICLE_TYPES,
   EDKU_ROUTE_WAYPOINTS,
+  MIN_COURIER_DELIVERY_FEE_EGP,
   estimateEdkuDistanceKm,
   formatAppErrorMessage,
   getPaymentMethodLabel,
@@ -68,6 +70,8 @@ interface CourierPortalViewProps {
   isLoadingCourier: boolean;
   orders: OrderRecord[];
   stores: StoreRecord[];
+  driverWallet?: DriverWalletRecord | null;
+  treasuryReceipts?: TreasuryReceiptRecord[];
   surgeEnabled?: boolean;
   surgeMultiplier?: number;
   onNotify?: (msg: string) => void;
@@ -113,6 +117,8 @@ export function CourierPortalView({
   isLoadingCourier,
   orders,
   stores,
+  driverWallet = null,
+  treasuryReceipts = [],
   surgeEnabled = false,
   surgeMultiplier = 1.5,
   onNotify,
@@ -559,7 +565,7 @@ export function CourierPortalView({
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-14 text-center edkawi-page-enter">
         <div className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 sm:p-10 space-y-4">
           <ShieldAlert
-            className="w-10 h-10 text-[#FF6B00] mx-auto"
+            className="w-10 h-10 text-[#FF7100] mx-auto"
             aria-hidden="true"
           />
           <h1 className="text-xl sm:text-2xl font-bold text-[#F8FAFC]">
@@ -573,7 +579,7 @@ export function CourierPortalView({
               <button
                 type="button"
                 onClick={() => setConfirmLogoutOpen(true)}
-                className="py-2.5 px-6 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold cursor-pointer"
+                className="py-2.5 px-6 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold cursor-pointer"
               >
                 تسجيل الخروج
               </button>
@@ -614,7 +620,7 @@ export function CourierPortalView({
               className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ${
                 isRejected
                   ? 'bg-rose-950/60 border border-rose-800/70'
-                  : 'bg-[#FF6B00]/15 border border-[#FF6B00]/30'
+                  : 'bg-[#FF7100]/15 border border-[#FF7100]/30'
               }`}
             >
               {isRejected ? (
@@ -623,12 +629,12 @@ export function CourierPortalView({
                   aria-hidden="true"
                 />
               ) : (
-                <Clock className="w-8 h-8 text-[#FF6B00]" aria-hidden="true" />
+                <Clock className="w-8 h-8 text-[#FF7100]" aria-hidden="true" />
               )}
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-bold text-[#FF6B00]">
+              <p className="text-xs font-bold text-[#FF7100]">
                 بوابة كابتن التوصيل · مدينة إدكو
               </p>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
@@ -662,7 +668,7 @@ export function CourierPortalView({
             </div>
           )}
 
-          <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#334155] text-right space-y-2 text-xs sm:text-sm">
+          <div className="p-5 rounded-2xl bg-[#10192D] border border-[#334155] text-right space-y-2 text-xs sm:text-sm">
             <div className="flex items-center justify-between gap-3">
               <span className="text-[#94A3B8]">اسم المندوب:</span>
               <span className="font-bold text-[#F8FAFC]">
@@ -692,7 +698,7 @@ export function CourierPortalView({
                     ? 'text-rose-400'
                     : hasCompleteKyc
                     ? 'text-emerald-400'
-                    : 'text-[#FF6B00]'
+                    : 'text-[#FF7100]'
                 }`}
               >
                 {isRejected
@@ -732,7 +738,7 @@ export function CourierPortalView({
                 onChange={(e) =>
                   setKycVehicleType(e.target.value as CourierVehicleType)
                 }
-                className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+                className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC]"
               >
                 {COURIER_VEHICLE_TYPES.map((vt) => (
                   <option key={vt} value={vt}>
@@ -758,7 +764,7 @@ export function CourierPortalView({
               <button
                 type="submit"
                 disabled={kycSubmitting}
-                className="min-h-[46px] px-6 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                className="min-h-[46px] px-6 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
               >
                 <UserCheck className="w-4 h-4" />
                 <span>
@@ -776,16 +782,16 @@ export function CourierPortalView({
                 <button
                   type="button"
                   onClick={() => setIsSupportModalOpen(true)}
-                  className="min-h-[46px] px-4 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                  className="min-h-[46px] px-4 py-2.5 rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Headphones className="w-4 h-4 text-[#FF6B00]" />
+                  <Headphones className="w-4 h-4 text-[#FF7100]" />
                   <span>الدعم الفني</span>
                 </button>
                 {onLogout && (
                   <button
                     type="button"
                     onClick={() => setConfirmLogoutOpen(true)}
-                    className="min-h-[46px] px-4 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-rose-500 text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                    className="min-h-[46px] px-4 py-2.5 rounded-2xl bg-[#10192D] border border-[#334155] hover:border-rose-500 text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 text-rose-400" />
                     <span>تسجيل الخروج</span>
@@ -1013,9 +1019,6 @@ export function CourierPortalView({
         `تم التسليم في ${order.deliveryNeighborhood}`,
         destCoords
       );
-      if (currentCourier?.id && order.deliveryFee > 0) {
-        await incrementCourierWalletBalance(currentCourier.id, order.deliveryFee).catch(() => {});
-      }
       if (gpsMode === 'edku_sim' && activeDeliveries.length <= 1) {
         setGpsMode('off');
         setGpsStatusMsg(null);
@@ -1034,8 +1037,14 @@ export function CourierPortalView({
     setActionError(null);
     const rawFee = errandQuoteByOrder[order.id] ?? '25';
     const parsedFee = Math.trunc(Number(rawFee));
-    if (!Number.isFinite(parsedFee) || parsedFee < 10 || parsedFee > 500) {
-      setActionError('يرجى تحديد تكلفة مشوار صحيحة بين ١٠ و ٥٠٠ ج.م.');
+    if (
+      !Number.isFinite(parsedFee) ||
+      parsedFee < MIN_COURIER_DELIVERY_FEE_EGP ||
+      parsedFee > 500
+    ) {
+      setActionError(
+        `يرجى تحديد تكلفة مشوار صحيحة بين ${MIN_COURIER_DELIVERY_FEE_EGP} و 500 ج.م.`
+      );
       return;
     }
     setBusyActionId(`quote_${order.id}`);
@@ -1080,7 +1089,7 @@ export function CourierPortalView({
           <button
             type="button"
             onClick={() => setActionError(null)}
-            className="px-3 py-1 rounded-lg bg-[#0F172A] border border-rose-700 text-rose-300 text-xs font-bold cursor-pointer shrink-0"
+            className="px-3 py-1 rounded-lg bg-[#10192D] border border-rose-700 text-rose-300 text-xs font-bold cursor-pointer shrink-0"
           >
             إغلاق
           </button>
@@ -1094,11 +1103,11 @@ export function CourierPortalView({
       >
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-bold text-[#FF6B00]">
+            <p className="text-xs font-bold text-[#FF7100]">
               كابتن توصيل إدكاوي المعتمد · مدينة إدكو
             </p>
             {surgeEnabled && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[#FF6B00]/20 border border-[#FF6B00]/50 text-[#FF6B00] text-xs font-bold font-mono tabular-nums">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[#FF7100]/20 border border-[#FF7100]/50 text-[#FF7100] text-xs font-bold font-mono tabular-nums">
                 <Zap className="w-3.5 h-3.5" />
                 <span>×{surgeMultiplier} ذروة نشطة</span>
               </span>
@@ -1133,14 +1142,17 @@ export function CourierPortalView({
             </span>
           </p>
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-950/60 border border-emerald-800/70 text-emerald-300 text-xs font-bold font-mono tabular-nums">
-              <span>متاح للسحب: {availableEscrowEgp} ج.م</span>
-            </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-950/60 border border-amber-800/70 text-amber-300 text-xs font-bold font-mono tabular-nums">
-              <span>معلق ٢٤ ساعة: {pendingEscrowEgp} ج.م</span>
+              <span>عهدة التحصيل: {driverWallet?.collectionCustody ?? 0} ج.م</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#FF6B00]/15 border border-[#FF6B00]/40 text-[#FF6B00] text-xs font-bold font-mono tabular-nums">
-              <span>إكراميات العملاء (Tips): {currentCourier.totalTipsEgp ?? 0} ج.م</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-950/60 border border-emerald-800/70 text-emerald-300 text-xs font-bold font-mono tabular-nums">
+              <span>مستحقاتي (أجر التوصيل): {driverWallet?.courierDues ?? availableEscrowEgp} ج.م</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs font-bold font-mono tabular-nums">
+              <span>المُسلّم للخزينة: {driverWallet?.handedOverAmount ?? 0} ج.م</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#FF7100]/15 border border-[#FF7100]/40 text-[#FF7100] text-xs font-bold font-mono tabular-nums">
+              <span>إكراميات العملاء: {currentCourier.totalTipsEgp ?? 0} ج.م</span>
             </span>
           </div>
         </div>
@@ -1149,7 +1161,7 @@ export function CourierPortalView({
           <button
             type="button"
             onClick={() => setIsSupportModalOpen(true)}
-            className="min-h-[48px] px-4 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+            className="min-h-[48px] px-4 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
           >
             <Headphones className="w-4 h-4" aria-hidden="true" />
             <span>الدعم الفني</span>
@@ -1169,9 +1181,9 @@ export function CourierPortalView({
               setLngInput(currentCourier.lng ?? fallback.lng);
               setEditingProfile((prev) => !prev);
             }}
-            className="min-h-[48px] px-4 rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+            className="min-h-[48px] px-4 rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
           >
-            <UserCheck className="w-4 h-4 text-[#FF6B00]" aria-hidden="true" />
+            <UserCheck className="w-4 h-4 text-[#FF7100]" aria-hidden="true" />
             <span>بياناتي وموقعي على الخريطة</span>
           </button>
 
@@ -1182,7 +1194,7 @@ export function CourierPortalView({
             className={`min-h-[48px] px-5 rounded-2xl text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] whitespace-nowrap ${
               currentCourier.isAvailable
                 ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                : 'bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#94A3B8]'
+                : 'bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#94A3B8]'
             }`}
           >
             <Power className="w-4 h-4" aria-hidden="true" />
@@ -1215,7 +1227,7 @@ export function CourierPortalView({
         <div className="space-y-1">
           <h2 className="text-sm sm:text-base font-bold text-[#F8FAFC] flex items-center gap-2">
             <LocateFixed
-              className="w-4 h-4 text-[#FF6B00]"
+              className="w-4 h-4 text-[#FF7100]"
               aria-hidden="true"
             />
             <span>بث موقع الاسكوتر الحي للعميل على Google Maps</span>
@@ -1234,8 +1246,8 @@ export function CourierPortalView({
             }
             className={`min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               gpsMode === 'real_gps'
-                ? 'bg-[#FF6B00] text-white'
-                : 'border border-[#334155] bg-[#0F172A] text-[#F8FAFC] hover:border-[#FF6B00]'
+                ? 'bg-[#FF7100] text-white'
+                : 'border border-[#334155] bg-[#10192D] text-[#F8FAFC] hover:border-[#FF7100]'
             }`}
           >
             <LocateFixed className="w-4 h-4" aria-hidden="true" />
@@ -1251,8 +1263,8 @@ export function CourierPortalView({
             }
             className={`min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               gpsMode === 'edku_sim'
-                ? 'bg-[#FF6B00] text-white'
-                : 'border border-[#334155] bg-[#0F172A] text-[#F8FAFC] hover:border-[#FF6B00]'
+                ? 'bg-[#FF7100] text-white'
+                : 'border border-[#334155] bg-[#10192D] text-[#F8FAFC] hover:border-[#FF7100]'
             }`}
           >
             {gpsMode === 'edku_sim' ? (
@@ -1266,7 +1278,7 @@ export function CourierPortalView({
             ) : (
               <>
                 <Play
-                  className="w-3.5 h-3.5 text-[#FF6B00]"
+                  className="w-3.5 h-3.5 text-[#FF7100]"
                   aria-hidden="true"
                 />
                 <span>وضع محاكاة داخل إدكو</span>
@@ -1304,7 +1316,7 @@ export function CourierPortalView({
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
                 maxLength={80}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm"
               />
             </div>
 
@@ -1322,7 +1334,7 @@ export function CourierPortalView({
                 value={phoneInput}
                 onChange={(e) => setPhoneInput(e.target.value)}
                 maxLength={11}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
               />
             </div>
 
@@ -1339,7 +1351,7 @@ export function CourierPortalView({
                 onChange={(e) =>
                   setVehicleInput(e.target.value as CourierVehicleType)
                 }
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm"
               >
                 {COURIER_VEHICLE_TYPES.map((vt) => (
                   <option key={vt} value={vt}>
@@ -1382,14 +1394,14 @@ export function CourierPortalView({
               <button
                 type="button"
                 onClick={() => setEditingProfile(false)}
-                className="min-h-[44px] px-4 rounded-xl border border-[#334155] bg-[#0F172A] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                className="min-h-[44px] px-4 rounded-xl border border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
               >
                 إلغاء
               </button>
               <button
                 type="submit"
                 disabled={busyActionId === 'save_profile'}
-                className="min-h-[44px] px-6 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold cursor-pointer"
+                className="min-h-[44px] px-6 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold cursor-pointer"
               >
                 حفظ البيانات والموقع
               </button>
@@ -1415,7 +1427,7 @@ export function CourierPortalView({
           <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#334155]">
             <div className="flex items-center gap-2.5">
               <Navigation
-                className="w-5 h-5 text-[#FF6B00]"
+                className="w-5 h-5 text-[#FF7100]"
                 aria-hidden="true"
               />
               <h2
@@ -1474,10 +1486,10 @@ export function CourierPortalView({
                       store={matchedStore}
                     />
 
-                    <div className="px-4 py-3 rounded-2xl bg-[#0F172A] border border-[#334155] flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="px-4 py-3 rounded-2xl bg-[#10192D] border border-[#334155] flex flex-wrap items-center justify-between gap-2 text-xs">
                       <span className="font-bold text-[#F8FAFC]">
                         الموقع الحالي المسجل:{' '}
-                        <span className="text-[#FF6B00]">
+                        <span className="text-[#FF7100]">
                           {order.courierLocation || EDKU_ROUTE_WAYPOINTS[1]}
                         </span>
                       </span>
@@ -1494,8 +1506,8 @@ export function CourierPortalView({
                         </span>
                       )}
                       {order.orderType === 'custom_errand' && (
-                        <div className="p-3 rounded-xl bg-[#0F172A] border border-[#334155] space-y-1 text-xs">
-                          <p className="font-bold text-[#FF6B00] flex items-center gap-1.5">
+                        <div className="p-3 rounded-xl bg-[#10192D] border border-[#334155] space-y-1 text-xs">
+                          <p className="font-bold text-[#FF7100] flex items-center gap-1.5">
                             <Bike className="w-4 h-4" />
                             <span>مشوار مخصص معتمد من العميل</span>
                           </p>
@@ -1515,7 +1527,7 @@ export function CourierPortalView({
                         <h3 className="text-lg font-bold text-[#F8FAFC]">
                           المستلم: {order.customerName}
                         </h3>
-                        <span className="text-lg font-bold text-[#FF6B00]">
+                        <span className="text-lg font-bold text-[#FF7100]">
                           المطلوب تحصيله نقداً:{' '}
                           <span className="font-mono tabular-nums">
                             {order.totalAmount}
@@ -1539,10 +1551,10 @@ export function CourierPortalView({
                         type="button"
                         disabled={busyActionId === `loc_${order.id}`}
                         onClick={() => void handleAdvanceWaypoint(order)}
-                        className="min-h-[58px] px-5 rounded-2xl bg-[#0F172A] hover:border-[#FF6B00] border border-[#334155] active:scale-[0.98] text-[#F8FAFC] text-sm sm:text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                        className="min-h-[58px] px-5 rounded-2xl bg-[#10192D] hover:border-[#FF7100] border border-[#334155] active:scale-[0.98] text-[#F8FAFC] text-sm sm:text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <MapPin
-                          className="w-5 h-5 text-[#FF6B00]"
+                          className="w-5 h-5 text-[#FF7100]"
                           aria-hidden="true"
                         />
                         <span>تحديث موقعي على الخريطة</span>
@@ -1550,10 +1562,10 @@ export function CourierPortalView({
 
                       <a
                         href={`tel:${order.customerPhone}`}
-                        className="min-h-[58px] px-5 rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-sm sm:text-base font-bold inline-flex items-center justify-center gap-2"
+                        className="min-h-[58px] px-5 rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-sm sm:text-base font-bold inline-flex items-center justify-center gap-2"
                       >
                         <Phone
-                          className="w-5 h-5 text-[#FF6B00]"
+                          className="w-5 h-5 text-[#FF7100]"
                           aria-hidden="true"
                         />
                         <span>
@@ -1609,7 +1621,7 @@ export function CourierPortalView({
           <div className="flex items-center justify-between gap-2 pb-4 border-b border-[#334155]">
             <div className="flex items-center gap-2">
               <PackageCheck
-                className="w-5 h-5 text-[#FF6B00]"
+                className="w-5 h-5 text-[#FF7100]"
                 aria-hidden="true"
               />
               <h2
@@ -1667,7 +1679,7 @@ export function CourierPortalView({
                                 ? 'text-emerald-400'
                                 : order.status === 'preparing'
                                 ? 'text-amber-400'
-                                : 'text-[#FF6B00]'
+                                : 'text-[#FF7100]'
                             }`}
                           >
                             {isCustomErrand
@@ -1684,7 +1696,7 @@ export function CourierPortalView({
                               : 'طلب جديد متاح للاستلام'}
                           </span>
                         </div>
-                        <span className="font-mono font-bold text-[#FF6B00] tabular-nums">
+                        <span className="font-mono font-bold text-[#FF7100] tabular-nums">
                           المسافة: {distanceKm} كم
                         </span>
                       </div>
@@ -1699,7 +1711,7 @@ export function CourierPortalView({
                       {isCustomErrand ? (
                         <div className="space-y-1.5 pt-1">
                           <h3 className="text-base font-bold text-[#F8FAFC] flex items-center gap-1.5">
-                            <Bike className="w-4 h-4 text-[#FF6B00]" />
+                            <Bike className="w-4 h-4 text-[#FF7100]" />
                             <span>
                               استلام من:{' '}
                               {order.errandPickupAddress || 'داخل مدينة إدكو'}
@@ -1723,7 +1735,7 @@ export function CourierPortalView({
                               توصيل إلى: {order.deliveryNeighborhood}
                             </span>
                             {order.zoneName && (
-                              <span className="px-2.5 py-0.5 rounded-lg bg-[#FF6B00]/15 border border-[#FF6B00]/40 text-[#FF6B00] text-xs font-bold">
+                              <span className="px-2.5 py-0.5 rounded-lg bg-[#FF7100]/15 border border-[#FF7100]/40 text-[#FF7100] text-xs font-bold">
                                 {order.zoneName} · توصيل: {order.deliveryFee} ج.م
                               </span>
                             )}
@@ -1746,18 +1758,18 @@ export function CourierPortalView({
 
                     {isCustomErrand ? (
                       order.status === 'awaiting_customer_errand_approval' ? (
-                        <div className="p-3.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs sm:text-sm font-bold flex items-center justify-between gap-3">
+                        <div className="p-3.5 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs sm:text-sm font-bold flex items-center justify-between gap-3">
                           <span>
                             تم إرسال عرضك ({order.totalAmount} ج.م) — بانتظار موافقة العميل للبدء فوراً
                           </span>
-                          <Clock className="w-4 h-4 text-[#FF6B00] shrink-0" />
+                          <Clock className="w-4 h-4 text-[#FF7100] shrink-0" />
                         </div>
                       ) : (
                         <div className="space-y-2.5 pt-1">
                           <div className="flex items-center gap-2">
                             <input
                               type="number"
-                              min={10}
+                              min={MIN_COURIER_DELIVERY_FEE_EGP}
                               max={500}
                               dir="ltr"
                               value={errandQuoteByOrder[order.id] ?? '25'}
@@ -1769,7 +1781,7 @@ export function CourierPortalView({
                               }
                               placeholder="25"
                               aria-label="تكلفة توصيل المشوار بالجنيه"
-                              className="w-28 min-h-[48px] px-3 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-sm font-mono font-bold text-[#F8FAFC] text-center tabular-nums"
+                              className="w-28 min-h-[48px] px-3 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-sm font-mono font-bold text-[#F8FAFC] text-center tabular-nums"
                             />
                             <span className="text-xs font-bold text-[#94A3B8]">
                               ج.م تكلفة توصيل المشوار المقترحة
@@ -1779,7 +1791,7 @@ export function CourierPortalView({
                             type="button"
                             disabled={isQuoting}
                             onClick={() => void handleSubmitErrandQuote(order)}
-                            className="w-full min-h-[54px] px-5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.98] disabled:opacity-60 text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                            className="w-full min-h-[54px] px-5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] disabled:opacity-60 text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
                           >
                             <Send className="w-4 h-4" aria-hidden="true" />
                             <span>
@@ -1796,7 +1808,7 @@ export function CourierPortalView({
                           type="button"
                           disabled={isPicking || busyActionId === `reject_${order.id}`}
                           onClick={() => void handlePickup(order)}
-                          className="flex-1 min-h-[58px] px-4 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.98] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-[0_8px_20px_-4px_rgba(255,107,0,0.4)]"
+                          className="flex-1 min-h-[58px] px-4 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-[0_8px_20px_-4px_rgba(255, 113, 0,0.4)]"
                         >
                           <Truck className="w-4 h-4" aria-hidden="true" />
                           <span>
@@ -1825,6 +1837,105 @@ export function CourierPortalView({
           )}
         </section>
       </div>
+
+      {/* Courier 3-Balance Financial Wallet & Treasury Receipts History */}
+      <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-[#F8FAFC]">
+              محفظة المندوب المالية وإيصالات الخزينة
+            </h2>
+            <p className="text-xs text-[#94A3B8] mt-0.5">
+              عهدة التحصيل منفصلة تماماً عن مستحقات أجور التوصيل · يتم تسليم النقدية بمقر إدكاوي بإيصال رسمي مرقّم.
+            </p>
+          </div>
+          <span className="font-mono text-xs text-[#94A3B8] tabular-nums">
+            إجمالي الطلبات المسلمة:{' '}
+            <strong className="text-[#F8FAFC]">
+              {driverWallet?.totalOrdersDelivered ?? completedOrders.length}
+            </strong>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl bg-[#10192D] border border-[#334155] space-y-1">
+            <p className="text-xs font-bold text-[#94A3B8]">
+              1. عهدة التحصيل (لدى المندوب)
+            </p>
+            <p className="font-mono text-2xl font-bold tabular-nums text-amber-300">
+              {driverWallet?.collectionCustody ?? 0} ج.م
+            </p>
+            <p className="text-[11px] text-[#94A3B8]">
+              نقدية محصلة من العملاء ومطلوب توريدها لمقر إدكاوي
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#10192D] border border-[#334155] space-y-1">
+            <p className="text-xs font-bold text-[#94A3B8]">
+              2. مستحقات المندوب (أجر التوصيل)
+            </p>
+            <p className="font-mono text-2xl font-bold tabular-nums text-emerald-400">
+              {driverWallet?.courierDues ?? 0} ج.م
+            </p>
+            <p className="text-[11px] text-[#94A3B8] tabular-nums">
+              تم صرفه سابقاً: {driverWallet?.totalDuesPaid ?? 0} ج.م
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#10192D] border border-[#334155] space-y-1">
+            <p className="text-xs font-bold text-[#94A3B8]">
+              3. المبالغ المسلّمة لخزينة إدكاوي
+            </p>
+            <p className="font-mono text-2xl font-bold tabular-nums text-[#F8FAFC]">
+              {driverWallet?.handedOverAmount ?? 0} ج.م
+            </p>
+            <p className="text-[11px] text-[#94A3B8]">
+              إجمالي ما تم توريده بإيصالات معتمدة
+            </p>
+          </div>
+        </div>
+
+        {treasuryReceipts.length > 0 && (
+          <div className="overflow-x-auto border border-[#334155] rounded-xl">
+            <table className="w-full text-right border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8]">
+                  <th className="py-2.5 px-4">رقم الإيصال</th>
+                  <th className="py-2.5 px-4">المتوقع</th>
+                  <th className="py-2.5 px-4">المسلّم فعلياً</th>
+                  <th className="py-2.5 px-4">الفرق</th>
+                  <th className="py-2.5 px-4">مستلم الخزينة</th>
+                  <th className="py-2.5 px-4">التاريخ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#334155]">
+                {treasuryReceipts.map((r) => (
+                  <tr key={r.id}>
+                    <td dir="ltr" className="py-2.5 px-4 font-mono font-bold text-[#FF7100] text-right">
+                      {r.receiptNumber}
+                    </td>
+                    <td className="py-2.5 px-4 font-mono tabular-nums">
+                      {r.expectedAmount} ج.م
+                    </td>
+                    <td className="py-2.5 px-4 font-mono tabular-nums font-bold text-emerald-400">
+                      {r.actualAmount} ج.م
+                    </td>
+                    <td className="py-2.5 px-4 font-mono tabular-nums">
+                      {r.varianceAmount} ج.م
+                    </td>
+                    <td className="py-2.5 px-4 text-xs text-[#94A3B8]">
+                      {r.receivedByName}
+                    </td>
+                    <td dir="ltr" className="py-2.5 px-4 font-mono text-xs text-[#94A3B8] text-right">
+                      {r.createdAtIso.slice(0, 16).replace('T', ' ')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <PortalSupportModal
         isOpen={isSupportModalOpen}
@@ -1868,7 +1979,7 @@ export function CourierPortalView({
                 type="button"
                 disabled={deleteAccountBusy}
                 onClick={() => setIsDeleteAccountOpen(false)}
-                className="min-h-[44px] px-4 rounded-xl border border-[#334155] bg-[#0F172A] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                className="min-h-[44px] px-4 rounded-xl border border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
               >
                 إلغاء
               </button>
@@ -1889,17 +2000,17 @@ export function CourierPortalView({
       {/* 30-Second Countdown Bottom Sheet for incoming order */}
       {incomingOrder && currentCourier?.isAvailable && (
         <div className="fixed inset-x-0 bottom-0 z-50 p-4 max-w-lg mx-auto pointer-events-auto">
-          <div className="bg-[#1E293B] border-2 border-[#FF6B00] rounded-2xl p-5 shadow-2xl space-y-4 text-right dir-rtl" dir="rtl">
+          <div className="bg-[#1E293B] border-2 border-[#FF7100] rounded-2xl p-5 shadow-2xl space-y-4 text-right dir-rtl" dir="rtl">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-[#FF6B00]/20 text-[#FF6B00] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-[#FF7100]/20 text-[#FF7100] flex items-center justify-center">
                   <Truck className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-bold text-[#F8FAFC]">طلب توصيل جديد متاح!</h3>
                     {surgeEnabled && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[#FF6B00]/20 text-[#FF6B00] text-[11px] font-bold font-mono tabular-nums">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[#FF7100]/20 text-[#FF7100] text-[11px] font-bold font-mono tabular-nums">
                         <Zap className="w-3 h-3" />
                         <span>×{surgeMultiplier} ذروة</span>
                       </span>
@@ -1908,21 +2019,21 @@ export function CourierPortalView({
                   <p className="text-xs text-[#94A3B8]">من متجر {incomingOrder.storeName}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 bg-[#FF6B00]/15 text-[#FF6B00] border border-[#FF6B00]/30 px-3 py-1 rounded-xl font-mono text-sm font-bold shrink-0">
+              <div className="flex items-center gap-1.5 bg-[#FF7100]/15 text-[#FF7100] border border-[#FF7100]/30 px-3 py-1 rounded-xl font-mono text-sm font-bold shrink-0">
                 <Clock className="w-4 h-4" />
                 <span>{countdownSeconds} ث</span>
               </div>
             </div>
 
             {/* Progress bar */}
-            <div className="w-full bg-[#0F172A] rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-[#10192D] rounded-full h-1.5 overflow-hidden">
               <div
-                className="bg-[#FF6B00] h-full transition-all duration-1000 ease-linear"
+                className="bg-[#FF7100] h-full transition-all duration-1000 ease-linear"
                 style={{ width: `${(countdownSeconds / 30) * 100}%` }}
               />
             </div>
 
-            <div className="bg-[#0F172A] border border-[#334155] rounded-xl p-3 space-y-2 text-xs">
+            <div className="bg-[#10192D] border border-[#334155] rounded-xl p-3 space-y-2 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-[#94A3B8]">المتجر والاستلام:</span>
                 <span className="font-semibold text-[#F8FAFC]">{findStoreNeighborhood(incomingOrder.storeId)}</span>
@@ -1937,7 +2048,7 @@ export function CourierPortalView({
               </div>
               <div className="flex justify-between items-center pt-1 border-t border-[#334155]">
                 <span className="text-[#94A3B8]">رسوم التوصيل للكابتن:</span>
-                <span className="font-mono font-bold text-base text-[#FF6B00]">+{incomingOrder.deliveryFee} ج.م</span>
+                <span className="font-mono font-bold text-base text-[#FF7100]">+{incomingOrder.deliveryFee} ج.م</span>
               </div>
             </div>
 
@@ -1949,7 +2060,7 @@ export function CourierPortalView({
                   setIncomingOrder(null);
                   void handlePickup(ord);
                 }}
-                className="py-3 px-4 bg-[#FF6B00] hover:bg-[#FF6B00]/90 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#FF6B00]/25 cursor-pointer"
+                className="py-3 px-4 bg-[#FF7100] hover:bg-[#FF7100]/90 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#FF7100]/25 cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>قبول فوراً</span>
@@ -1966,7 +2077,7 @@ export function CourierPortalView({
                     void rejectOrderByCourierInFirestore(ordId, currentCourier.id).catch(() => {});
                   }
                 }}
-                className="py-3 px-4 bg-[#0F172A] hover:bg-[#0F172A]/80 border border-[#334155] text-[#94A3B8] hover:text-rose-400 font-bold rounded-xl transition duration-200 flex items-center justify-center gap-1.5 text-sm cursor-pointer"
+                className="py-3 px-4 bg-[#10192D] hover:bg-[#10192D]/80 border border-[#334155] text-[#94A3B8] hover:text-rose-400 font-bold rounded-xl transition duration-200 flex items-center justify-center gap-1.5 text-sm cursor-pointer"
               >
                 <XCircle className="w-4 h-4" />
                 <span>رفض الطلب</span>

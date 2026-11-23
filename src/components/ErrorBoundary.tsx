@@ -36,10 +36,10 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6">
+        <div className="min-h-screen bg-[#10192D] flex items-center justify-center p-6">
           <div className="bg-[#1E293B] border border-[#334155] rounded-2xl max-w-lg w-full p-6 text-center space-y-4">
             <AlertTriangle
-              className="w-10 h-10 text-[#FF6B00] mx-auto"
+              className="w-10 h-10 text-[#FF7100] mx-auto"
               aria-hidden="true"
             />
             <h1 className="text-xl font-bold text-[#F8FAFC]">
@@ -51,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="py-2.5 px-5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-[#F8FAFC] text-sm font-bold cursor-pointer"
+              className="py-2.5 px-5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-[#F8FAFC] text-sm font-bold cursor-pointer"
             >
               إعادة تحميل التطبيق
             </button>

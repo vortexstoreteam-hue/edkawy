@@ -235,7 +235,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
             <button
               type="button"
               onClick={onRequireLogin}
-              className="min-h-[44px] px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+              className="min-h-[44px] px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
             >
               تسجيل الدخول للمحادثة
             </button>
@@ -249,7 +249,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
     <section className="rounded-2xl border border-[#334155] bg-[#1E293B] p-6 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#334155] pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/15 text-[#FF6B00] flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-[#FF7100]/15 text-[#FF7100] flex items-center justify-center shrink-0">
             <Headphones className="w-5 h-5" />
           </div>
           <div>
@@ -268,7 +268,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
             setFormError(null);
             setShowNewForm((prev) => !prev);
           }}
-          className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+          className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>{showNewForm ? 'إخفاء النموذج' : 'تذكرة جديدة'}</span>
@@ -278,7 +278,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
       {showNewForm && (
         <form
           onSubmit={handleCreateTicket}
-          className="rounded-2xl border border-[#334155] bg-[#0F172A] p-4 sm:p-5 space-y-4"
+          className="rounded-2xl border border-[#334155] bg-[#10192D] p-4 sm:p-5 space-y-4"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -348,14 +348,14 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
             <button
               type="button"
               onClick={() => setShowNewForm(false)}
-              className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#1E293B] text-xs font-bold text-[#F8FAFC] hover:border-[#FF6B00] whitespace-nowrap shrink-0 cursor-pointer"
+              className="min-h-[44px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#1E293B] text-xs font-bold text-[#F8FAFC] hover:border-[#FF7100] whitespace-nowrap shrink-0 cursor-pointer"
             >
               إلغاء
             </button>
             <button
               type="submit"
               disabled={submittingTicket}
-              className="min-h-[44px] inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+              className="min-h-[44px] inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
             >
               {submittingTicket ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -369,7 +369,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
       )}
 
       {tickets.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[#334155] bg-[#0F172A] p-8 text-center">
+        <div className="rounded-2xl border border-dashed border-[#334155] bg-[#10192D] p-8 text-center">
           <MessageSquare className="w-8 h-8 text-[#94A3B8] mx-auto mb-2" />
           <p className="text-sm font-bold text-[#F8FAFC]">
             لا توجد تذاكر دعم سابقة حتى الآن
@@ -395,8 +395,8 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
                     onClick={() => setSelectedTicketId(t.id)}
                     className={`w-full text-right p-3.5 rounded-2xl border transition-colors cursor-pointer ${
                       isSelected
-                        ? 'border-[#FF6B00] bg-[#FF6B00]/10'
-                        : 'border-[#334155] bg-[#0F172A] hover:border-[#FF6B00]/60'
+                        ? 'border-[#FF7100] bg-[#FF7100]/10'
+                        : 'border-[#334155] bg-[#10192D] hover:border-[#FF7100]/60'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -406,7 +406,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
                       <span
                         className={`text-xs font-bold whitespace-nowrap shrink-0 ${
                           t.status === 'open'
-                            ? 'text-[#FF6B00]'
+                            ? 'text-[#FF7100]'
                             : 'text-emerald-400'
                         }`}
                       >
@@ -427,7 +427,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
           </div>
 
           {/* Live Chat Bubble Stream */}
-          <div className="lg:col-span-7 flex flex-col rounded-2xl border border-[#334155] bg-[#0F172A] overflow-hidden min-h-[380px]">
+          <div className="lg:col-span-7 flex flex-col rounded-2xl border border-[#334155] bg-[#10192D] overflow-hidden min-h-[380px]">
             {selectedTicket ? (
               <>
                 <div className="px-4 py-3 bg-[#1E293B] border-b border-[#334155] flex items-center justify-between gap-3">
@@ -444,7 +444,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
                     <span
                       className={`text-xs font-bold whitespace-nowrap ${
                         selectedTicket.status === 'open'
-                          ? 'text-[#FF6B00]'
+                          ? 'text-[#FF7100]'
                           : 'text-emerald-400'
                       }`}
                     >
@@ -472,7 +472,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
                 {selectedTicket.status === 'open' &&
                   !selectedTicket.hasAdminReply && (
                     <div className="px-4 py-2.5 bg-amber-950/40 border-b border-amber-500/30 flex items-center gap-2 text-xs font-bold text-amber-200">
-                      <Clock className="w-4 h-4 text-[#FF6B00] shrink-0" />
+                      <Clock className="w-4 h-4 text-[#FF7100] shrink-0" />
                       <span>جاري مراجعة مشكلتك، سيتم الرد قريباً</span>
                     </div>
                   )}
@@ -481,7 +481,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
                   {selectedTicket.attachmentImageUrl && (
                     <div className="rounded-2xl border border-[#334155] bg-[#1E293B] p-2.5 space-y-1.5">
                       <p className="text-[11px] font-bold text-[#94A3B8] flex items-center gap-1">
-                        <Paperclip className="w-3 h-3 text-[#FF6B00]" />
+                        <Paperclip className="w-3 h-3 text-[#FF7100]" />
                         <span>مرفق التذكرة</span>
                       </p>
                       <img
@@ -499,7 +499,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
                         m.text.trim() === selectedTicket.details.trim()
                     ) && (
                       <div className="flex justify-start">
-                        <div className="max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2.5 bg-[#FF6B00] text-white shadow-sm">
+                        <div className="max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2.5 bg-[#FF7100] text-white shadow-sm">
                           <p className="text-xs font-bold opacity-95 mb-0.5">
                             {selectedTicket.userName}
                           </p>
@@ -525,7 +525,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
                         <div
                           className={`max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm ${
                             isMine
-                              ? 'rounded-tr-sm bg-[#FF6B00] text-white'
+                              ? 'rounded-tr-sm bg-[#FF7100] text-white'
                               : 'rounded-tl-sm bg-[#1E293B] text-[#F8FAFC] border border-[#334155]'
                           }`}
                         >
@@ -533,7 +533,7 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
                             className={`text-[11px] font-bold mb-0.5 ${
                               isMine
                                 ? 'text-white/90'
-                                : 'text-[#FF6B00]'
+                                : 'text-[#FF7100]'
                             }`}
                           >
                             {isMine ? 'أنت' : msg.senderName || 'الدعم الفني'}
@@ -568,12 +568,12 @@ export const CustomerSupportSection: React.FC<CustomerSupportSectionProps> = ({
                       onChange={(e) => setReplyText(e.target.value)}
                       placeholder="اكتب رسالتك لفريق الدعم..."
                       maxLength={1500}
-                      className="flex-1 min-h-[44px] px-3.5 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+                      className="flex-1 min-h-[44px] px-3.5 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
                     />
                     <button
                       type="submit"
                       disabled={sendingReply || !replyText.trim()}
-                      className="min-h-[44px] min-w-[44px] px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                      className="min-h-[44px] min-w-[44px] px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                     >
                       {sendingReply ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -634,7 +634,7 @@ export const PortalSupportModal: React.FC<PortalSupportModalProps> = ({
       <div className="w-full max-w-4xl rounded-2xl bg-[#1E293B] border border-[#334155] shadow-2xl overflow-hidden my-auto max-h-[90dvh] flex flex-col">
         <div className="px-5 py-4 bg-[#1E293B] border-b border-[#334155] text-[#F8FAFC] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <Headphones className="w-5 h-5 text-[#FF6B00]" />
+            <Headphones className="w-5 h-5 text-[#FF7100]" />
             <h2 className="text-base sm:text-lg font-bold text-[#F8FAFC]">
               الدعم الفني المباشر — {userRole === 'store' ? 'بوابة التاجر' : 'بوابة الكابتن'}
             </h2>
@@ -643,7 +643,7 @@ export const PortalSupportModal: React.FC<PortalSupportModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="إغلاق نافذة الدعم"
-            className="min-h-[44px] min-w-[44px] rounded-2xl text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#0F172A] flex items-center justify-center cursor-pointer"
+            className="min-h-[44px] min-w-[44px] rounded-2xl text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#10192D] flex items-center justify-center cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -832,7 +832,7 @@ export const AdminSupportSplitWorkspace: React.FC<
       {/* Top Filter & Summary Toolbar */}
       <div className="rounded-2xl border border-[#334155] bg-[#1E293B] p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 p-1 rounded-2xl bg-[#0F172A] border border-[#334155]">
+          <div className="flex items-center gap-1 p-1 rounded-2xl bg-[#10192D] border border-[#334155]">
             {(
               [
                 { id: 'open', label: `مفتوحة (${openCount})` },
@@ -849,7 +849,7 @@ export const AdminSupportSplitWorkspace: React.FC<
                 onClick={() => setStatusFilter(tab.id)}
                 className={`min-h-[40px] px-3.5 py-1.5 rounded-2xl text-xs font-bold whitespace-nowrap shrink-0 transition-colors tabular-nums cursor-pointer ${
                   statusFilter === tab.id
-                    ? 'bg-[#FF6B00] text-white shadow-sm'
+                    ? 'bg-[#FF7100] text-white shadow-sm'
                     : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                 }`}
               >
@@ -859,7 +859,7 @@ export const AdminSupportSplitWorkspace: React.FC<
           </div>
 
           {unansweredCount > 0 && (
-            <span className="text-xs font-bold text-[#FF6B00] tabular-nums">
+            <span className="text-xs font-bold text-[#FF7100] tabular-nums">
               {unansweredCount} بانتظار أول رد فوري
             </span>
           )}
@@ -872,7 +872,7 @@ export const AdminSupportSplitWorkspace: React.FC<
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="بحث باسم المستخدم أو الهاتف أو الموضوع..."
-            className="w-full min-h-[42px] pr-10 pl-3.5 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs sm:text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+            className="w-full min-h-[42px] pr-10 pl-3.5 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-xs sm:text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
           />
         </div>
       </div>
@@ -905,12 +905,12 @@ export const AdminSupportSplitWorkspace: React.FC<
                     onClick={() => setSelectedTicketId(ticket.id)}
                     className={`w-full text-right p-3.5 rounded-2xl border transition-colors cursor-pointer ${
                       isSelected
-                        ? 'border-[#FF6B00] bg-[#FF6B00]/10'
+                        ? 'border-[#FF7100] bg-[#FF7100]/10'
                         : isSlaOverdue
                         ? 'border-rose-500/50 bg-rose-950/30'
                         : isUrgentOpen
                         ? 'border-amber-500/40 bg-amber-950/25'
-                        : 'border-[#334155] bg-[#0F172A] hover:border-[#FF6B00]/50'
+                        : 'border-[#334155] bg-[#10192D] hover:border-[#FF7100]/50'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -922,7 +922,7 @@ export const AdminSupportSplitWorkspace: React.FC<
                           isSlaOverdue
                             ? 'text-rose-400'
                             : isUrgentOpen
-                            ? 'text-[#FF6B00]'
+                            ? 'text-[#FF7100]'
                             : ticket.status === 'open'
                             ? 'text-amber-400'
                             : 'text-emerald-400'
@@ -989,7 +989,7 @@ export const AdminSupportSplitWorkspace: React.FC<
               <div className="flex flex-wrap items-center gap-4 text-xs text-[#F8FAFC] tabular-nums">
                 {selectedTicket.userPhone ? (
                   <span className="inline-flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-[#FF6B00]" />
+                    <Phone className="w-3.5 h-3.5 text-[#FF7100]" />
                     <span dir="ltr">{selectedTicket.userPhone}</span>
                   </span>
                 ) : (
@@ -1020,7 +1020,7 @@ export const AdminSupportSplitWorkspace: React.FC<
                 </div>
               )}
 
-              <div className="rounded-2xl bg-[#0F172A] p-3.5 border border-[#334155]">
+              <div className="rounded-2xl bg-[#10192D] p-3.5 border border-[#334155]">
                 <p className="text-xs font-bold text-[#94A3B8] mb-1">
                   تفاصيل الشكوى الأساسية:
                 </p>
@@ -1030,9 +1030,9 @@ export const AdminSupportSplitWorkspace: React.FC<
               </div>
 
               {selectedTicket.attachmentImageUrl && (
-                <div className="rounded-2xl bg-[#0F172A] p-3 border border-[#334155] space-y-2">
+                <div className="rounded-2xl bg-[#10192D] p-3 border border-[#334155] space-y-2">
                   <p className="text-xs font-bold text-[#94A3B8] flex items-center gap-1.5">
-                    <Paperclip className="w-3.5 h-3.5 text-[#FF6B00]" />
+                    <Paperclip className="w-3.5 h-3.5 text-[#FF7100]" />
                     <span>مرفق العميل (اضغط للتكبير)</span>
                   </p>
                   <button
@@ -1054,14 +1054,14 @@ export const AdminSupportSplitWorkspace: React.FC<
               {actorRole === 'admin' && (
                 <div>
                   <label className="flex items-center gap-1.5 text-xs font-bold text-[#F8FAFC] mb-1.5">
-                    <UserCheck className="w-3.5 h-3.5 text-[#FF6B00]" />
+                    <UserCheck className="w-3.5 h-3.5 text-[#FF7100]" />
                     <span>مسؤول الدعم المعين (توزيع تلقائي مع تعديل يدوي)</span>
                   </label>
                   <select
                     disabled={assigningAgent}
                     value={selectedTicket.assignedTo || ''}
                     onChange={(e) => handleAssignAgent(e.target.value)}
-                    className="w-full min-h-[42px] px-3 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs sm:text-sm text-[#F8FAFC]"
+                    className="w-full min-h-[42px] px-3 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-xs sm:text-sm text-[#F8FAFC]"
                   >
                     <option value="">فريق الدعم المركزي (الإدارة العامة)</option>
                     {activeSupportAgents.map((agent) => (
@@ -1089,12 +1089,12 @@ export const AdminSupportSplitWorkspace: React.FC<
                     مع {selectedTicket.userName} ({getUserRoleLabel(selectedTicket.userRole)})
                   </p>
                 </div>
-                <span className="text-xs font-bold text-[#FF6B00] whitespace-nowrap shrink-0">
+                <span className="text-xs font-bold text-[#FF7100] whitespace-nowrap shrink-0">
                   مباشر الآن
                 </span>
               </div>
 
-              <div className="flex-1 p-4 sm:p-5 space-y-3 overflow-y-auto bg-[#0F172A] max-h-[420px]">
+              <div className="flex-1 p-4 sm:p-5 space-y-3 overflow-y-auto bg-[#10192D] max-h-[420px]">
                 {selectedTicket.details &&
                   !messages.some(
                     (m) =>
@@ -1103,7 +1103,7 @@ export const AdminSupportSplitWorkspace: React.FC<
                   ) && (
                     <div className="flex justify-end">
                       <div className="max-w-[85%] rounded-2xl rounded-tl-sm px-4 py-3 bg-[#1E293B] text-[#F8FAFC] border border-[#334155] shadow-sm">
-                        <p className="text-xs font-bold text-[#FF6B00] mb-1">
+                        <p className="text-xs font-bold text-[#FF7100] mb-1">
                           {selectedTicket.userName}
                         </p>
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -1128,13 +1128,13 @@ export const AdminSupportSplitWorkspace: React.FC<
                       <div
                         className={`max-w-[85%] rounded-2xl px-4 py-2.5 shadow-sm ${
                           isStaffMsg
-                            ? 'rounded-tr-sm bg-[#FF6B00] text-white'
+                            ? 'rounded-tr-sm bg-[#FF7100] text-white'
                             : 'rounded-tl-sm bg-[#1E293B] text-[#F8FAFC] border border-[#334155]'
                         }`}
                       >
                         <p
                           className={`text-[11px] font-bold mb-0.5 ${
-                            isStaffMsg ? 'text-white/90' : 'text-[#FF6B00]'
+                            isStaffMsg ? 'text-white/90' : 'text-[#FF7100]'
                           }`}
                         >
                           {msg.senderName}
@@ -1165,7 +1165,7 @@ export const AdminSupportSplitWorkspace: React.FC<
                     key={preset}
                     type="button"
                     onClick={() => setReplyText(preset)}
-                    className="px-2.5 py-1 rounded-2xl border border-[#334155] bg-[#0F172A] hover:border-[#FF6B00] text-[11px] font-semibold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer transition-colors"
+                    className="px-2.5 py-1 rounded-2xl border border-[#334155] bg-[#10192D] hover:border-[#FF7100] text-[11px] font-semibold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer transition-colors"
                   >
                     {preset}
                   </button>
@@ -1182,12 +1182,12 @@ export const AdminSupportSplitWorkspace: React.FC<
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="اكتب رد الدعم الفني ليظهر للمستخدم في نفس اللحظة..."
                   maxLength={1500}
-                  className="flex-1 min-h-[44px] px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+                  className="flex-1 min-h-[44px] px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
                 />
                 <button
                   type="submit"
                   disabled={sendingReply || !replyText.trim()}
-                  className="min-h-[44px] px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="min-h-[44px] px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-sm font-bold inline-flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   {sendingReply ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1227,7 +1227,7 @@ export const AdminSupportSplitWorkspace: React.FC<
               <button
                 type="button"
                 onClick={() => setLightboxImageUrl(null)}
-                className="min-h-[36px] min-w-[36px] rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] flex items-center justify-center cursor-pointer"
+                className="min-h-[36px] min-w-[36px] rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] flex items-center justify-center cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1235,7 +1235,7 @@ export const AdminSupportSplitWorkspace: React.FC<
             <img
               src={lightboxImageUrl}
               alt="مرفق التذكرة"
-              className="w-full max-h-[75vh] object-contain rounded-2xl bg-[#0F172A]"
+              className="w-full max-h-[75vh] object-contain rounded-2xl bg-[#10192D]"
             />
           </div>
         </div>

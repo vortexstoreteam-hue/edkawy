@@ -2,9 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
-  Check,
   Clock,
-  Copy,
   Eye,
   EyeOff,
   KeyRound,
@@ -16,6 +14,7 @@ import {
   Phone,
   Pill,
   RefreshCw,
+  ShieldCheck,
   ShoppingBag,
   Store,
   User as UserIcon,
@@ -23,11 +22,13 @@ import {
 import { HERO_EDKU_IMAGE } from '../assets/storeImages';
 import { EDKU_CITY_CENTER } from '../data/edkuSeedStores';
 import {
+  fetchAdminSetupStatus,
   formatFirebaseAuthError,
+  isAllowlistedAdminEmail,
+  loginAdminWithGoogle,
   loginAnonymously,
   loginUnifiedWithEmailAndPassword,
   loginWithGoogleCustomer,
-  OFFICIAL_ADMIN_PORTAL_EMAIL,
   readPendingSessionReferralCode,
   registerAccountFromInvitationInFirestore,
   registerCustomerWithEmailAndPassword,
@@ -39,12 +40,14 @@ import {
   sendFirebaseFallbackVerificationLink,
   sendPasswordResetEmailForUser,
   signInAndBootstrapAdmin,
+  submitInitialAdminSetup,
   validateInvitationTokenInFirestore,
   verifyAdminOtpFromServer,
   verifyUserEmailVerificationOtp,
 } from '../services/edkawiFirebaseService';
 import {
   AdminOtpRequestResult,
+  AdminSetupStatusResult,
   CourierKycDocumentsInput,
   CourierVehicleType,
   EmailVerificationRequestResult,
@@ -225,8 +228,20 @@ export function AuthScreen({
   }, [inviteToken]);
 
   const [step, setStep] = useState<
-    'credentials' | 'admin_otp' | 'customer_email_otp' | 'reset_password'
+    | 'credentials'
+    | 'admin_initial_setup'
+    | 'admin_otp'
+    | 'customer_email_otp'
+    | 'reset_password'
   >('credentials');
+  const [adminSetupStatus, setAdminSetupStatus] =
+    useState<AdminSetupStatusResult | null>(null);
+  const [adminSetupPassword, setAdminSetupPassword] = useState('');
+  const [adminSetupConfirmPassword, setAdminSetupConfirmPassword] =
+    useState('');
+  const [adminSetupSuccessMsg, setAdminSetupSuccessMsg] = useState<
+    string | null
+  >(null);
   const [otpCode, setOtpCode] = useState('');
   const [customerOtpDigits, setCustomerOtpDigits] = useState<string[]>([
     '',
@@ -240,7 +255,6 @@ export function AuthScreen({
     useState<AdminOtpRequestResult | null>(null);
   const [emailVerifyMeta, setEmailVerifyMeta] =
     useState<EmailVerificationRequestResult | null>(null);
-  const [copiedOtp, setCopiedOtp] = useState(false);
 
   const [busyMode, setBusyMode] = useState<
     | 'login'
@@ -249,6 +263,8 @@ export function AuthScreen({
     | 'verify_customer_email'
     | 'fallback_email_link'
     | 'google'
+    | 'google_admin'
+    | 'admin_setup'
     | 'customer'
     | 'verify_otp'
     | 'resend_otp'
@@ -257,6 +273,20 @@ export function AuthScreen({
   >(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [resetSuccessMsg, setResetSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAdminSetupStatus()
+      .then((res) => {
+        if (!cancelled) {
+          setAdminSetupStatus(res);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (otpLockoutSeconds <= 0) return;
@@ -606,18 +636,25 @@ export function AuthScreen({
   async function handleUnifiedLoginSubmit(e: FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
+    setAdminSetupSuccessMsg(null);
 
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail || !normalizedEmail.includes('@')) {
       setErrorMsg('يرجى إدخال البريد الإلكتروني بشكل صحيح.');
       return;
     }
-    if (!password || password.length < 6) {
-      setErrorMsg('يرجى إدخال كلمة المرور (٦ أحرف أو أرقام على الأقل).');
-      return;
-    }
 
-    if (normalizedEmail === OFFICIAL_ADMIN_PORTAL_EMAIL) {
+    if (isAllowlistedAdminEmail(normalizedEmail)) {
+      if (adminSetupStatus?.setupRequired) {
+        setAdminSetupPassword('');
+        setAdminSetupConfirmPassword('');
+        setStep('admin_initial_setup');
+        return;
+      }
+      if (!password || password.length < 6) {
+        setErrorMsg('يرجى إدخال كلمة مرور الإدارة (٦ أحرف أو أرقام على الأقل).');
+        return;
+      }
       setBusyMode('login');
       try {
         const otpRes = await requestAdminOtpFromServer(
@@ -628,14 +665,37 @@ export function AuthScreen({
         setOtpCode('');
         setStep('admin_otp');
       } catch (err) {
-        setErrorMsg(
-          err instanceof Error
-            ? err.message
-            : 'بيانات الدخول الخاصة بالإدارة غير صحيحة.'
-        );
+        const typedErr = err as Error & { setupRequired?: boolean };
+        if (typedErr?.setupRequired) {
+          setAdminSetupStatus((prev) =>
+            prev
+              ? { ...prev, setupRequired: true, source: 'unconfigured' }
+              : {
+                  ok: true,
+                  setupRequired: true,
+                  source: 'unconfigured',
+                  adminEmail: normalizedEmail,
+                }
+          );
+          setAdminSetupPassword('');
+          setAdminSetupConfirmPassword('');
+          setStep('admin_initial_setup');
+          setErrorMsg(null);
+        } else {
+          setErrorMsg(
+            err instanceof Error
+              ? err.message
+              : 'بيانات الدخول الخاصة بالإدارة غير صحيحة.'
+          );
+        }
       } finally {
         setBusyMode(null);
       }
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setErrorMsg('يرجى إدخال كلمة المرور (٦ أحرف أو أرقام على الأقل).');
       return;
     }
 
@@ -660,6 +720,84 @@ export function AuthScreen({
     }
   }
 
+  async function handleAdminInitialSetupSubmit(e: FormEvent) {
+    e.preventDefault();
+    setErrorMsg(null);
+    setAdminSetupSuccessMsg(null);
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!isAllowlistedAdminEmail(normalizedEmail)) {
+      setErrorMsg('يرجى إدخال بريد الإدارة المعتمد أولاً.');
+      return;
+    }
+    if (adminSetupPassword.length < 10) {
+      setErrorMsg(
+        'يرجى اختيار كلمة مرور قوية للإدارة لا تقل عن ١٠ أحرف أو أرقام ورموز.'
+      );
+      return;
+    }
+    if (adminSetupPassword !== adminSetupConfirmPassword) {
+      setErrorMsg('كلمتا المرور غير متطابقتين.');
+      return;
+    }
+
+    setBusyMode('admin_setup');
+    try {
+      await submitInitialAdminSetup(normalizedEmail, adminSetupPassword);
+      setPassword(adminSetupPassword);
+      setAdminSetupStatus({
+        ok: true,
+        setupRequired: false,
+        source: 'initial_setup',
+        adminEmail: normalizedEmail,
+      });
+      try {
+        const otpRes = await requestAdminOtpFromServer(
+          normalizedEmail,
+          adminSetupPassword
+        );
+        setOtpRequestMeta(otpRes);
+        setOtpCode('');
+        setStep('admin_otp');
+      } catch (otpErr) {
+        setStep('credentials');
+        setAdminSetupSuccessMsg(
+          'تم حفظ كلمة مرور الإدارة المشفرة بنجاح! لتسجيل الدخول بالبريد يلزم ضبط إعدادات SMTP لاستلام كود OTP، أو يمكنك الدخول مباشرة بحساب Google المعتمد.'
+        );
+        if (otpErr instanceof Error) {
+          setErrorMsg(otpErr.message);
+        }
+      }
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : 'تعذر حفظ كلمة مرور الإدارة الأولية.'
+      );
+    } finally {
+      setBusyMode(null);
+    }
+  }
+
+  async function handleGoogleAdminLogin() {
+    setErrorMsg(null);
+    setBusyMode('google_admin');
+    onAuthTransitionStart();
+    try {
+      await loginAdminWithGoogle();
+      onAuthTransitionEnd('admin');
+    } catch (err) {
+      onAuthTransitionEnd();
+      if (err instanceof Error && /[\u0600-\u06FF]/.test(err.message)) {
+        setErrorMsg(err.message);
+      } else {
+        setErrorMsg(formatFirebaseAuthError(err).message);
+      }
+    } finally {
+      setBusyMode(null);
+    }
+  }
+
   async function handleVerifyAdminOtpSubmit(e: FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
@@ -674,20 +812,17 @@ export function AuthScreen({
     setBusyMode('verify_otp');
     onAuthTransitionStart();
     try {
-      const verifyRes = await verifyAdminOtpFromServer(
-        normalizedEmail,
-        trimmedCode
-      );
-      await signInAndBootstrapAdmin(
-        normalizedEmail,
-        password,
-        verifyRes.adminBootstrapGate!
-      );
+      await verifyAdminOtpFromServer(normalizedEmail, trimmedCode);
+      await signInAndBootstrapAdmin(normalizedEmail, password);
       onAuthTransitionEnd('admin');
     } catch (err) {
       onAuthTransitionEnd();
-      const formatted = formatFirebaseAuthError(err);
-      setErrorMsg(formatted.message);
+      if (err instanceof Error && /[\u0600-\u06FF]/.test(err.message)) {
+        setErrorMsg(err.message);
+      } else {
+        const formatted = formatFirebaseAuthError(err);
+        setErrorMsg(formatted.message);
+      }
     } finally {
       setBusyMode(null);
     }
@@ -757,25 +892,10 @@ export function AuthScreen({
     }
   }
 
-  async function handleCopyFallbackOtp(code: string) {
-    setOtpCode(code);
-    const digits = code.replace(/\D/g, '').slice(0, 4).split('');
-    if (digits.length === 4) {
-      setCustomerOtpDigits(digits);
-    }
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopiedOtp(true);
-      setTimeout(() => setCopiedOtp(false), 2000);
-    } catch {
-      // Code is already filled into input
-    }
-  }
-
   return (
     <div
       dir="rtl"
-      className="min-h-[calc(100dvh-4rem)] bg-gradient-to-b from-[#0F172A] via-[#162033] to-[#0F172A] p-4 sm:p-6 flex items-center justify-center edkawi-page-enter"
+      className="min-h-[calc(100dvh-4rem)] bg-gradient-to-b from-[#10192D] via-[#18233C] to-[#10192D] p-4 sm:p-6 flex items-center justify-center edkawi-page-enter"
     >
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         {/* Right Column (RTL): Login & Registration Card */}
@@ -786,7 +906,7 @@ export function AuthScreen({
           <div className="space-y-5">
             <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#334155]">
               <div className="space-y-1.5 text-center sm:text-right">
-                <p className="text-xs font-bold text-[#FF6B00]">
+                <p className="text-xs font-bold text-[#FF7100]">
                   مدينة إدكو · محافظة البحيرة
                 </p>
                 <h1
@@ -795,6 +915,8 @@ export function AuthScreen({
                 >
                   {inviteToken
                     ? 'إتمام التسجيل عبر الدعوة'
+                    : step === 'admin_initial_setup'
+                    ? 'تهيئة كلمة مرور الإدارة لأول مرة'
                     : step === 'admin_otp'
                     ? 'التحقق الأمني للإدارة'
                     : step === 'customer_email_otp'
@@ -808,6 +930,8 @@ export function AuthScreen({
                 <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
                   {inviteToken
                     ? 'أكمل بياناتك لتفعيل حسابك على إدكاوي'
+                    : step === 'admin_initial_setup'
+                    ? 'قم بتعيين كلمة مرور قوية لبوابة الإدارة (مرة واحدة فقط)'
                     : step === 'admin_otp'
                     ? 'أدخل كود التحقق المكون من ٦ أرقام'
                     : step === 'customer_email_otp'
@@ -825,10 +949,10 @@ export function AuthScreen({
           {activeRefCode && !inviteToken && authMode === 'register_customer' && (
             <div
               role="status"
-              className="p-3.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-xs font-semibold text-[#F8FAFC] text-center"
+              className="p-3.5 rounded-2xl bg-[#10192D] border border-[#334155] text-xs font-semibold text-[#F8FAFC] text-center"
             >
               كود الإحالة:{' '}
-              <span className="font-mono font-bold text-[#FF6B00]">
+              <span className="font-mono font-bold text-[#FF7100]">
                 {activeRefCode}
               </span>
             </div>
@@ -837,7 +961,7 @@ export function AuthScreen({
           {hasPendingCartForCheckout && !inviteToken && step === 'credentials' && (
             <div
               role="status"
-              className="p-3.5 rounded-2xl bg-[#FF6B00]/15 border border-[#FF6B00]/40 text-[#F8FAFC] text-xs sm:text-sm font-semibold text-center"
+              className="p-3.5 rounded-2xl bg-[#FF7100]/15 border border-[#FF7100]/40 text-[#F8FAFC] text-xs sm:text-sm font-semibold text-center"
             >
               لديك منتجات في السلة — سجّل دخولك لإتمام الطلب الآن.
             </div>
@@ -849,6 +973,15 @@ export function AuthScreen({
               className="p-3.5 rounded-2xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-200 text-xs sm:text-sm font-semibold"
             >
               {resetSuccessMsg}
+            </div>
+          )}
+
+          {adminSetupSuccessMsg && (
+            <div
+              role="status"
+              className="p-3.5 rounded-2xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-200 text-xs sm:text-sm font-semibold"
+            >
+              {adminSetupSuccessMsg}
             </div>
           )}
 
@@ -864,7 +997,7 @@ export function AuthScreen({
           {inviteToken ? (
             inviteChecking ? (
               <div className="py-10 flex flex-col items-center justify-center gap-3 text-sm font-semibold text-[#94A3B8]">
-                <Loader2 className="w-6 h-6 animate-spin text-[#FF6B00]" />
+                <Loader2 className="w-6 h-6 animate-spin text-[#FF7100]" />
                 <span>جارٍ التحقق من رابط الدعوة...</span>
               </div>
             ) : !inviteRecord || inviteInvalidReason ? (
@@ -882,7 +1015,7 @@ export function AuthScreen({
                     setErrorMsg(null);
                     onClearInviteToken?.();
                   }}
-                  className="w-full min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold cursor-pointer"
+                  className="w-full min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold cursor-pointer"
                 >
                   الانتقال لتسجيل الدخول
                 </button>
@@ -892,9 +1025,9 @@ export function AuthScreen({
                 onSubmit={handleInvitationRegisterSubmit}
                 className="space-y-4"
               >
-                <div className="p-3.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-xs text-[#94A3B8]">
+                <div className="p-3.5 rounded-2xl bg-[#10192D] border border-[#334155] text-xs text-[#94A3B8]">
                   نوع الحساب:{' '}
-                  <strong className="text-[#FF6B00]">
+                  <strong className="text-[#FF7100]">
                     {inviteRecord.userType === 'store'
                       ? 'متجر / مطعم / صيدلية'
                       : inviteRecord.userType === 'courier'
@@ -917,7 +1050,7 @@ export function AuthScreen({
                     dir="ltr"
                     readOnly
                     value={inviteRecord.email}
-                    className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm font-mono text-left text-[#94A3B8] cursor-not-allowed"
+                    className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm font-mono text-left text-[#94A3B8] cursor-not-allowed"
                   />
                 </div>
 
@@ -939,7 +1072,7 @@ export function AuthScreen({
                           ? 'مثال: مطبخ إدكو'
                           : 'الاسم بالكامل'
                       }
-                      className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+                      className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
                     />
                   </div>
 
@@ -957,7 +1090,7 @@ export function AuthScreen({
                         value={invitePhone}
                         onChange={(e) => setInvitePhone(e.target.value)}
                         placeholder="01012345678"
-                        className="w-full pr-10 pl-3.5 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm font-mono tabular-nums text-left text-[#F8FAFC]"
+                        className="w-full pr-10 pl-3.5 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm font-mono tabular-nums text-left text-[#F8FAFC]"
                       />
                     </div>
                   </div>
@@ -976,7 +1109,7 @@ export function AuthScreen({
                       value={invitePassword}
                       onChange={(e) => setInvitePassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-3.5 pl-10 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm font-mono text-left text-[#F8FAFC]"
+                      className="w-full px-3.5 pl-10 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm font-mono text-left text-[#F8FAFC]"
                     />
                     <button
                       type="button"
@@ -1006,7 +1139,7 @@ export function AuthScreen({
                             setInviteStoreCategory(nextCat);
                             setInviteIsHomeFood(nextCat === 'أكل بيتي');
                           }}
-                          className="w-full px-3 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+                          className="w-full px-3 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC]"
                         >
                           {STORE_CATEGORIES.map((cat) => (
                             <option key={cat} value={cat}>
@@ -1024,7 +1157,7 @@ export function AuthScreen({
                             onChange={(e) =>
                               setInviteIsHomeFood(e.target.checked)
                             }
-                            className="w-4 h-4 accent-[#FF6B00] rounded"
+                            className="w-4 h-4 accent-[#FF7100] rounded"
                           />
                           <span>أكل بيتي طازج</span>
                         </label>
@@ -1041,12 +1174,12 @@ export function AuthScreen({
                         value={inviteStoreDesc}
                         onChange={(e) => setInviteStoreDesc(e.target.value)}
                         placeholder="مثال: أشهى الطواجن والمحاشي في إدكو"
-                        className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+                        className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC]"
                       />
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-[#0F172A] border border-[#334155] space-y-3">
-                      <p className="text-xs font-bold text-[#FF6B00]">
+                    <div className="p-4 rounded-2xl bg-[#10192D] border border-[#334155] space-y-3">
+                      <p className="text-xs font-bold text-[#FF7100]">
                         التوثيق القانوني والضريبي الإجباري للمتجر
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1125,7 +1258,7 @@ export function AuthScreen({
                             e.target.value as CourierVehicleType
                           )
                         }
-                        className="w-full px-3 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+                        className="w-full px-3 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC]"
                       >
                         {COURIER_VEHICLE_TYPES.map((vt) => (
                           <option key={vt} value={vt}>
@@ -1169,7 +1302,7 @@ export function AuthScreen({
                         value={inviteAddress}
                         onChange={(e) => setInviteAddress(e.target.value)}
                         placeholder="العنوان التفصيلي أو أقرب علامة مميزة"
-                        className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+                        className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC]"
                       />
                     )}
                   </div>
@@ -1178,7 +1311,7 @@ export function AuthScreen({
                 <button
                   type="submit"
                   disabled={busyMode !== null || inviteWaterPin}
-                  className="w-full min-h-[50px] py-3 px-6 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-55 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg shadow-[#FF6B00]/25"
+                  className="w-full min-h-[50px] py-3 px-6 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-55 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg shadow-[#FF7100]/25"
                 >
                   <span>
                     {busyMode === 'register_invite'
@@ -1215,7 +1348,7 @@ export function AuthScreen({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full pr-11 pl-4 py-3.5 rounded-2xl border border-[#334155] focus:border-[#FF6B00] bg-[#0F172A] text-sm font-mono text-left text-[#F8FAFC]"
+                    className="w-full pr-11 pl-4 py-3.5 rounded-2xl border border-[#334155] focus:border-[#FF7100] bg-[#10192D] text-sm font-mono text-left text-[#F8FAFC]"
                     autoFocus
                     required
                   />
@@ -1225,7 +1358,7 @@ export function AuthScreen({
               <button
                 type="submit"
                 disabled={busyMode !== null}
-                className="w-full min-h-[50px] py-3 px-6 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.98] disabled:opacity-60 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg shadow-[#FF6B00]/25"
+                className="w-full min-h-[50px] py-3 px-6 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] disabled:opacity-60 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg shadow-[#FF7100]/25"
               >
                 <span>
                   {busyMode === 'reset_password'
@@ -1244,7 +1377,7 @@ export function AuthScreen({
                     setErrorMsg(null);
                     setResetSuccessMsg(null);
                   }}
-                  className="inline-flex items-center gap-1.5 text-sm font-bold text-[#94A3B8] hover:text-[#FF6B00] transition-colors cursor-pointer whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-[#94A3B8] hover:text-[#FF7100] transition-colors cursor-pointer whitespace-nowrap"
                 >
                   <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   <span>العودة لتسجيل الدخول</span>
@@ -1257,44 +1390,17 @@ export function AuthScreen({
               noValidate
               className="space-y-4"
             >
-              <div className="p-4 rounded-2xl bg-[#0F172A] border border-[#334155] space-y-2 text-xs sm:text-sm">
+              <div className="p-4 rounded-2xl bg-[#10192D] border border-[#334155] space-y-2 text-xs sm:text-sm">
                 <p className="font-bold text-[#F8FAFC]">
                   {emailVerifyMeta?.sentViaSmtp
                     ? `تم إرسال رسالة التفعيل من تطبيق إدكاوي إلى ${
                         emailVerifyMeta.maskedEmail || email.trim()
                       }`
-                    : 'كود التفعيل الفوري من تطبيق إدكاوي'}
+                    : 'أدخل كود التفعيل المرسل إلى بريدك الإلكتروني'}
                 </p>
-
-                {emailVerifyMeta?.fallbackOtpCode && (
-                  <div className="pt-2 flex items-center justify-between gap-3 border-t border-[#334155]">
-                    <span
-                      dir="ltr"
-                      className="font-mono text-lg font-bold tracking-[0.25em] text-[#FF6B00] tabular-nums"
-                    >
-                      {emailVerifyMeta.fallbackOtpCode}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleCopyFallbackOtp(emailVerifyMeta.fallbackOtpCode!)
-                      }
-                      className="py-1.5 px-3 rounded-xl bg-[#1E293B] border border-[#334155] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                    >
-                      {copiedOtp ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>تم التعبئة</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>تعبئة الكود</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
+                <p className="text-xs text-[#94A3B8]">
+                  راجع صندوق الوارد (Inbox) أو الرسائل غير المرغوبة (Spam). الكود صالح لمدة ١٠ دقائق.
+                </p>
               </div>
 
               {otpLockoutSeconds > 0 && (
@@ -1306,7 +1412,7 @@ export function AuthScreen({
                     <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                     <span>تم القفل المؤقت بعد ٥ محاولات خاطئة</span>
                   </span>
-                  <span className="font-mono tabular-nums text-[#FF6B00]">
+                  <span className="font-mono tabular-nums text-[#FF7100]">
                     {Math.floor(otpLockoutSeconds / 60)}:
                     {String(otpLockoutSeconds % 60).padStart(2, '0')}
                   </span>
@@ -1370,7 +1476,7 @@ export function AuthScreen({
                       }}
                       placeholder="•"
                       autoFocus={idx === 0}
-                      className="h-14 w-full rounded-2xl border border-[#334155] focus:border-[#FF6B00] bg-[#0F172A] text-center text-2xl font-mono font-bold text-[#F8FAFC] tabular-nums disabled:opacity-50"
+                      className="h-14 w-full rounded-2xl border border-[#334155] focus:border-[#FF7100] bg-[#10192D] text-center text-2xl font-mono font-bold text-[#F8FAFC] tabular-nums disabled:opacity-50"
                     />
                   ))}
                 </div>
@@ -1379,7 +1485,7 @@ export function AuthScreen({
               <button
                 type="submit"
                 disabled={busyMode !== null || otpLockoutSeconds > 0}
-                className="w-full min-h-[50px] py-3 px-6 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                className="w-full min-h-[50px] py-3 px-6 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
               >
                 {busyMode === 'verify_customer_email' ? (
                   <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
@@ -1400,7 +1506,7 @@ export function AuthScreen({
                 type="button"
                 disabled={busyMode !== null}
                 onClick={handleRegisterWithFallbackLink}
-                className="w-full min-h-[44px] py-2.5 px-4 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs font-bold text-[#F8FAFC] hover:border-[#FF6B00] cursor-pointer whitespace-nowrap inline-flex items-center justify-center gap-2"
+                className="w-full min-h-[44px] py-2.5 px-4 rounded-2xl border border-[#334155] bg-[#10192D] text-xs font-bold text-[#F8FAFC] hover:border-[#FF7100] cursor-pointer whitespace-nowrap inline-flex items-center justify-center gap-2"
               >
                 {busyMode === 'fallback_email_link' && (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1432,7 +1538,7 @@ export function AuthScreen({
                   type="button"
                   disabled={busyMode !== null || otpLockoutSeconds > 0}
                   onClick={handleResendCustomerEmailOtp}
-                  className="inline-flex items-center gap-1.5 text-[#FF6B00] hover:underline disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 text-[#FF7100] hover:underline disabled:opacity-50 cursor-pointer whitespace-nowrap"
                 >
                   <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>
@@ -1443,49 +1549,136 @@ export function AuthScreen({
                 </button>
               </div>
             </form>
+          ) : step === 'admin_initial_setup' ? (
+            <form
+              onSubmit={handleAdminInitialSetupSubmit}
+              noValidate
+              className="space-y-4"
+            >
+              <div className="p-4 rounded-2xl bg-[#10192D] border border-[#334155] space-y-1.5 text-xs sm:text-sm">
+                <p className="font-bold text-[#F8FAFC] inline-flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#FF7100]" aria-hidden="true" />
+                  <span>إعداد أول مرة لبوابة الإدارة</span>
+                </p>
+                <p className="text-xs text-[#94A3B8] leading-relaxed">
+                  لم يتم ضبط كلمة مرور الإدارة في متغيرات البيئة بعد. اختر كلمة مرور قوية (١٠ أحرف على الأقل) ليتم تشفيرها وحفظها بأمان لمرة واحدة.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#F8FAFC] mb-1.5">
+                  بريد الإدارة المعتمد
+                </label>
+                <input
+                  type="email"
+                  dir="ltr"
+                  readOnly
+                  value={email.trim().toLowerCase()}
+                  className="w-full px-3.5 py-3 rounded-2xl border border-[#334155] bg-[#10192D] text-sm font-mono text-left text-[#94A3B8] cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="admin-setup-password"
+                  className="block text-xs font-bold text-[#F8FAFC] mb-1.5"
+                >
+                  كلمة مرور الإدارة الجديدة (١٠ أحرف فأكثر)
+                </label>
+                <input
+                  id="admin-setup-password"
+                  type={showPassword ? 'text' : 'password'}
+                  dir="ltr"
+                  autoComplete="new-password"
+                  value={adminSetupPassword}
+                  onChange={(e) => setAdminSetupPassword(e.target.value)}
+                  placeholder="••••••••••"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-[#334155] focus:border-[#FF7100] bg-[#10192D] text-base font-mono text-left text-[#F8FAFC]"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="admin-setup-confirm-password"
+                  className="block text-xs font-bold text-[#F8FAFC] mb-1.5"
+                >
+                  تأكيد كلمة مرور الإدارة
+                </label>
+                <input
+                  id="admin-setup-confirm-password"
+                  type={showPassword ? 'text' : 'password'}
+                  dir="ltr"
+                  autoComplete="new-password"
+                  value={adminSetupConfirmPassword}
+                  onChange={(e) => setAdminSetupConfirmPassword(e.target.value)}
+                  placeholder="••••••••••"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-[#334155] focus:border-[#FF7100] bg-[#10192D] text-base font-mono text-left text-[#F8FAFC]"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={busyMode !== null}
+                className="w-full min-h-[50px] py-3 px-6 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] disabled:opacity-60 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              >
+                {busyMode === 'admin_setup' ? (
+                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                ) : null}
+                <span>
+                  {busyMode === 'admin_setup'
+                    ? 'جارٍ الحفظ والتشفير...'
+                    : 'حفظ كلمة مرور الإدارة والمتابعة'}
+                </span>
+                <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                disabled={busyMode !== null}
+                onClick={handleGoogleAdminLogin}
+                className="w-full min-h-[46px] py-2.5 px-4 rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              >
+                <GoogleBrandMark />
+                <span>
+                  {busyMode === 'google_admin'
+                    ? 'جارٍ التحقق...'
+                    : 'أو الدخول المباشر بحساب Google المعتمد للإدارة'}
+                </span>
+              </button>
+
+              <div className="pt-1 flex justify-center">
+                <button
+                  type="button"
+                  disabled={busyMode !== null}
+                  onClick={() => {
+                    setStep('credentials');
+                    setErrorMsg(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-[#94A3B8] hover:text-[#FF7100] cursor-pointer whitespace-nowrap"
+                >
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  <span>العودة لتسجيل الدخول</span>
+                </button>
+              </div>
+            </form>
           ) : step === 'admin_otp' ? (
             <form
               onSubmit={handleVerifyAdminOtpSubmit}
               noValidate
               className="space-y-4"
             >
-              <div className="p-4 rounded-2xl bg-[#0F172A] border border-[#334155] space-y-2 text-xs sm:text-sm">
+              <div className="p-4 rounded-2xl bg-[#10192D] border border-[#334155] space-y-2 text-xs sm:text-sm">
                 <p className="font-bold text-[#F8FAFC]">
-                  {otpRequestMeta?.delivery === 'edkawy_mail' ||
-                  otpRequestMeta?.delivery === 'gmail'
-                    ? `تم إرسال كود التحقق من تطبيق إدكاوي إلى بريد الإدارة`
-                    : 'كود التحقق الأمني — تطبيق إدكاوي'}
+                  {otpRequestMeta?.recipient
+                    ? `تم إرسال كود التحقق إلى ${otpRequestMeta.recipient}`
+                    : 'تم إرسال كود التحقق الأمني إلى بريد الإدارة المعتمد'}
                 </p>
-
-                {otpRequestMeta?.fallbackOtpCode && (
-                  <div className="pt-2 flex items-center justify-between gap-3 border-t border-[#334155]">
-                    <span
-                      dir="ltr"
-                      className="font-mono text-lg font-bold tracking-[0.25em] text-[#FF6B00] tabular-nums"
-                    >
-                      {otpRequestMeta.fallbackOtpCode}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleCopyFallbackOtp(otpRequestMeta.fallbackOtpCode!)
-                      }
-                      className="py-1.5 px-3 rounded-xl bg-[#1E293B] border border-[#334155] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-                    >
-                      {copiedOtp ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
-                          <span>تم التعبئة</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>تعبئة الكود</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
+                <p className="text-xs text-[#94A3B8]">
+                  تحقق من صندوق الوارد وأدخل الرمز المكون من ٦ أرقام (صالح لمدة ١٠ دقائق).
+                </p>
               </div>
 
               <div>
@@ -1511,7 +1704,7 @@ export function AuthScreen({
                       setOtpCode(e.target.value.replace(/[^0-9]/g, ''))
                     }
                     placeholder="000000"
-                    className="w-full pr-11 pl-4 py-3.5 rounded-2xl border border-[#334155] focus:border-[#FF6B00] bg-[#0F172A] text-center text-lg font-mono font-bold tracking-[0.35em] text-[#F8FAFC] tabular-nums"
+                    className="w-full pr-11 pl-4 py-3.5 rounded-2xl border border-[#334155] focus:border-[#FF7100] bg-[#10192D] text-center text-lg font-mono font-bold tracking-[0.35em] text-[#F8FAFC] tabular-nums"
                     autoFocus
                   />
                 </div>
@@ -1520,7 +1713,7 @@ export function AuthScreen({
               <button
                 type="submit"
                 disabled={busyMode !== null}
-                className="w-full min-h-[50px] py-3 px-6 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.98] disabled:opacity-60 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                className="w-full min-h-[50px] py-3 px-6 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] disabled:opacity-60 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
               >
                 <span>
                   {busyMode === 'verify_otp'
@@ -1528,6 +1721,16 @@ export function AuthScreen({
                     : 'تأكيد الكود والدخول'}
                 </span>
                 <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                disabled={busyMode !== null}
+                onClick={handleGoogleAdminLogin}
+                className="w-full min-h-[44px] py-2.5 px-4 rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              >
+                <GoogleBrandMark />
+                <span>دخول الإدارة بحساب Google المعتمد</span>
               </button>
 
               <div className="pt-1 flex items-center justify-between gap-3 text-xs font-bold">
@@ -1549,7 +1752,7 @@ export function AuthScreen({
                   type="button"
                   disabled={busyMode !== null}
                   onClick={handleResendAdminOtp}
-                  className="inline-flex items-center gap-1.5 text-[#FF6B00] hover:underline cursor-pointer whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 text-[#FF7100] hover:underline cursor-pointer whitespace-nowrap"
                 >
                   <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>
@@ -1565,7 +1768,7 @@ export function AuthScreen({
               <div
                 role="tablist"
                 aria-label="خيارات الدخول أو إنشاء حساب"
-                className="grid grid-cols-2 gap-1.5 p-1.5 rounded-2xl bg-[#0F172A] border border-[#334155]"
+                className="grid grid-cols-2 gap-1.5 p-1.5 rounded-2xl bg-[#10192D] border border-[#334155]"
               >
                 <button
                   type="button"
@@ -1577,7 +1780,7 @@ export function AuthScreen({
                   }}
                   className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     authMode === 'login'
-                      ? 'bg-[#FF6B00] text-white shadow-sm'
+                      ? 'bg-[#FF7100] text-white shadow-sm'
                       : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
@@ -1593,7 +1796,7 @@ export function AuthScreen({
                   }}
                   className={`py-2.5 px-3 rounded-xl text-sm font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     authMode === 'register_customer'
-                      ? 'bg-[#FF6B00] text-white shadow-sm'
+                      ? 'bg-[#FF7100] text-white shadow-sm'
                       : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
@@ -1635,10 +1838,10 @@ export function AuthScreen({
                           }}
                           placeholder="مثال: أحمد محمد"
                           maxLength={80}
-                          className={`w-full pr-11 pl-4 py-3.5 rounded-2xl border bg-[#0F172A] text-base text-[#F8FAFC] placeholder:text-[#94A3B8] ${
+                          className={`w-full pr-11 pl-4 py-3.5 rounded-2xl border bg-[#10192D] text-base text-[#F8FAFC] placeholder:text-[#94A3B8] ${
                             inlineNameError
                               ? 'border-red-500'
-                              : 'border-[#334155] focus:border-[#FF6B00]'
+                              : 'border-[#334155] focus:border-[#FF7100]'
                           }`}
                           required
                         />
@@ -1673,10 +1876,10 @@ export function AuthScreen({
                             setTouchedFields((p) => ({ ...p, phone: true }));
                           }}
                           placeholder="01012345678"
-                          className={`w-full pr-11 pl-4 py-3.5 rounded-2xl border bg-[#0F172A] text-base font-mono text-left text-[#F8FAFC] placeholder:text-[#94A3B8] tabular-nums ${
+                          className={`w-full pr-11 pl-4 py-3.5 rounded-2xl border bg-[#10192D] text-base font-mono text-left text-[#F8FAFC] placeholder:text-[#94A3B8] tabular-nums ${
                             inlinePhoneError
                               ? 'border-red-500'
-                              : 'border-[#334155] focus:border-[#FF6B00]'
+                              : 'border-[#334155] focus:border-[#FF7100]'
                           }`}
                         />
                       </div>
@@ -1712,10 +1915,10 @@ export function AuthScreen({
                         setTouchedFields((p) => ({ ...p, email: true }));
                       }}
                       placeholder="name@example.com"
-                      className={`w-full pr-11 pl-4 py-3.5 rounded-2xl border bg-[#0F172A] text-base font-mono text-left text-[#F8FAFC] placeholder:text-[#94A3B8] ${
+                      className={`w-full pr-11 pl-4 py-3.5 rounded-2xl border bg-[#10192D] text-base font-mono text-left text-[#F8FAFC] placeholder:text-[#94A3B8] ${
                         inlineEmailError
                           ? 'border-red-500'
-                          : 'border-[#334155] focus:border-[#FF6B00]'
+                          : 'border-[#334155] focus:border-[#FF7100]'
                       }`}
                       required
                     />
@@ -1743,7 +1946,7 @@ export function AuthScreen({
                           setResetSuccessMsg(null);
                           setStep('reset_password');
                         }}
-                        className="text-xs font-bold text-[#FF6B00] hover:underline cursor-pointer whitespace-nowrap shrink-0"
+                        className="text-xs font-bold text-[#FF7100] hover:underline cursor-pointer whitespace-nowrap shrink-0"
                       >
                         نسيت كلمة المرور؟
                       </button>
@@ -1769,10 +1972,10 @@ export function AuthScreen({
                         setTouchedFields((p) => ({ ...p, password: true }));
                       }}
                       placeholder="••••••••"
-                      className={`w-full pr-11 pl-11 py-3.5 rounded-2xl border bg-[#0F172A] text-base font-mono text-left text-[#F8FAFC] placeholder:text-[#94A3B8] ${
+                      className={`w-full pr-11 pl-11 py-3.5 rounded-2xl border bg-[#10192D] text-base font-mono text-left text-[#F8FAFC] placeholder:text-[#94A3B8] ${
                         inlinePasswordError
                           ? 'border-red-500'
-                          : 'border-[#334155] focus:border-[#FF6B00]'
+                          : 'border-[#334155] focus:border-[#FF7100]'
                       }`}
                       required
                     />
@@ -1798,10 +2001,47 @@ export function AuthScreen({
                   )}
                 </div>
 
+                {authMode === 'login' && isAllowlistedAdminEmail(email) && (
+                  <div className="p-3.5 rounded-2xl bg-[#10192D] border border-[#334155] space-y-2.5">
+                    {adminSetupStatus?.setupRequired && (
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span className="text-[#94A3B8]">
+                          حساب الإدارة يحتاج لإعداد كلمة المرور لأول مرة.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setErrorMsg(null);
+                            setAdminSetupPassword('');
+                            setAdminSetupConfirmPassword('');
+                            setStep('admin_initial_setup');
+                          }}
+                          className="font-bold text-[#FF7100] hover:underline cursor-pointer whitespace-nowrap"
+                        >
+                          بدء الإعداد الآن
+                        </button>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      disabled={busyMode !== null}
+                      onClick={handleGoogleAdminLogin}
+                      className="w-full min-h-[44px] py-2.5 px-4 rounded-2xl bg-[#18233C] hover:border-[#FF7100] border border-[#334155] text-[#F8FAFC] text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                    >
+                      <GoogleBrandMark />
+                      <span>
+                        {busyMode === 'google_admin'
+                          ? 'جارٍ توثيق الإدارة...'
+                          : 'دخول الإدارة بحساب Google المعتمد'}
+                      </span>
+                    </button>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={busyMode !== null}
-                  className="w-full min-h-[52px] py-3.5 px-6 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.98] disabled:opacity-60 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg shadow-[#FF6B00]/30"
+                  className="w-full min-h-[52px] py-3.5 px-6 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] disabled:opacity-60 text-white font-bold text-lg inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg shadow-[#FF7100]/30"
                 >
                   {busyMode === 'register_customer' || busyMode === 'login' ? (
                     <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
@@ -1830,7 +2070,7 @@ export function AuthScreen({
               </div>
 
               {hasPendingGroupJoin && (
-                <div className="p-3.5 rounded-2xl bg-[#FF6B00]/15 border border-[#FF6B00]/40 text-xs text-[#F8FAFC] font-bold">
+                <div className="p-3.5 rounded-2xl bg-[#FF7100]/15 border border-[#FF7100]/40 text-xs text-[#F8FAFC] font-bold">
                   أنت مدعو إلى سلة جماعية في إدكاوي — سجّل الدخول بحسابك أو أنشئ حساباً للدخول فوراً إلى غرفة السلة والمشاركة مع أصدقائك.
                 </div>
               )}
@@ -1840,7 +2080,7 @@ export function AuthScreen({
                   type="button"
                   disabled={busyMode !== null}
                   onClick={handleGoogleCustomerLogin}
-                  className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-[#0F172A] hover:bg-[#0F172A]/80 active:scale-[0.98] disabled:opacity-60 border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+                  className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-[#10192D] hover:bg-[#10192D]/80 active:scale-[0.98] disabled:opacity-60 border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <GoogleBrandMark />
                   <span>
@@ -1855,10 +2095,10 @@ export function AuthScreen({
                     type="button"
                     disabled={busyMode !== null}
                     onClick={handleAnonymousCustomerEntry}
-                    className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-[#0F172A] hover:border-[#FF6B00] border border-[#334155] active:scale-[0.98] disabled:opacity-60 text-[#F8FAFC] font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+                    className="w-full min-h-[48px] py-3 px-4 rounded-2xl bg-[#10192D] hover:border-[#FF7100] border border-[#334155] active:scale-[0.98] disabled:opacity-60 text-[#F8FAFC] font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <ShoppingBag
-                      className="w-4 h-4 text-[#FF6B00] shrink-0"
+                      className="w-4 h-4 text-[#FF7100] shrink-0"
                       aria-hidden="true"
                     />
                     <span>
@@ -1880,7 +2120,7 @@ export function AuthScreen({
                 <button
                   type="button"
                   onClick={() => onOpenLegalModal('terms')}
-                  className="text-[#FF6B00] hover:underline cursor-pointer"
+                  className="text-[#FF7100] hover:underline cursor-pointer"
                 >
                   الشروط والأحكام
                 </button>
@@ -1888,7 +2128,7 @@ export function AuthScreen({
                 <button
                   type="button"
                   onClick={() => onOpenLegalModal('privacy')}
-                  className="text-[#FF6B00] hover:underline cursor-pointer"
+                  className="text-[#FF7100] hover:underline cursor-pointer"
                 >
                   الخصوصية
                 </button>
@@ -1896,7 +2136,7 @@ export function AuthScreen({
                 <button
                   type="button"
                   onClick={() => onOpenLegalModal('pharmacy')}
-                  className="text-[#FF6B00] hover:underline cursor-pointer"
+                  className="text-[#FF7100] hover:underline cursor-pointer"
                 >
                   الصيدليات
                 </button>
@@ -1916,8 +2156,8 @@ export function AuthScreen({
             fallbackLabel="إدكاوي — مدينة إدكو"
             className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="relative z-10 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/80 to-transparent p-6 pt-24 space-y-2.5">
-            <p className="text-xs font-bold text-[#FF6B00]">
+          <div className="relative z-10 bg-gradient-to-t from-[#10192D] via-[#10192D]/80 to-transparent p-6 pt-24 space-y-2.5">
+            <p className="text-xs font-bold text-[#FF7100]">
               شارع البحر · حي المحطة · المعدية · كوبري شربت
             </p>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC] leading-tight">
@@ -1997,10 +2237,10 @@ export function EmailVerificationGateView({
   return (
     <div
       dir="rtl"
-      className="min-h-[calc(100dvh-4rem)] bg-gradient-to-b from-[#0F172A] via-[#162033] to-[#0F172A] p-6 flex items-center justify-center edkawi-page-enter"
+      className="min-h-[calc(100dvh-4rem)] bg-gradient-to-b from-[#10192D] via-[#18233C] to-[#10192D] p-6 flex items-center justify-center edkawi-page-enter"
     >
       <div className="w-full max-w-md rounded-2xl bg-[#1E293B] border border-[#334155] p-6 space-y-5 text-center shadow-2xl">
-        <div className="w-14 h-14 rounded-2xl bg-[#FF6B00]/15 text-[#FF6B00] flex items-center justify-center mx-auto">
+        <div className="w-14 h-14 rounded-2xl bg-[#FF7100]/15 text-[#FF7100] flex items-center justify-center mx-auto">
           <Mail className="w-7 h-7" />
         </div>
 
@@ -2013,7 +2253,7 @@ export function EmailVerificationGateView({
           </p>
           <p
             dir="ltr"
-            className="font-mono text-sm font-bold text-[#FF6B00]"
+            className="font-mono text-sm font-bold text-[#FF7100]"
           >
             {userEmail}
           </p>
@@ -2037,7 +2277,7 @@ export function EmailVerificationGateView({
             type="button"
             disabled={busy !== null}
             onClick={handleCheckVerified}
-            className="w-full min-h-[48px] px-5 py-3 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full min-h-[48px] px-5 py-3 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
           >
             <RefreshCw
               className={`w-4 h-4 ${busy === 'check' ? 'animate-spin' : ''}`}
@@ -2053,7 +2293,7 @@ export function EmailVerificationGateView({
             type="button"
             disabled={busy !== null}
             onClick={handleResend}
-            className="w-full min-h-[46px] px-5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm font-bold text-[#F8FAFC] hover:border-[#FF6B00] cursor-pointer"
+            className="w-full min-h-[46px] px-5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm font-bold text-[#F8FAFC] hover:border-[#FF7100] cursor-pointer"
           >
             {busy === 'resend'
               ? 'جارٍ إعادة الإرسال...'

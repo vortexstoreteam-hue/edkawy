@@ -99,7 +99,7 @@ export const DeviceImageInput: React.FC<DeviceImageInputProps> = ({
 
       {value ? (
         <div
-          className={`relative w-full ${aspectClassName} rounded-2xl overflow-hidden border border-[#334155] bg-[#0F172A] group`}
+          className={`relative w-full ${aspectClassName} rounded-2xl overflow-hidden border border-[#334155] bg-[#10192D] group`}
         >
           <img
             src={value}
@@ -115,12 +115,12 @@ export const DeviceImageInput: React.FC<DeviceImageInputProps> = ({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={compressing}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1E293B] border border-[#334155] text-[#F8FAFC] px-3 py-1.5 text-xs font-bold hover:border-[#FF6B00] whitespace-nowrap shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1E293B] border border-[#334155] text-[#F8FAFC] px-3 py-1.5 text-xs font-bold hover:border-[#FF7100] whitespace-nowrap shrink-0 cursor-pointer"
             >
               {compressing ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#FF6B00]" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#FF7100]" />
               ) : (
-                <RefreshCw className="h-3.5 w-3.5 text-[#FF6B00]" />
+                <RefreshCw className="h-3.5 w-3.5 text-[#FF7100]" />
               )}
               <span>تغيير الصورة</span>
             </button>
@@ -134,19 +134,19 @@ export const DeviceImageInput: React.FC<DeviceImageInputProps> = ({
           className={`w-full ${aspectClassName} rounded-2xl border-2 border-dashed ${
             displayError
               ? 'border-rose-500/70 bg-rose-950/25'
-              : 'border-[#334155] bg-[#0F172A] hover:border-[#FF6B00] hover:bg-[#1E293B]'
+              : 'border-[#334155] bg-[#10192D] hover:border-[#FF7100] hover:bg-[#1E293B]'
           } flex flex-col items-center justify-center gap-2 p-4 text-center transition-colors cursor-pointer`}
         >
           {compressing ? (
             <>
-              <Loader2 className="h-7 w-7 animate-spin text-[#FF6B00]" />
+              <Loader2 className="h-7 w-7 animate-spin text-[#FF7100]" />
               <span className="text-xs font-bold text-[#F8FAFC]">
                 جارٍ ضغط وتجهيز الصورة بجودة عالية...
               </span>
             </>
           ) : (
             <>
-              <div className="h-11 w-11 rounded-2xl bg-[#FF6B00]/15 text-[#FF6B00] flex items-center justify-center">
+              <div className="h-11 w-11 rounded-2xl bg-[#FF7100]/15 text-[#FF7100] flex items-center justify-center">
                 {allowCameraCapture ? (
                   <Camera className="h-5 w-5" />
                 ) : (

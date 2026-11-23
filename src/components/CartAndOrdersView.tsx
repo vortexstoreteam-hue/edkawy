@@ -201,10 +201,10 @@ export function CartPageView({
           <button
             type="button"
             onClick={onBackToShopping}
-            className="inline-flex items-center gap-2 py-2.5 px-4 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] active:scale-[0.97] text-xs sm:text-sm font-bold text-[#F8FAFC] cursor-pointer whitespace-nowrap"
+            className="inline-flex items-center gap-2 py-2.5 px-4 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] active:scale-[0.97] text-xs sm:text-sm font-bold text-[#F8FAFC] cursor-pointer whitespace-nowrap"
           >
             <ArrowRight
-              className="w-4 h-4 text-[#FF6B00]"
+              className="w-4 h-4 text-[#FF7100]"
               aria-hidden="true"
             />
             <span>إضافة أصناف أخرى</span>
@@ -228,7 +228,7 @@ export function CartPageView({
           >
             <div className="pb-5 border-b border-[#334155] flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-bold text-[#FF6B00]">
+                <p className="text-xs font-bold text-[#FF7100]">
                   سلة المشتريات من متجر
                 </p>
                 <h1
@@ -259,7 +259,7 @@ export function CartPageView({
                     className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                   >
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#0F172A] border border-[#334155] shrink-0">
+                      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#10192D] border border-[#334155] shrink-0">
                         <ResilientImage
                           src={entry.item.imageUrl || ''}
                           alt={entry.item.name}
@@ -273,7 +273,7 @@ export function CartPageView({
                           {entry.item.name}
                         </h2>
                         {entry.selectedVariant && (
-                          <p className="text-xs font-semibold text-[#FF6B00]">
+                          <p className="text-xs font-semibold text-[#FF7100]">
                             الخيار المحدد: {entry.selectedVariant.name}
                           </p>
                         )}
@@ -283,7 +283,7 @@ export function CartPageView({
                             {unitPrice}
                           </span>{' '}
                           ج.م · الإجمالي:{' '}
-                          <span className="font-mono font-bold text-[#FF6B00] tabular-nums">
+                          <span className="font-mono font-bold text-[#FF7100] tabular-nums">
                             {unitPrice * entry.quantity}
                           </span>{' '}
                           ج.م
@@ -292,7 +292,7 @@ export function CartPageView({
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-                      <div className="inline-flex items-center gap-1.5 bg-[#0F172A] border border-[#334155] p-1 rounded-2xl">
+                      <div className="inline-flex items-center gap-1.5 bg-[#10192D] border border-[#334155] p-1 rounded-2xl">
                         <button
                           type="button"
                           onClick={() => onUpdateQuantity(entryKey, -1)}
@@ -309,7 +309,7 @@ export function CartPageView({
                           disabled={reachedMax}
                           onClick={() => onUpdateQuantity(entryKey, 1)}
                           aria-label={`زيادة كمية ${entry.item.name}`}
-                          className="w-9 h-9 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-45 text-white flex items-center justify-center cursor-pointer"
+                          className="w-9 h-9 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-45 text-white flex items-center justify-center cursor-pointer"
                         >
                           <Plus className="w-4 h-4" aria-hidden="true" />
                         </button>
@@ -325,7 +325,7 @@ export function CartPageView({
                           })
                         }
                         aria-label={`حذف ${entry.item.name} من السلة`}
-                        className="p-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-red-400 hover:bg-red-950/40 cursor-pointer"
+                        className="p-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-red-400 hover:bg-red-950/40 cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" aria-hidden="true" />
                       </button>
@@ -404,7 +404,7 @@ export function CartPageView({
                     htmlFor="cart-coupon-input"
                     className="block text-xs font-bold text-[#F8FAFC] flex items-center gap-1.5"
                   >
-                    <Tag className="w-3.5 h-3.5 text-[#FF6B00]" />
+                    <Tag className="w-3.5 h-3.5 text-[#FF7100]" />
                     <span>كود الخصم أو قسيمة نقاط الولاء</span>
                   </label>
 
@@ -447,12 +447,12 @@ export function CartPageView({
                         }
                         placeholder="EDK25"
                         maxLength={32}
-                        className="flex-1 min-h-[42px] px-3 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-mono uppercase text-left"
+                        className="flex-1 min-h-[42px] px-3 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-mono uppercase text-left"
                       />
                       <button
                         type="submit"
                         disabled={couponBusy || !couponInput.trim()}
-                        className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-xs font-bold cursor-pointer shrink-0"
+                        className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-xs font-bold cursor-pointer shrink-0"
                       >
                         {couponBusy ? '...' : 'تطبيق'}
                       </button>
@@ -475,7 +475,7 @@ export function CartPageView({
 
               <div className="pt-4 border-t border-[#334155] flex items-center justify-between text-base font-bold text-[#F8FAFC]">
                 <span>الإجمالي الكلي</span>
-                <span className="text-xl text-[#FF6B00]">
+                <span className="text-xl text-[#FF7100]">
                   <span className="font-mono tabular-nums">
                     {totals.totalAmount}
                   </span>{' '}
@@ -517,7 +517,7 @@ export function CartPageView({
             )}
 
             {isGuestCustomer && !storeIsClosed && (
-              <div className="p-4 rounded-2xl bg-[#0F172A] border border-[#334155] space-y-3">
+              <div className="p-4 rounded-2xl bg-[#10192D] border border-[#334155] space-y-3">
                 <p className="text-xs sm:text-sm font-bold text-[#F8FAFC]">
                   يلزم تسجيل الدخول قبل إنشاء الطلب
                 </p>
@@ -549,7 +549,7 @@ export function CartPageView({
                         setAuthBusy(false);
                       }
                     }}
-                    className="w-full min-h-[44px] py-2.5 px-4 rounded-2xl bg-[#1E293B] hover:border-[#FF6B00] border border-[#334155] text-xs sm:text-sm font-bold text-[#F8FAFC] inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+                    className="w-full min-h-[44px] py-2.5 px-4 rounded-2xl bg-[#1E293B] hover:border-[#FF7100] border border-[#334155] text-xs sm:text-sm font-bold text-[#F8FAFC] inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <CheckoutGoogleIcon />
                     <span>
@@ -564,7 +564,7 @@ export function CartPageView({
                     type="button"
                     disabled={authBusy}
                     onClick={onOpenLoginScreenForCheckout}
-                    className="w-full py-2 px-3 rounded-2xl text-xs font-bold text-[#FF6B00] hover:underline cursor-pointer whitespace-nowrap"
+                    className="w-full py-2 px-3 rounded-2xl text-xs font-bold text-[#FF7100] hover:underline cursor-pointer whitespace-nowrap"
                   >
                     أو تسجيل الدخول بالبريد الإلكتروني
                   </button>
@@ -584,7 +584,7 @@ export function CartPageView({
       <div
         role="region"
         aria-label="شريط إتمام الطلب الثابت"
-        className="fixed bottom-0 inset-x-0 z-30 bg-[#0F172A]/95 backdrop-blur-md border-t border-[#334155]"
+        className="fixed bottom-0 inset-x-0 z-30 bg-[#10192D]/95 backdrop-blur-md border-t border-[#334155]"
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-8 h-16 sm:h-[72px] flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -610,7 +610,7 @@ export function CartPageView({
               }
             }}
             aria-label="المتابعة لإتمام الطلب"
-            className="py-3 px-7 sm:px-10 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.97] disabled:opacity-55 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg"
+            className="py-3 px-7 sm:px-10 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.97] disabled:opacity-55 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg"
           >
             {storeIsClosed ? (
               <>
@@ -990,10 +990,10 @@ export function CheckoutPageView({
           <button
             type="button"
             onClick={onBackToCart}
-            className="inline-flex items-center gap-2 py-2.5 px-4 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] active:scale-[0.97] text-xs sm:text-sm font-bold text-[#F8FAFC] cursor-pointer whitespace-nowrap"
+            className="inline-flex items-center gap-2 py-2.5 px-4 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] active:scale-[0.97] text-xs sm:text-sm font-bold text-[#F8FAFC] cursor-pointer whitespace-nowrap"
           >
             <ArrowRight
-              className="w-4 h-4 text-[#FF6B00]"
+              className="w-4 h-4 text-[#FF7100]"
               aria-hidden="true"
             />
             <span>العودة إلى السلة</span>
@@ -1051,11 +1051,11 @@ export function CheckoutPageView({
             )}
 
             {isGuestCustomer ? (
-              <div className="p-6 rounded-2xl bg-[#0F172A] border border-[#334155] space-y-5">
+              <div className="p-6 rounded-2xl bg-[#10192D] border border-[#334155] space-y-5">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-base font-bold text-[#F8FAFC]">
                     <Lock
-                      className="w-4 h-4 text-[#FF6B00] shrink-0"
+                      className="w-4 h-4 text-[#FF7100] shrink-0"
                       aria-hidden="true"
                     />
                     <h2>يلزم تسجيل الدخول الفعلي قبل إنشاء الطلب</h2>
@@ -1080,7 +1080,7 @@ export function CheckoutPageView({
                     type="button"
                     disabled={guestAuthBusy}
                     onClick={handleInlineGoogleSignIn}
-                    className="min-h-[48px] py-3 px-5 rounded-2xl bg-[#1E293B] hover:border-[#FF6B00] disabled:opacity-60 border border-[#334155] text-sm font-bold text-[#F8FAFC] inline-flex items-center justify-center gap-2.5 cursor-pointer whitespace-nowrap shrink-0"
+                    className="min-h-[48px] py-3 px-5 rounded-2xl bg-[#1E293B] hover:border-[#FF7100] disabled:opacity-60 border border-[#334155] text-sm font-bold text-[#F8FAFC] inline-flex items-center justify-center gap-2.5 cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <CheckoutGoogleIcon />
                     <span>
@@ -1098,10 +1098,10 @@ export function CheckoutPageView({
                         setShowInlineEmailAuth((prev) => !prev);
                         setGuestAuthError(null);
                       }}
-                      className="min-h-[48px] py-3 px-5 rounded-xl bg-[#1E293B] hover:bg-[#0F172A] disabled:opacity-60 text-sm font-bold text-white inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+                      className="min-h-[48px] py-3 px-5 rounded-xl bg-[#1E293B] hover:bg-[#10192D] disabled:opacity-60 text-sm font-bold text-white inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
                     >
                       <Mail
-                        className="w-4 h-4 text-[#FF6B00] shrink-0"
+                        className="w-4 h-4 text-[#FF7100] shrink-0"
                         aria-hidden="true"
                       />
                       <span>الدخول أو التسجيل بالبريد</span>
@@ -1112,10 +1112,10 @@ export function CheckoutPageView({
                         type="button"
                         disabled={guestAuthBusy}
                         onClick={onOpenLoginScreenForCheckout}
-                        className="min-h-[48px] py-3 px-5 rounded-xl bg-[#1E293B] hover:bg-[#0F172A] disabled:opacity-60 text-sm font-bold text-white inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+                        className="min-h-[48px] py-3 px-5 rounded-xl bg-[#1E293B] hover:bg-[#10192D] disabled:opacity-60 text-sm font-bold text-white inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
                       >
                         <Mail
-                          className="w-4 h-4 text-[#FF6B00] shrink-0"
+                          className="w-4 h-4 text-[#FF7100] shrink-0"
                           aria-hidden="true"
                         />
                         <span>الدخول بالبريد الإلكتروني</span>
@@ -1130,7 +1130,7 @@ export function CheckoutPageView({
                     noValidate
                     className="pt-4 border-t border-[#334155] space-y-4"
                   >
-                    <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-200/70 bg-[#0F172A]">
+                    <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-200/70 bg-[#10192D]">
                       <button
                         type="button"
                         onClick={() => {
@@ -1231,7 +1231,7 @@ export function CheckoutPageView({
                     <button
                       type="submit"
                       disabled={guestAuthBusy}
-                      className="w-full min-h-[46px] py-2.5 px-5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                      className="w-full min-h-[46px] py-2.5 px-5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                     >
                       <span>
                         {guestAuthBusy
@@ -1256,7 +1256,7 @@ export function CheckoutPageView({
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-sm sm:text-base font-bold text-[#F8FAFC]">
                     <MapPin
-                      className="w-4 h-4 text-[#FF6B00]"
+                      className="w-4 h-4 text-[#FF7100]"
                       aria-hidden="true"
                     />
                     <h2>١. موقع التوصيل على خريطة مدينة إدكو</h2>
@@ -1303,8 +1303,8 @@ export function CheckoutPageView({
                                 }}
                                 className={`px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer ${
                                   selected
-                                    ? 'bg-[#FF6B00] text-white border-[#FF6B00]'
-                                    : 'edkawi-surface border-[#334155] hover:border-[#FF6B00]'
+                                    ? 'bg-[#FF7100] text-white border-[#FF7100]'
+                                    : 'edkawi-surface border-[#334155] hover:border-[#FF7100]'
                                 }`}
                               >
                                 {saved.label} · {saved.neighborhood}
@@ -1355,7 +1355,7 @@ export function CheckoutPageView({
                       >
                         اختر منطقتك (التسعير الجغرافي المعتمد في إدكو) *
                       </label>
-                      <span className="font-mono text-xs font-bold text-[#FF6B00] tabular-nums">
+                      <span className="font-mono text-xs font-bold text-[#FF7100] tabular-nums">
                         رسوم التوصيل: {selectedZone.deliveryFee} ج.م
                       </span>
                     </div>
@@ -1535,7 +1535,7 @@ export function CheckoutPageView({
                 <div className="pt-5 border-t border-slate-100 border-[#334155] space-y-4">
                   <div className="flex items-center gap-2 text-sm sm:text-base font-bold text-[#F8FAFC]">
                     <CalendarClock
-                      className="w-4 h-4 text-[#FF6B00]"
+                      className="w-4 h-4 text-[#FF7100]"
                       aria-hidden="true"
                     />
                     <h2>٢. موعد التوصيل</h2>
@@ -1547,7 +1547,7 @@ export function CheckoutPageView({
                       onClick={() => setIsScheduled(false)}
                       className={`p-4 rounded-2xl border text-right cursor-pointer ${
                         !isScheduled
-                          ? 'border-[#FF6B00] bg-[#FF6B00]/8'
+                          ? 'border-[#FF7100] bg-[#FF7100]/8'
                           : 'border-[#334155] edkawi-surface'
                       }`}
                     >
@@ -1564,7 +1564,7 @@ export function CheckoutPageView({
                       onClick={() => setIsScheduled(true)}
                       className={`p-4 rounded-2xl border text-right cursor-pointer ${
                         isScheduled
-                          ? 'border-[#FF6B00] bg-[#FF6B00]/8'
+                          ? 'border-[#FF7100] bg-[#FF7100]/8'
                           : 'border-[#334155] edkawi-surface'
                       }`}
                     >
@@ -1604,7 +1604,7 @@ export function CheckoutPageView({
                 <div className="pt-5 border-t border-[#334155] space-y-4">
                   <div className="flex items-center gap-2 text-sm sm:text-base font-bold text-[#F8FAFC]">
                     <CreditCard
-                      className="w-4 h-4 text-[#FF6B00]"
+                      className="w-4 h-4 text-[#FF7100]"
                       aria-hidden="true"
                     />
                     <h2>٣. طريقة الدفع</h2>
@@ -1624,12 +1624,12 @@ export function CheckoutPageView({
                       onClick={() => setPaymentMethod('cash')}
                       className={`p-4 rounded-2xl border-2 text-right flex items-start gap-3.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                         paymentMethod === 'cash'
-                          ? 'border-[#FF6B00] bg-[#FF6B00]/10'
-                          : 'border-[#334155] bg-[#0F172A] hover:border-[#FF6B00]/60'
+                          ? 'border-[#FF7100] bg-[#FF7100]/10'
+                          : 'border-[#334155] bg-[#10192D] hover:border-[#FF7100]/60'
                       }`}
                     >
                       <Banknote
-                        className="w-5 h-5 shrink-0 mt-0.5 text-[#FF6B00]"
+                        className="w-5 h-5 shrink-0 mt-0.5 text-[#FF7100]"
                         aria-hidden="true"
                       />
                       <div className="flex-1">
@@ -1653,8 +1653,8 @@ export function CheckoutPageView({
                     <div
                       className={`p-4 rounded-2xl border-2 text-right transition-colors ${
                         paymentMethod === 'wallet'
-                          ? 'border-[#FF6B00] bg-[#FF6B00]/10'
-                          : 'border-[#334155] bg-[#0F172A] hover:border-[#FF6B00]/60'
+                          ? 'border-[#FF7100] bg-[#FF7100]/10'
+                          : 'border-[#334155] bg-[#10192D] hover:border-[#FF7100]/60'
                       }`}
                     >
                       <button
@@ -1666,7 +1666,7 @@ export function CheckoutPageView({
                         className="w-full text-right flex items-start gap-3.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Wallet
-                          className="w-5 h-5 shrink-0 mt-0.5 text-[#FF6B00]"
+                          className="w-5 h-5 shrink-0 mt-0.5 text-[#FF7100]"
                           aria-hidden="true"
                         />
                         <div className="flex-1 space-y-1">
@@ -1674,7 +1674,7 @@ export function CheckoutPageView({
                             <p className="text-sm font-bold text-[#F8FAFC]">
                               محفظة إدكاوي
                             </p>
-                            <span className="text-xs font-mono font-bold text-[#FF6B00] tabular-nums">
+                            <span className="text-xs font-mono font-bold text-[#FF7100] tabular-nums">
                               الرصيد: {walletBalance} ج.م
                             </span>
                           </div>
@@ -1693,7 +1693,7 @@ export function CheckoutPageView({
                             <button
                               type="button"
                               onClick={onOpenWalletTopup}
-                              className="min-h-[36px] px-3 py-1.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold cursor-pointer"
+                              className="min-h-[36px] px-3 py-1.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold cursor-pointer"
                             >
                               شحن المحفظة الآن
                             </button>
@@ -1714,16 +1714,16 @@ export function CheckoutPageView({
                       }}
                       className={`p-4 rounded-2xl border-2 text-right flex items-start justify-between gap-3 transition-colors ${
                         !visaEnabled
-                          ? 'border-[#334155] bg-[#0F172A]/60 opacity-60 cursor-not-allowed select-none'
+                          ? 'border-[#334155] bg-[#10192D]/60 opacity-60 cursor-not-allowed select-none'
                           : paymentMethod === 'visa'
-                          ? 'border-[#FF6B00] bg-[#FF6B00]/10 cursor-pointer'
-                          : 'border-[#334155] bg-[#0F172A] hover:border-[#FF6B00]/60 cursor-pointer'
+                          ? 'border-[#FF7100] bg-[#FF7100]/10 cursor-pointer'
+                          : 'border-[#334155] bg-[#10192D] hover:border-[#FF7100]/60 cursor-pointer'
                       }`}
                     >
                       <div className="flex items-start gap-3">
                         <CreditCard
                           className={`w-5 h-5 shrink-0 mt-0.5 ${
-                            visaEnabled ? 'text-[#FF6B00]' : 'text-[#94A3B8]'
+                            visaEnabled ? 'text-[#FF7100]' : 'text-[#94A3B8]'
                           }`}
                           aria-hidden="true"
                         />
@@ -1758,7 +1758,7 @@ export function CheckoutPageView({
             className="lg:col-span-5 rounded-2xl bg-[#1E293B] border border-[#334155] p-6 space-y-5"
           >
             <div className="pb-4 border-b border-slate-100 border-[#334155]">
-              <p className="text-xs font-bold text-[#FF6B00]">
+              <p className="text-xs font-bold text-[#FF7100]">
                 مراجعة الأصناف من
               </p>
               <h2
@@ -1770,10 +1770,10 @@ export function CheckoutPageView({
             </div>
 
             {activeSharedCart && activeSharedCart.items.length > 0 && (
-              <div className="rounded-2xl bg-[#0F172A] bg-[#1E293B] border border-[#334155] p-4 space-y-3">
+              <div className="rounded-2xl bg-[#10192D] bg-[#1E293B] border border-[#334155] p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-[#FF6B00]" />
+                    <Users className="w-4 h-4 text-[#FF7100]" />
                     <span className="text-xs sm:text-sm font-bold text-[#F8FAFC]">
                       تفصيل الطلب الجماعي — مين ضاف إيه؟
                     </span>
@@ -1814,7 +1814,7 @@ export function CheckoutPageView({
                         <span className="text-[#F8FAFC]">
                           {group.participantName}
                         </span>
-                        <span className="text-[#FF6B00] font-mono tabular-nums">
+                        <span className="text-[#FF7100] font-mono tabular-nums">
                           {group.subtotal} ج.م
                         </span>
                       </div>
@@ -1848,7 +1848,7 @@ export function CheckoutPageView({
                   <span className="text-[#F8FAFC] font-medium">
                     {item.name}
                     {item.variantLabel ? (
-                      <span className="text-[#FF6B00] text-xs font-semibold mr-1">
+                      <span className="text-[#FF7100] text-xs font-semibold mr-1">
                         ({item.variantLabel})
                       </span>
                     ) : null}{' '}
@@ -1917,7 +1917,7 @@ export function CheckoutPageView({
               </div>
               <div className="pt-3 border-t border-slate-100 border-[#334155] flex items-center justify-between text-base font-bold text-[#F8FAFC]">
                 <span>الإجمالي النهائي</span>
-                <span className="text-xl text-[#FF6B00]">
+                <span className="text-xl text-[#FF7100]">
                   <span className="font-mono tabular-nums">
                     {totals.totalAmount}
                   </span>{' '}
@@ -1933,7 +1933,7 @@ export function CheckoutPageView({
       <div
         role="region"
         aria-label="شريط تأكيد الطلب الثابت"
-        className="fixed bottom-0 inset-x-0 z-30 bg-[#0F172A]/95 backdrop-blur-md border-t border-[#334155]"
+        className="fixed bottom-0 inset-x-0 z-30 bg-[#10192D]/95 backdrop-blur-md border-t border-[#334155]"
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-8 h-16 sm:h-[72px] flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -1955,7 +1955,7 @@ export function CheckoutPageView({
               type="button"
               disabled={guestAuthBusy || storeIsClosed || belowMinOrder}
               onClick={handleInlineGoogleSignIn}
-              className="py-3 px-6 sm:px-8 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0 shadow-lg"
+              className="py-3 px-6 sm:px-8 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0 shadow-lg"
             >
               {storeIsClosed ? (
                 <span>المتجر مغلق حالياً</span>
@@ -1979,7 +1979,7 @@ export function CheckoutPageView({
                 isCheckoutWaterPin ||
                 (paymentMethod === 'wallet' && !hasEnoughWalletBalance)
               }
-              className="py-3 px-7 sm:px-10 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg"
+              className="py-3 px-7 sm:px-10 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shadow-lg"
             >
               {storeIsClosed ? (
                 <span>المتجر مغلق حالياً</span>
@@ -2203,7 +2203,7 @@ export function OrderTrackingView({
       <div className="max-w-2xl mx-auto px-4 sm:px-8 py-14 edkawi-page-enter">
         <div className="edkawi-soft-card p-10 sm:p-14 text-center space-y-5">
           <PackageCheck
-            className="w-10 h-10 text-[#FF6B00] mx-auto"
+            className="w-10 h-10 text-[#FF7100] mx-auto"
             aria-hidden="true"
           />
           <h1 className="text-xl font-bold text-[#F8FAFC]">
@@ -2406,7 +2406,7 @@ export function OrderTrackingView({
                 type="button"
                 disabled={approvingQuote || cancelling}
                 onClick={handleApproveQuoteClick}
-                className="flex-1 min-w-[220px] min-h-[48px] px-6 py-3 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-sm sm:text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                className="flex-1 min-w-[220px] min-h-[48px] px-6 py-3 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-sm sm:text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 <span>
@@ -2433,9 +2433,9 @@ export function OrderTrackingView({
        * CUSTOM ERRAND QUOTE APPROVAL CARD
        * =================================================================== */}
       {order.status === 'awaiting_customer_errand_approval' && (
-        <section className="rounded-2xl bg-[#1E293B] text-white p-6 space-y-5 shadow-xl border border-[#FF6B00]/40">
+        <section className="rounded-2xl bg-[#1E293B] text-white p-6 space-y-5 shadow-xl border border-[#FF7100]/40">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 text-xs font-bold text-[#FF6B00]">
+            <div className="inline-flex items-center gap-2 text-xs font-bold text-[#FF7100]">
               <Bike className="w-4 h-4" />
               <span>
                 عرض تكلفة المشوار جاهز من {order.courierName || 'كابتن إدكاوي'}
@@ -2446,7 +2446,7 @@ export function OrderTrackingView({
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#0F172A] rounded-2xl p-4 border border-[#334155]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#10192D] rounded-2xl p-4 border border-[#334155]">
             <div>
               <p className="text-xs text-[#94A3B8]">الكابتن المكلّف</p>
               <p className="text-lg font-extrabold text-[#F8FAFC] mt-0.5">
@@ -2454,7 +2454,7 @@ export function OrderTrackingView({
               </p>
             </div>
             <div>
-              <p className="text-xs text-[#FF6B00] font-bold">
+              <p className="text-xs text-[#FF7100] font-bold">
                 تكلفة توصيل وتنفيذ المشوار
               </p>
               <p className="text-2xl font-extrabold text-[#F8FAFC] font-mono tabular-nums mt-0.5">
@@ -2469,7 +2469,7 @@ export function OrderTrackingView({
                 type="button"
                 disabled={approvingQuote || cancelling}
                 onClick={handleApproveErrandClick}
-                className="flex-1 min-w-[220px] min-h-[48px] px-6 py-3 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-sm sm:text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                className="flex-1 min-w-[220px] min-h-[48px] px-6 py-3 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-sm sm:text-base font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 <span>
@@ -2484,7 +2484,7 @@ export function OrderTrackingView({
               type="button"
               disabled={cancelling || approvingQuote}
               onClick={() => setConfirmCancelOpen(true)}
-              className="min-h-[48px] px-5 py-3 rounded-2xl bg-[#0F172A] border border-[#334155] hover:bg-red-950/60 hover:border-red-500/40 text-red-300 text-xs sm:text-sm font-bold cursor-pointer transition-colors"
+              className="min-h-[48px] px-5 py-3 rounded-2xl bg-[#10192D] border border-[#334155] hover:bg-red-950/60 hover:border-red-500/40 text-red-300 text-xs sm:text-sm font-bold cursor-pointer transition-colors"
             >
               {cancelling ? 'جارٍ الإلغاء...' : 'رفض العرض وإلغاء المشوار'}
             </button>
@@ -2496,7 +2496,7 @@ export function OrderTrackingView({
       <section className="edkawi-soft-card p-6 sm:p-9 space-y-7">
         <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-slate-100 border-[#334155]">
           <div>
-            <p className="text-xs font-bold text-[#FF6B00] mb-1">
+            <p className="text-xs font-bold text-[#FF7100] mb-1">
               {isCustomErrand
                 ? 'متابعة مشوارك الخاص المباشر · إدكاوي'
                 : isPharmacyOrder
@@ -2526,7 +2526,7 @@ export function OrderTrackingView({
 
         {/* 4-Stage Progress Stepper */}
         {order.status === 'cancelled' ? (
-          <div className="p-5 rounded-2xl bg-[#0F172A] border border-[#334155] text-sm font-semibold text-[#F8FAFC] flex items-center gap-2.5">
+          <div className="p-5 rounded-2xl bg-[#10192D] border border-[#334155] text-sm font-semibold text-[#F8FAFC] flex items-center gap-2.5">
             <XCircle
               className="w-5 h-5 text-slate-500 shrink-0"
               aria-hidden="true"
@@ -2545,7 +2545,7 @@ export function OrderTrackingView({
                   key={step.key}
                   className={`p-5 rounded-[18px] border ${
                     isActive
-                      ? 'border-[#FF6B00] bg-[#FF6B00]/8 shadow-2xs'
+                      ? 'border-[#FF7100] bg-[#FF7100]/8 shadow-2xs'
                       : isCompleted
                         ? 'border-emerald-800 bg-emerald-950/30'
                         : 'border-slate-200/80 border-[#334155] edkawi-surface-muted'
@@ -2558,7 +2558,7 @@ export function OrderTrackingView({
                     <span
                       className={`text-xs font-bold ${
                         isActive
-                          ? 'text-[#FF6B00]'
+                          ? 'text-[#FF7100]'
                           : isCompleted
                             ? 'text-emerald-700 text-emerald-400'
                             : 'text-slate-400'
@@ -2593,7 +2593,7 @@ export function OrderTrackingView({
           order.pointsEarned > 0 && (
             <div className="rounded-2xl bg-amber-950/30 border border-amber-800 px-5 py-3.5 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 text-xs sm:text-sm font-bold text-amber-200">
-                <Award className="w-5 h-5 text-[#FF6B00] shrink-0" />
+                <Award className="w-5 h-5 text-[#FF7100] shrink-0" />
                 <span>
                   أضيفت +{order.pointsEarned} نقطة ولاء إلى حسابك في إدكاوي من هذا الطلب!
                 </span>
@@ -2605,7 +2605,7 @@ export function OrderTrackingView({
         {(order.prepTimeMinutes || order.courierName || order.status === 'ready') && (
           <div className="p-5 sm:p-6 rounded-[18px] edkawi-surface-muted border border-slate-200/80 border-[#334155] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1.5">
-              <p className="text-xs font-bold text-[#FF6B00]">
+              <p className="text-xs font-bold text-[#FF7100]">
                 متابعة التجهيز ومندوب التوصيل المباشر
               </p>
               {order.courierName ? (
@@ -2633,7 +2633,7 @@ export function OrderTrackingView({
               ) : (
                 <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC]">
                   وقت التحضير المقدر:{' '}
-                  <span className="font-mono text-[#FF6B00] tabular-nums">
+                  <span className="font-mono text-[#FF7100] tabular-nums">
                     {order.prepTimeMinutes}
                   </span>{' '}
                   دقيقة
@@ -2644,9 +2644,9 @@ export function OrderTrackingView({
             {order.courierPhone && (
               <a
                 href={`tel:${order.courierPhone}`}
-                className="py-2.5 px-5 rounded-xl bg-[#1E293B] hover:bg-[#0F172A] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
+                className="py-2.5 px-5 rounded-xl bg-[#1E293B] hover:bg-[#10192D] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
               >
-                <Phone className="w-4 h-4 text-[#FF6B00]" aria-hidden="true" />
+                <Phone className="w-4 h-4 text-[#FF7100]" aria-hidden="true" />
                 <span>اتصال بالمندوب</span>
               </a>
             )}
@@ -2697,7 +2697,7 @@ export function OrderTrackingView({
                   <button
                     type="button"
                     onClick={() => onOpenReviewModal(order)}
-                    className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                    className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer shrink-0"
                   >
                     <Star className="w-4 h-4 fill-white" />
                     <span>تقييم المتجر والمندوب</span>
@@ -2713,7 +2713,7 @@ export function OrderTrackingView({
           <div className="p-5 sm:p-6 rounded-[18px] edkawi-surface-muted border border-slate-200/80 border-[#334155] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {order.isTipped || tipSuccessMsg ? (
               <div className="flex items-center gap-2.5 text-xs sm:text-sm font-bold text-emerald-700 text-emerald-400">
-                <HeartHandshake className="w-5 h-5 text-[#FF6B00] shrink-0" />
+                <HeartHandshake className="w-5 h-5 text-[#FF7100] shrink-0" />
                 <span>
                   {tipSuccessMsg ||
                     `تمت إضافة إكرامية ${order.tipAmountEgp ?? 10} ج.م لمحفظة كابتن التوصيل ${order.courierName || ''} — شكراً لتقديرك!`}
@@ -2723,7 +2723,7 @@ export function OrderTrackingView({
               <>
                 <div className="space-y-1">
                   <p className="text-sm font-bold text-[#F8FAFC] flex items-center gap-2">
-                    <HeartHandshake className="w-4 h-4 text-[#FF6B00]" />
+                    <HeartHandshake className="w-4 h-4 text-[#FF7100]" />
                     <span>
                       إكرامية للكابتن {order.courierName || 'مندوب إدكاوي'} تقديراً لسرعته
                     </span>
@@ -2761,7 +2761,7 @@ export function OrderTrackingView({
                           setTippingAmount(null);
                         }
                       }}
-                      className="min-h-[42px] px-4 py-2 rounded-xl border border-[#334155] bg-[#1E293B] hover:border-[#FF6B00] hover:bg-[#FF6B00] hover:text-white text-xs sm:text-sm font-bold font-mono tabular-nums text-[#F8FAFC] cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                      className="min-h-[42px] px-4 py-2 rounded-xl border border-[#334155] bg-[#1E293B] hover:border-[#FF7100] hover:bg-[#FF7100] hover:text-white text-xs sm:text-sm font-bold font-mono tabular-nums text-[#F8FAFC] cursor-pointer whitespace-nowrap shrink-0 transition-colors"
                     >
                       {tippingAmount === amt ? '...' : `${amt} ج.م`}
                     </button>
@@ -2787,7 +2787,7 @@ export function OrderTrackingView({
               <div className="space-y-2.5">
                 {order.errandPickupAddress && (
                   <div className="p-3.5 rounded-xl edkawi-surface-muted border border-[#334155] text-xs sm:text-sm text-[#F8FAFC]">
-                    <span className="font-bold text-[#FF6B00]">
+                    <span className="font-bold text-[#FF7100]">
                       مكان الاستلام / البداية:{' '}
                     </span>
                     {order.errandPickupAddress}
@@ -2795,7 +2795,7 @@ export function OrderTrackingView({
                 )}
                 {order.errandDescription && (
                   <div className="p-3.5 rounded-xl edkawi-surface-muted border border-[#334155] text-xs sm:text-sm text-[#F8FAFC]">
-                    <span className="font-bold text-[#FF6B00]">
+                    <span className="font-bold text-[#FF7100]">
                       المطلوب في المشوار:{' '}
                     </span>
                     {order.errandDescription}
@@ -2807,7 +2807,7 @@ export function OrderTrackingView({
             {isPharmacyOrder && (
               <div className="space-y-3">
                 {order.prescriptionImageUrl && (
-                  <div className="rounded-2xl overflow-hidden border border-[#334155] max-h-56 bg-[#0F172A]">
+                  <div className="rounded-2xl overflow-hidden border border-[#334155] max-h-56 bg-[#10192D]">
                     <img
                       src={order.prescriptionImageUrl}
                       alt="صورة الروشتة المرفقة"
@@ -2817,7 +2817,7 @@ export function OrderTrackingView({
                 )}
                 {order.prescriptionMedicineRequest && (
                   <div className="p-3.5 rounded-xl edkawi-surface-muted border border-[#334155] text-xs sm:text-sm text-[#F8FAFC] flex items-start gap-2">
-                    <FileText className="w-4 h-4 text-[#FF6B00] shrink-0 mt-0.5" />
+                    <FileText className="w-4 h-4 text-[#FF7100] shrink-0 mt-0.5" />
                     <span>{order.prescriptionMedicineRequest}</span>
                   </div>
                 )}
@@ -2839,7 +2839,7 @@ export function OrderTrackingView({
                     <span className="text-[#F8FAFC]">
                       {item.name}
                       {item.variantLabel ? (
-                        <span className="text-[#FF6B00] text-xs font-semibold mr-1">
+                        <span className="text-[#FF7100] text-xs font-semibold mr-1">
                           ({item.variantLabel})
                         </span>
                       ) : null}{' '}
@@ -2890,7 +2890,7 @@ export function OrderTrackingView({
                   ? 'بانتظار عرض تكلفة المشوار من الكابتن'
                   : 'الإجمالي شامل التوصيل'}
               </span>
-              <span className="text-[#FF6B00]">
+              <span className="text-[#FF7100]">
                 <span className="font-mono tabular-nums">
                   {order.totalAmount}
                 </span>{' '}
@@ -2956,7 +2956,7 @@ export function OrderTrackingView({
                 type="button"
                 disabled={confirming || cancelling}
                 onClick={handleConfirmPendingClick}
-                className="min-h-[44px] py-2.5 px-5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap shadow-sm"
+                className="min-h-[44px] py-2.5 px-5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap shadow-sm"
               >
                 {confirming ? (
                   <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
@@ -2969,7 +2969,7 @@ export function OrderTrackingView({
             <button
               type="button"
               onClick={onNavigateToOrders}
-              className="py-2.5 px-5 rounded-xl bg-[#1E293B] hover:bg-[#0F172A] text-white text-xs sm:text-sm font-bold cursor-pointer whitespace-nowrap"
+              className="py-2.5 px-5 rounded-xl bg-[#1E293B] hover:bg-[#10192D] text-white text-xs sm:text-sm font-bold cursor-pointer whitespace-nowrap"
             >
               عرض كل طلباتي
             </button>
@@ -3050,7 +3050,7 @@ function StatusIndicator({ status }: { status: OrderStatus }) {
       );
     case 'awaiting_customer_approval':
       return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#FF6B00]">
+        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#FF7100]">
           <Pill className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{label}</span>
         </span>
@@ -3064,7 +3064,7 @@ function StatusIndicator({ status }: { status: OrderStatus }) {
       );
     case 'awaiting_customer_errand_approval':
       return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#FF6B00]">
+        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#FF7100]">
           <Bike className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{label}</span>
         </span>
@@ -3101,7 +3101,7 @@ function StatusIndicator({ status }: { status: OrderStatus }) {
     case 'on_the_way':
     case 'delivering':
       return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF6B00]">
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF7100]">
           <Truck className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{label}</span>
         </span>
@@ -3206,17 +3206,17 @@ export function OrdersHistoryView({
               href={GOOGLE_PLAY_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="py-2.5 px-4 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-xs sm:text-sm font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              className="py-2.5 px-4 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] text-xs sm:text-sm font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span>قيّمنا على Google Play</span>
-              <ExternalLink className="w-3.5 h-3.5 text-[#FF6B00]" />
+              <ExternalLink className="w-3.5 h-3.5 text-[#FF7100]" />
             </a>
           )}
           <button
             type="button"
             onClick={onNavigateToStores}
-            className="py-2.5 px-5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-xs sm:text-sm font-bold text-white whitespace-nowrap shrink-0 cursor-pointer"
+            className="py-2.5 px-5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-xs sm:text-sm font-bold text-white whitespace-nowrap shrink-0 cursor-pointer"
           >
             + طلب جديد من المتاجر
           </button>
@@ -3308,7 +3308,7 @@ export function OrdersHistoryView({
                     </p>
                   </div>
 
-                  <p className="text-lg font-bold text-[#FF6B00] shrink-0">
+                  <p className="text-lg font-bold text-[#FF7100] shrink-0">
                     <span className="font-mono tabular-nums">
                       {order.totalAmount}
                     </span>{' '}
@@ -3322,7 +3322,7 @@ export function OrdersHistoryView({
                     <div className="space-y-0.5">
                       <p className="text-xs sm:text-sm font-bold text-emerald-100">
                         سعر الأدوية: {order.subtotal} ج.م + توصيل {order.deliveryFee} ج.م ={' '}
-                        <span className="text-[#FF6B00]">
+                        <span className="text-[#FF7100]">
                           {order.totalAmount} ج.م
                         </span>
                       </p>
@@ -3338,7 +3338,7 @@ export function OrdersHistoryView({
                         type="button"
                         disabled={approvingId === order.id}
                         onClick={() => void handleQuickApprove(order)}
-                        className="min-h-[40px] px-4 py-2 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs font-bold cursor-pointer"
+                        className="min-h-[40px] px-4 py-2 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs font-bold cursor-pointer"
                       >
                         {approvingId === order.id
                           ? 'جارٍ التأكيد...'
@@ -3354,7 +3354,7 @@ export function OrdersHistoryView({
                     <div className="space-y-0.5">
                       <p className="text-xs sm:text-sm font-bold text-white">
                         عرض تكلفة المشوار من {order.courierName || 'كابتن إدكاوي'}:{' '}
-                        <span className="text-[#FF6B00] font-mono tabular-nums">
+                        <span className="text-[#FF7100] font-mono tabular-nums">
                           {order.totalAmount} ج.م
                         </span>
                       </p>
@@ -3368,7 +3368,7 @@ export function OrdersHistoryView({
                         type="button"
                         disabled={approvingId === order.id}
                         onClick={() => void handleQuickApproveErrand(order)}
-                        className="min-h-[40px] px-4 py-2 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs font-bold cursor-pointer whitespace-nowrap"
+                        className="min-h-[40px] px-4 py-2 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs font-bold cursor-pointer whitespace-nowrap"
                       >
                         {approvingId === order.id
                           ? 'جارٍ التأكيد...'
@@ -3396,7 +3396,7 @@ export function OrdersHistoryView({
                         <button
                           type="button"
                           onClick={() => onOpenReviewModal(order)}
-                          className="py-1.5 px-3.5 rounded-xl bg-[#FF6B00] text-white text-xs font-bold hover:bg-[#E55F00] inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                          className="py-1.5 px-3.5 rounded-xl bg-[#FF7100] text-white text-xs font-bold hover:bg-[#E66600] inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
                         >
                           <Star className="w-3.5 h-3.5 fill-white" />
                           <span>تقييم الطلب</span>
@@ -3408,7 +3408,7 @@ export function OrdersHistoryView({
                         type="button"
                         disabled={confirmingId === order.id}
                         onClick={() => void handleConfirmOrderClick(order)}
-                        className="py-1.5 px-3.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+                        className="py-1.5 px-3.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
                       >
                         {confirmingId === order.id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
@@ -3426,7 +3426,7 @@ export function OrdersHistoryView({
                     <button
                       type="button"
                       onClick={() => onTrackOrder(order.id)}
-                      className="py-1.5 px-3.5 rounded-xl bg-[#FF6B00]/10 text-xs font-bold text-[#FF6B00] hover:bg-[#FF6B00]/20 cursor-pointer whitespace-nowrap"
+                      className="py-1.5 px-3.5 rounded-xl bg-[#FF7100]/10 text-xs font-bold text-[#FF7100] hover:bg-[#FF7100]/20 cursor-pointer whitespace-nowrap"
                     >
                       تفاصيل وتتبع الطلب
                     </button>

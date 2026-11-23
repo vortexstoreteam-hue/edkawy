@@ -46,11 +46,11 @@ export const CourierKycFields: React.FC<CourierKycFieldsProps> = ({
   return (
     <div
       dir="rtl"
-      className="rounded-2xl bg-[#0F172A] border border-[#334155] p-4 sm:p-5 space-y-4"
+      className="rounded-2xl bg-[#10192D] border border-[#334155] p-4 sm:p-5 space-y-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#334155]">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/15 border border-[#FF6B00]/30 text-[#FF6B00] flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-[#FF7100]/15 border border-[#FF7100]/30 text-[#FF7100] flex items-center justify-center shrink-0">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
@@ -69,7 +69,7 @@ export const CourierKycFields: React.FC<CourierKycFieldsProps> = ({
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-extrabold border ${
             uploadedCount === requiredDocsCount
               ? 'bg-emerald-950/50 border-emerald-700 text-emerald-300'
-              : 'bg-[#1E293B] border-[#334155] text-[#FF6B00]'
+              : 'bg-[#1E293B] border-[#334155] text-[#FF7100]'
           }`}
         >
           {uploadedCount === requiredDocsCount ? (
@@ -196,7 +196,7 @@ export const CourierKycFields: React.FC<CourierKycFieldsProps> = ({
       </div>
 
       <div className="flex items-start gap-2 rounded-2xl bg-[#1E293B] border border-[#334155] p-3 text-[11px] text-[#94A3B8]">
-        <Camera className="w-4 h-4 text-[#FF6B00] shrink-0 mt-0.5" />
+        <Camera className="w-4 h-4 text-[#FF7100] shrink-0 mt-0.5" />
         <span>
           تُحفظ جميع صور المستندات بشكل مشفر ولا يطلع عليها سوى إدارة المنصة لاعتماد حسابك وتشغيل استلام الطلبات.
         </span>

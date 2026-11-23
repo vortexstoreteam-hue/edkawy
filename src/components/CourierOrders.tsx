@@ -145,7 +145,7 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#F8FAFC] flex items-center gap-2">
-            <Bike className="w-6 h-6 text-[#FF6B00]" />
+            <Bike className="w-6 h-6 text-[#FF7100]" />
             <span>لوحة الكابتن: {courierName}</span>
           </h1>
           <p className="text-xs sm:text-sm text-[#94A3B8] mt-1">
@@ -154,7 +154,7 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
         </div>
 
         {myTasks.length > 0 && (
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FF6B00]/15 border border-[#FF6B00]/40 text-[#FF6B00] text-xs font-bold">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FF7100]/15 border border-[#FF7100]/40 text-[#FF7100] text-xs font-bold">
             <Navigation className="w-4 h-4" />
             <span>لديك {myTasks.length} طلب قيد التوصيل الآن</span>
           </div>
@@ -168,7 +168,7 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
           onClick={() => setActiveTab('my_tasks')}
           className={`py-2.5 px-3 rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === 'my_tasks'
-              ? 'bg-[#FF6B00] text-white shadow-md'
+              ? 'bg-[#FF7100] text-white shadow-md'
               : 'text-[#94A3B8] hover:text-[#F8FAFC]'
           }`}
         >
@@ -212,7 +212,7 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
       {/* Loading */}
       {isLoading && (
         <div className="py-16 text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-[#FF6B00] animate-spin mx-auto" />
+          <Loader2 className="w-8 h-8 text-[#FF7100] animate-spin mx-auto" />
           <p className="text-sm font-semibold text-[#94A3B8]">
             جارٍ تحديث خريطة ومهام التوصيل...
           </p>
@@ -250,10 +250,10 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between border-b border-[#334155] pb-3">
-                    <span className="font-mono text-xs font-bold text-[#FF6B00]">
+                    <span className="font-mono text-xs font-bold text-[#FF7100]">
                       #{order.id.slice(-6).toUpperCase()}
                     </span>
-                    <span className="text-xs font-bold px-3 py-1 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC]">
+                    <span className="text-xs font-bold px-3 py-1 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC]">
                       {order.storeName}
                     </span>
                   </div>
@@ -261,7 +261,7 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
                   {/* Delivery Route Details */}
                   <div className="space-y-2 text-xs">
                     <div className="flex items-start gap-2 text-[#F8FAFC]">
-                      <MapPin className="w-4 h-4 text-[#FF6B00] shrink-0 mt-0.5" />
+                      <MapPin className="w-4 h-4 text-[#FF7100] shrink-0 mt-0.5" />
                       <div>
                         <strong>عنوان التوصيل: </strong>
                         <span className="text-[#94A3B8]">{order.deliveryNeighborhood} · {order.deliveryAddress}</span>
@@ -274,7 +274,7 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
                       <a
                         href={`tel:${order.customerPhone}`}
                         dir="ltr"
-                        className="font-bold text-[#FF6B00] hover:underline"
+                        className="font-bold text-[#FF7100] hover:underline"
                       >
                         {order.customerPhone}
                       </a>
@@ -282,7 +282,7 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
                   </div>
 
                   {/* Items Count & Fee */}
-                  <div className="p-3.5 rounded-2xl bg-[#0F172A] border border-[#334155] flex items-center justify-between text-xs">
+                  <div className="p-3.5 rounded-2xl bg-[#10192D] border border-[#334155] flex items-center justify-between text-xs">
                     <span className="text-[#94A3B8]">
                       عدد الأصناف: {order.items.reduce((s, it) => s + it.quantity, 0)} صنف
                     </span>
@@ -296,7 +296,7 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
                 <div className="pt-3 border-t border-[#334155] flex items-center justify-between gap-3">
                   <div>
                     <span className="text-xs text-[#94A3B8]">تحصيل كاش: </span>
-                    <span className="text-base font-extrabold text-[#FF6B00] tabular-nums">
+                    <span className="text-base font-extrabold text-[#FF7100] tabular-nums">
                       {order.totalAmount} ج.م
                     </span>
                   </div>
@@ -307,7 +307,7 @@ export const CourierOrders: React.FC<CourierOrdersProps> = ({
                         type="button"
                         onClick={() => handleClaimOrder(order)}
                         disabled={actionLoadingId === order.id}
-                        className="min-h-[40px] px-5 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                        className="min-h-[40px] px-5 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
                       >
                         {actionLoadingId === order.id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />

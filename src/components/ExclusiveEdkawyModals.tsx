@@ -78,7 +78,7 @@ export const EdkuWeatherPromoBanner: React.FC<EdkuWeatherPromoBannerProps> = ({
   return (
     <div className="rounded-2xl border border-[#334155] bg-[#1E293B] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
       <div className="flex items-start sm:items-center gap-3.5">
-        <div className="w-11 h-11 rounded-2xl bg-[#FF6B00]/10 text-[#FF6B00] flex items-center justify-center shrink-0">
+        <div className="w-11 h-11 rounded-2xl bg-[#FF7100]/10 text-[#FF7100] flex items-center justify-center shrink-0">
           <CloudSun className="w-6 h-6" />
         </div>
         <div>
@@ -99,7 +99,7 @@ export const EdkuWeatherPromoBanner: React.FC<EdkuWeatherPromoBannerProps> = ({
       <button
         type="button"
         onClick={() => onSelectCategory(targetCategory)}
-        className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+        className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
       >
         تصفح {targetCategory}
       </button>
@@ -224,7 +224,7 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
       <div className="w-full max-w-2xl rounded-3xl bg-[#1E293B] border border-[#334155] shadow-2xl overflow-hidden my-auto max-h-[90dvh] flex flex-col">
         <div className="px-5 py-4 bg-[#1E293B] text-white flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <Camera className="w-5 h-5 text-[#FF6B00]" />
+            <Camera className="w-5 h-5 text-[#FF7100]" />
             <h2 className="text-base sm:text-lg font-bold text-white">
               البحث الذكي بالصور في مطاعم ومتاجر إدكو
             </h2>
@@ -255,7 +255,7 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
             type="button"
             disabled={!imageDataUrl || analyzing}
             onClick={handleAnalyzePhoto}
-            className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-sm font-bold cursor-pointer"
+            className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-sm font-bold cursor-pointer"
           >
             {analyzing ? (
               <>
@@ -277,11 +277,11 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
           )}
 
           {(detectedDish || summaryText) && (
-            <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-4 space-y-3">
+            <div className="rounded-2xl bg-[#10192D] border border-[#334155] p-4 space-y-3">
               {detectedDish && (
                 <p className="text-sm font-bold text-[#F8FAFC]">
                   الصنف المكتشف:{' '}
-                  <span className="text-[#FF6B00]">{detectedDish}</span>
+                  <span className="text-[#FF7100]">{detectedDish}</span>
                 </p>
               )}
               {summaryText && (
@@ -332,7 +332,7 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
                             });
                             onClose();
                           }}
-                          className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer"
+                          className="min-h-[40px] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer"
                         >
                           <ShoppingBag className="w-3.5 h-3.5" />
                           <span>أضف للسلة</span>
@@ -474,7 +474,7 @@ export const ErrandServiceModal: React.FC<ErrandServiceModalProps> = ({
       <div className="w-full max-w-2xl rounded-3xl bg-[#1E293B] border border-[#334155] shadow-2xl overflow-hidden my-auto max-h-[92dvh] flex flex-col">
         <div className="px-5 py-4 bg-[#1E293B] text-white flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <Bike className="w-5 h-5 text-[#FF6B00]" />
+            <Bike className="w-5 h-5 text-[#FF7100]" />
             <div>
               <h2 className="text-base sm:text-lg font-bold text-white">
                 خدمة مشاوير إدكاوي السريعة
@@ -508,7 +508,7 @@ export const ErrandServiceModal: React.FC<ErrandServiceModalProps> = ({
               onChange={(e) => setErrandDescription(e.target.value)}
               placeholder="مثال: استلام شنطة أوراق من مكتب البريد أو شراء طلب خاص وتوصيله للمنزل..."
               maxLength={380}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#64748B]"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#64748B]"
             />
           </div>
 
@@ -522,7 +522,7 @@ export const ErrandServiceModal: React.FC<ErrandServiceModalProps> = ({
               onChange={(e) => setErrandPickupAddress(e.target.value)}
               placeholder="مثال: موقف إدكو العمومي / شارع جمال عبد الناصر"
               maxLength={160}
-              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#64748B]"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#64748B]"
             />
           </div>
 
@@ -537,7 +537,7 @@ export const ErrandServiceModal: React.FC<ErrandServiceModalProps> = ({
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="الاسم الثلاثي"
                 maxLength={80}
-                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC]"
               />
             </div>
 
@@ -552,7 +552,7 @@ export const ErrandServiceModal: React.FC<ErrandServiceModalProps> = ({
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="01012345678"
                 maxLength={14}
-                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] text-left tabular-nums"
+                className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] text-left tabular-nums"
               />
             </div>
           </div>
@@ -576,7 +576,7 @@ export const ErrandServiceModal: React.FC<ErrandServiceModalProps> = ({
 
           <div>
             <label className="flex items-center gap-1.5 text-xs font-bold text-[#F8FAFC] mb-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#FF6B00]" />
+              <MapPin className="w-3.5 h-3.5 text-[#FF7100]" />
               <span>عنوان التسليم التفصيلي (الدور / العلامة المميزة)</span>
             </label>
             <input
@@ -585,7 +585,7 @@ export const ErrandServiceModal: React.FC<ErrandServiceModalProps> = ({
               onChange={(e) => setDeliveryAddress(e.target.value)}
               placeholder="مثال: بجوار مسجد المحطة — عمارة 4 — الدور الثاني"
               maxLength={200}
-              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC]"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC]"
             />
           </div>
 
@@ -606,7 +606,7 @@ export const ErrandServiceModal: React.FC<ErrandServiceModalProps> = ({
             <button
               type="submit"
               disabled={submitting || isWaterPin}
-              className="min-h-[46px] inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+              className="min-h-[46px] inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
             >
               {submitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -710,7 +710,7 @@ export const DailySpinWheelModal: React.FC<DailySpinWheelModalProps> = ({
       <div className="w-full max-w-md rounded-3xl bg-[#1E293B] border border-[#334155] shadow-2xl overflow-hidden">
         <div className="px-5 py-4 bg-[#1E293B] text-white flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <Gift className="w-5 h-5 text-[#FF6B00]" />
+            <Gift className="w-5 h-5 text-[#FF7100]" />
             <h2 className="text-base sm:text-lg font-bold text-white">
               عجلة الحظ اليومية من إدكاوي
             </h2>
@@ -731,15 +731,15 @@ export const DailySpinWheelModal: React.FC<DailySpinWheelModalProps> = ({
           </p>
 
           <div className="grid grid-cols-3 gap-2.5 text-xs font-bold">
-            <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-3 space-y-1">
-              <p className="text-[#FF6B00] font-mono tabular-nums">+15 / +30</p>
+            <div className="rounded-2xl bg-[#10192D] border border-[#334155] p-3 space-y-1">
+              <p className="text-[#FF7100] font-mono tabular-nums">+15 / +30</p>
               <p className="text-[#F8FAFC]">نقطة ولاء</p>
             </div>
-            <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-3 space-y-1">
-              <p className="text-[#FF6B00] font-mono tabular-nums">15% خصم</p>
+            <div className="rounded-2xl bg-[#10192D] border border-[#334155] p-3 space-y-1">
+              <p className="text-[#FF7100] font-mono tabular-nums">15% خصم</p>
               <p className="text-[#F8FAFC]">كوبون فوري</p>
             </div>
-            <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-3 space-y-1">
+            <div className="rounded-2xl bg-[#10192D] border border-[#334155] p-3 space-y-1">
               <p className="text-emerald-400">مجاني</p>
               <p className="text-[#F8FAFC]">توصيل طلبك</p>
             </div>
@@ -754,7 +754,7 @@ export const DailySpinWheelModal: React.FC<DailySpinWheelModalProps> = ({
                 <div className="flex items-center justify-between gap-2 rounded-xl bg-[#1E293B] px-3 py-2 border border-emerald-800">
                   <span
                     dir="ltr"
-                    className="font-mono font-bold text-sm text-[#FF6B00]"
+                    className="font-mono font-bold text-sm text-[#FF7100]"
                   >
                     {result.couponCode}
                   </span>
@@ -786,7 +786,7 @@ export const DailySpinWheelModal: React.FC<DailySpinWheelModalProps> = ({
           )}
 
           {remainingMs > 0 && !result ? (
-            <div className="rounded-2xl bg-[#0F172A] p-4 space-y-1">
+            <div className="rounded-2xl bg-[#10192D] p-4 space-y-1">
               <p className="text-xs text-[#94A3B8]">
                 لقد استخدمت لفّتك اليومية — تتجدد اللفّة القادمة خلال:
               </p>
@@ -802,7 +802,7 @@ export const DailySpinWheelModal: React.FC<DailySpinWheelModalProps> = ({
               type="button"
               disabled={spinning}
               onClick={handleSpin}
-              className="w-full min-h-[48px] px-6 py-3 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full min-h-[48px] px-6 py-3 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
             >
               {spinning ? (
                 <>
@@ -885,7 +885,7 @@ export const GooglePlayReviewPromptModal: React.FC<
             target="_blank"
             rel="noopener noreferrer"
             onClick={onClose}
-            className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 whitespace-nowrap"
+            className="min-h-[44px] px-5 py-2.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 whitespace-nowrap"
           >
             <span>تقييم إدكاوي على Google Play</span>
             <ExternalLink className="w-4 h-4" />

@@ -31,5 +31,5 @@ export function logAppVersion(): void {
 🏷️ التكويد: [الموسم: ${VERSION_INFO.season} | رئيسي: ${VERSION_INFO.major} | فرعي: ${VERSION_INFO.minor} | ترقيع: ${VERSION_INFO.patch}]
 =============================================
   `.trim();
-  console.log(`%c${banner}`, 'color: #ff6b00; font-weight: bold; font-family: monospace; font-size: 11px;');
+  console.log(`%c${banner}`, 'color: #FF7100; font-weight: bold; font-family: monospace; font-size: 11px;');
 }

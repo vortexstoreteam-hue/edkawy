@@ -2353,6 +2353,8 @@ export interface OrderFinancialSplit {
   commissionAmount: number;
   restaurantNet: number;
   courierEarning: number;
+  courierDeliveryCompensation: number;
+  freeDeliveryFundedByEdkawy: boolean;
   customerTotal: number;
   isBalanced: boolean;
 }
@@ -2373,6 +2375,8 @@ export function calculateOrderFinancialSplit(params: {
   commissionRate?: number;
   courierDeliveryCompensation?: number;
   freeDeliveryFundedByEdkawy?: boolean;
+  isFreeDeliveryReward?: boolean;
+  freeDeliveryBaseFee?: number;
 }): OrderFinancialSplit {
   const subtotal = Math.max(0, Math.round(Number(params.subtotal || 0) * 100) / 100);
   const deliveryFee = Math.max(
@@ -2393,15 +2397,22 @@ export function calculateOrderFinancialSplit(params: {
   const restaurantNet =
     Math.round((subtotal - commissionAmount) * 100) / 100;
 
-  const courierEarning =
+  const freeDeliveryFundedByEdkawy = Boolean(
+    params.freeDeliveryFundedByEdkawy || params.isFreeDeliveryReward
+  );
+
+  const courierDeliveryCompensation =
     typeof params.courierDeliveryCompensation === 'number' &&
     params.courierDeliveryCompensation > 0
       ? Math.max(
           MIN_COURIER_DELIVERY_FEE_EGP,
           Math.round(params.courierDeliveryCompensation * 100) / 100
         )
-      : params.freeDeliveryFundedByEdkawy
-      ? MIN_COURIER_DELIVERY_FEE_EGP
+      : freeDeliveryFundedByEdkawy
+      ? Math.max(
+          MIN_COURIER_DELIVERY_FEE_EGP,
+          Math.round(Number(params.freeDeliveryBaseFee || 0) * 100) / 100
+        )
       : deliveryFee;
 
   const customerTotal =
@@ -2420,7 +2431,9 @@ export function calculateOrderFinancialSplit(params: {
     commissionRate,
     commissionAmount,
     restaurantNet,
-    courierEarning,
+    courierEarning: courierDeliveryCompensation,
+    courierDeliveryCompensation,
+    freeDeliveryFundedByEdkawy,
     customerTotal,
     isBalanced: Math.abs(splitSum - standardTotal) < 0.02,
   };
@@ -2435,6 +2448,7 @@ export function getOrderFinancialSnapshot(
   );
   const subtotal = Math.max(0, Number(order.subtotal || 0));
   const deliveryFee = Math.max(0, Number(order.deliveryFee || 0));
+  const freeDeliveryFundedByEdkawy = Boolean(order.freeDeliveryFundedByEdkawy);
 
   if (
     typeof order.commissionAmount === 'number' &&
@@ -2442,11 +2456,11 @@ export function getOrderFinancialSnapshot(
   ) {
     const commissionAmount = Math.round(order.commissionAmount * 100) / 100;
     const restaurantNet = Math.round(order.restaurantNet * 100) / 100;
-    const courierEarning =
+    const courierDeliveryCompensation =
       typeof order.courierDeliveryCompensation === 'number' &&
       order.courierDeliveryCompensation > 0
         ? order.courierDeliveryCompensation
-        : order.freeDeliveryFundedByEdkawy
+        : freeDeliveryFundedByEdkawy
         ? MIN_COURIER_DELIVERY_FEE_EGP
         : deliveryFee;
     return {
@@ -2455,7 +2469,9 @@ export function getOrderFinancialSnapshot(
       commissionRate: rate,
       commissionAmount,
       restaurantNet,
-      courierEarning,
+      courierEarning: courierDeliveryCompensation,
+      courierDeliveryCompensation,
+      freeDeliveryFundedByEdkawy,
       customerTotal: Number(order.totalAmount || subtotal + deliveryFee),
       isBalanced:
         Math.abs(restaurantNet + commissionAmount - subtotal) < 0.02,
@@ -2469,7 +2485,7 @@ export function getOrderFinancialSnapshot(
     discountAmount: order.discountAmount,
     commissionRate: rate,
     courierDeliveryCompensation: order.courierDeliveryCompensation,
-    freeDeliveryFundedByEdkawy: order.freeDeliveryFundedByEdkawy,
+    freeDeliveryFundedByEdkawy,
   });
 }
 

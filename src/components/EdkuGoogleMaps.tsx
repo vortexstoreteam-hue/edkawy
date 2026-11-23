@@ -107,7 +107,7 @@ interface SdkRoutePolylineProps {
 
 const SdkRoutePolylineLayer: React.FC<SdkRoutePolylineProps> = ({
   waypoints,
-  strokeColor = '#FF6B00',
+  strokeColor = '#FF7100',
   fitBounds = false,
 }) => {
   const map = useMap();
@@ -225,7 +225,7 @@ const DemandThermalCirclesLayer: React.FC<{
         zone.intensity >= 0.75
           ? '#EF4444'
           : zone.intensity >= 0.45
-          ? '#FF6B00'
+          ? '#FF7100'
           : '#F59E0B';
       return new gmaps.Circle({
         map,
@@ -292,7 +292,7 @@ export const EdkuStoresMap: React.FC<EdkuStoresMapProps> = ({
   if (!HAS_MAPS_API_KEY) {
     return (
       <div className="rounded-2xl bg-[#1E293B] border border-[#334155] p-6 text-center space-y-2">
-        <MapPin className="w-7 h-7 text-[#FF6B00] mx-auto" />
+        <MapPin className="w-7 h-7 text-[#FF7100] mx-auto" />
         <p className="text-sm font-semibold text-[#F8FAFC]">
           خريطة متاجر وصيدليات إدكو التفاعلية غير مفعلة حالياً
         </p>
@@ -310,7 +310,7 @@ export const EdkuStoresMap: React.FC<EdkuStoresMapProps> = ({
     >
       <div className="px-5 py-3.5 border-b border-[#334155] flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-[#FF6B00] shrink-0" />
+          <MapPin className="w-4 h-4 text-[#FF7100] shrink-0" />
           <h2 className="text-sm sm:text-base font-bold text-[#F8FAFC]">
             خريطة متاجر وصيدليات مدينة إدكو
           </h2>
@@ -343,7 +343,7 @@ export const EdkuStoresMap: React.FC<EdkuStoresMapProps> = ({
               >
                 <Pin
                   background={
-                    !open ? '#64748B' : isPharmacy ? '#0D9488' : '#FF6B00'
+                    !open ? '#64748B' : isPharmacy ? '#0D9488' : '#FF7100'
                   }
                   borderColor="#1E293B"
                   glyphColor="#FFFFFF"
@@ -387,7 +387,7 @@ export const EdkuStoresMap: React.FC<EdkuStoresMapProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectStore(activeInfoEntry.store)}
-                  className="w-full py-2 px-3 rounded-lg bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold transition-colors cursor-pointer"
+                  className="w-full py-2 px-3 rounded-lg bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold transition-colors cursor-pointer"
                 >
                   {activeInfoEntry.store.category === 'صيدليات'
                     ? 'إرسال روشتة أو طلب أدوية'
@@ -493,7 +493,7 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
   onWaterValidationChange,
   autoLocateOnMount = false,
   heightClassName = 'h-[260px]',
-  pinColor = '#FF6B00',
+  pinColor = '#FF7100',
 }) => {
   const rawPlacesLib = useMapsLibrary('places');
   const placesLib = rawPlacesLib as unknown as ModernPlacesLibrary | null;
@@ -960,7 +960,7 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
     <div className="rounded-2xl border border-[#334155] bg-[#1E293B] p-4 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <MapPin className="w-4 h-4 text-[#FF6B00] shrink-0" />
+          <MapPin className="w-4 h-4 text-[#FF7100] shrink-0" />
           <span className="text-sm font-bold text-[#F8FAFC] truncate">
             {label}
           </span>
@@ -971,7 +971,7 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
             type="button"
             onClick={handleDetectCurrentGps}
             disabled={locatingGps}
-            className="min-h-[40px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
+            className="min-h-[40px] inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
           >
             {locatingGps ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -990,7 +990,7 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
               className={`min-h-[40px] inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-bold border transition-colors cursor-pointer ${
                 liveWatchActive
                   ? 'bg-emerald-600 text-white border-emerald-600'
-                  : 'bg-[#0F172A] text-[#F8FAFC] border-[#334155] hover:border-[#FF6B00]'
+                  : 'bg-[#10192D] text-[#F8FAFC] border-[#334155] hover:border-[#FF7100]'
               }`}
               title="تتبع موقعك الحي تلقائياً أثناء الحركة"
             >
@@ -1019,10 +1019,10 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
                 setShowSuggestions(true);
               }}
               placeholder="ابحث داخل إدكو والقرى المجاورة..."
-              className="w-full rounded-2xl border border-[#334155] bg-[#0F172A] pr-10 pl-9 py-2.5 text-sm text-[#F8FAFC] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#FF6B00]"
+              className="w-full rounded-2xl border border-[#334155] bg-[#10192D] pr-10 pl-9 py-2.5 text-sm text-[#F8FAFC] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#FF7100]"
             />
             {searchingPlaces && (
-              <Loader2 className="w-4 h-4 text-[#FF6B00] animate-spin absolute left-3" />
+              <Loader2 className="w-4 h-4 text-[#FF7100] animate-spin absolute left-3" />
             )}
             {!searchingPlaces && searchQuery.trim().length > 0 && (
               <button
@@ -1042,7 +1042,7 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
 
           {showSuggestions &&
             (localVillageSuggestions.length > 0 || suggestions.length > 0) && (
-              <div className="mt-1.5 rounded-2xl border border-[#334155] bg-[#0F172A] shadow-xl max-h-56 overflow-y-auto divide-y divide-[#334155] z-20 relative">
+              <div className="mt-1.5 rounded-2xl border border-[#334155] bg-[#10192D] shadow-xl max-h-56 overflow-y-auto divide-y divide-[#334155] z-20 relative">
                 {localVillageSuggestions.map((area) => (
                   <button
                     key={`local-${area}`}
@@ -1050,7 +1050,7 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
                     onClick={() => handleSelectLocalAreaSuggestion(area)}
                     className="w-full text-right px-4 py-2.5 hover:bg-[#1E293B] transition-colors flex items-start gap-2 cursor-pointer"
                   >
-                    <MapPin className="w-4 h-4 text-[#FF6B00] shrink-0 mt-0.5" />
+                    <MapPin className="w-4 h-4 text-[#FF7100] shrink-0 mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-bold text-[#F8FAFC] truncate">
                         {area}
@@ -1069,7 +1069,7 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
                       onClick={() => void handleSelectPlacePrediction(pred)}
                       className="w-full text-right px-4 py-2.5 hover:bg-[#1E293B] transition-colors flex items-start gap-2 cursor-pointer"
                     >
-                      <MapPin className="w-4 h-4 text-[#FF6B00] shrink-0 mt-0.5" />
+                      <MapPin className="w-4 h-4 text-[#FF7100] shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold text-[#F8FAFC] truncate">
                           {main}
@@ -1104,7 +1104,7 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
             emitCoordinates(coords.lat, coords.lng, area);
             void resolveAndEmitStreetAddress(coords.lat, coords.lng, area);
           }}
-          className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm font-semibold text-[#F8FAFC]"
+          className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-sm font-semibold text-[#F8FAFC]"
         >
           {EDKU_NEIGHBORHOODS.map((area) => (
             <option key={area} value={area}>
@@ -1179,8 +1179,8 @@ export const EdkuLocationPickerMap: React.FC<EdkuLocationPickerMapProps> = ({
       )}
 
       {(resolvingAddress || resolvedStreetText) && (
-        <div className="px-3.5 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-xs text-[#F8FAFC] flex items-center gap-2">
-          <Navigation className="w-3.5 h-3.5 text-[#FF6B00] shrink-0" />
+        <div className="px-3.5 py-2.5 rounded-2xl bg-[#10192D] border border-[#334155] text-xs text-[#F8FAFC] flex items-center gap-2">
+          <Navigation className="w-3.5 h-3.5 text-[#FF7100] shrink-0" />
           <span className="truncate">
             {resolvingAddress
               ? 'جارٍ تحديد العنوان...'
@@ -1279,7 +1279,7 @@ export const LiveOrderScooterMap: React.FC<LiveOrderScooterMapProps> = ({
   if (!HAS_MAPS_API_KEY) {
     return (
       <div className="rounded-2xl p-6 bg-[#1E293B] border border-[#334155] text-center space-y-2">
-        <Navigation className="w-6 h-6 text-[#FF6B00] mx-auto" />
+        <Navigation className="w-6 h-6 text-[#FF7100] mx-auto" />
         <p className="text-sm font-bold text-[#F8FAFC]">
           المندوب في الطريق إليك الآن داخل {order.deliveryNeighborhood}
         </p>
@@ -1296,7 +1296,7 @@ export const LiveOrderScooterMap: React.FC<LiveOrderScooterMapProps> = ({
     <div className="rounded-2xl overflow-hidden border border-[#334155] bg-[#1E293B]">
       <div className="px-4 py-3 border-b border-[#334155] flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Bike className="w-4 h-4 text-[#FF6B00] shrink-0" />
+          <Bike className="w-4 h-4 text-[#FF7100] shrink-0" />
           <span className="text-sm font-bold text-[#F8FAFC]">
             التتبع الحي لمندوب إدكاوي على الخريطة
           </span>
@@ -1319,7 +1319,7 @@ export const LiveOrderScooterMap: React.FC<LiveOrderScooterMapProps> = ({
         >
           <SdkRoutePolylineLayer
             waypoints={trackingWaypoints}
-            strokeColor="#FF6B00"
+            strokeColor="#FF7100"
           />
 
           <AdvancedMarker
@@ -1330,7 +1330,7 @@ export const LiveOrderScooterMap: React.FC<LiveOrderScooterMapProps> = ({
               {order.orderType === 'pharmacy_prescription' ? (
                 <Pill className="w-3.5 h-3.5 text-teal-400" />
               ) : (
-                <Store className="w-3.5 h-3.5 text-[#FF6B00]" />
+                <Store className="w-3.5 h-3.5 text-[#FF7100]" />
               )}
               <span>{order.storeName}</span>
             </div>
@@ -1357,7 +1357,7 @@ export const LiveOrderScooterMap: React.FC<LiveOrderScooterMapProps> = ({
                 : 'مندوب إدكاوي'
             }
           >
-            <div className="flex items-center gap-1.5 bg-[#FF6B00] text-white px-3 py-1.5 rounded-full shadow-lg border-2 border-white text-xs font-bold">
+            <div className="flex items-center gap-1.5 bg-[#FF7100] text-white px-3 py-1.5 rounded-full shadow-lg border-2 border-white text-xs font-bold">
               <Bike className="w-4 h-4 shrink-0" />
               <span className="whitespace-nowrap">
                 {order.courierName || 'مندوب إدكاوي'}
@@ -1367,7 +1367,7 @@ export const LiveOrderScooterMap: React.FC<LiveOrderScooterMapProps> = ({
         </Map>
       </div>
 
-      <div className="px-4 py-3 bg-[#0F172A] border-t border-[#334155] flex flex-wrap items-center justify-between gap-2 text-xs text-[#94A3B8] tabular-nums">
+      <div className="px-4 py-3 bg-[#10192D] border-t border-[#334155] flex flex-wrap items-center justify-between gap-2 text-xs text-[#94A3B8] tabular-nums">
         <span>نقطة الاستلام: {order.storeName}</span>
         <span>·</span>
         <span>الوجهة: {order.deliveryNeighborhood}</span>
@@ -1470,7 +1470,7 @@ export const CourierMultiStopAndHeatmapMap: React.FC<
     <section className="rounded-2xl bg-[#1E293B] border border-[#334155] overflow-hidden">
       <div className="px-4 py-3.5 border-b border-[#334155] flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <RouteIcon className="w-4 h-4 text-[#FF6B00] shrink-0" />
+          <RouteIcon className="w-4 h-4 text-[#FF7100] shrink-0" />
           <div>
             <h3 className="text-sm font-bold text-[#F8FAFC]">
               خريطة المسار المتعدد والمناطق الساخنة (إدكو)
@@ -1486,8 +1486,8 @@ export const CourierMultiStopAndHeatmapMap: React.FC<
           onClick={() => setShowHeatmap((v) => !v)}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold transition-colors cursor-pointer ${
             showHeatmap
-              ? 'bg-[#FF6B00] text-white'
-              : 'bg-[#0F172A] border border-[#334155] text-[#F8FAFC]'
+              ? 'bg-[#FF7100] text-white'
+              : 'bg-[#10192D] border border-[#334155] text-[#F8FAFC]'
           }`}
         >
           <Flame className="w-3.5 h-3.5" />
@@ -1514,14 +1514,14 @@ export const CourierMultiStopAndHeatmapMap: React.FC<
           {stops.routeWaypoints.length >= 2 && (
             <SdkRoutePolylineLayer
               waypoints={stops.routeWaypoints}
-              strokeColor="#FF6B00"
+              strokeColor="#FF7100"
               fitBounds={true}
             />
           )}
 
           {/* Courier Marker */}
           <AdvancedMarker position={courierCoords} zIndex={70} title={courierName}>
-            <div className="flex items-center gap-1.5 bg-[#FF6B00] text-white px-3 py-1.5 rounded-full shadow-lg border-2 border-white text-xs font-bold">
+            <div className="flex items-center gap-1.5 bg-[#FF7100] text-white px-3 py-1.5 rounded-full shadow-lg border-2 border-white text-xs font-bold">
               <Bike className="w-4 h-4" />
               <span>{courierName || 'موقعي'}</span>
             </div>
@@ -1536,7 +1536,7 @@ export const CourierMultiStopAndHeatmapMap: React.FC<
             >
               <Pin
                 background="#1E293B"
-                borderColor="#FF6B00"
+                borderColor="#FF7100"
                 glyphColor="#FFFFFF"
                 glyph={String(idx + 1)}
               />
@@ -1620,7 +1620,7 @@ export const AdminLiveCouriersMap: React.FC<AdminLiveCouriersMapProps> = ({
     <section className="rounded-2xl bg-[#1E293B] border border-[#334155] overflow-hidden">
       <div className="px-5 py-3.5 border-b border-[#334155] flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Bike className="w-4 h-4 text-[#FF6B00]" />
+          <Bike className="w-4 h-4 text-[#FF7100]" />
           <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC]">
             خريطة المتابعة الحية لأسطول المناديب والمتاجر في إدكو
           </h3>
@@ -1673,7 +1673,7 @@ export const AdminLiveCouriersMap: React.FC<AdminLiveCouriersMapProps> = ({
               <div
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold shadow-md border border-white cursor-pointer ${
                   courier.isAvailable
-                    ? 'bg-[#FF6B00] text-white'
+                    ? 'bg-[#FF7100] text-white'
                     : 'bg-slate-600 text-slate-100'
                 }`}
               >

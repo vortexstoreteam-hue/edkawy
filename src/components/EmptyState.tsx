@@ -23,7 +23,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       dir="rtl"
       className={`rounded-2xl bg-[#1E293B] border border-[#334155] p-6 sm:p-10 text-center space-y-4 ${className}`}
     >
-      <div className="w-14 h-14 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#FF6B00] flex items-center justify-center mx-auto">
+      <div className="w-14 h-14 rounded-2xl bg-[#10192D] border border-[#334155] text-[#FF7100] flex items-center justify-center mx-auto">
         <Icon className="w-7 h-7" />
       </div>
       <div className="space-y-1.5 max-w-md mx-auto">
@@ -38,7 +38,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <button
           type="button"
           onClick={onAction}
-          className="min-h-[44px] px-6 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold inline-flex items-center justify-center cursor-pointer active:scale-[0.98]"
+          className="min-h-[44px] px-6 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold inline-flex items-center justify-center cursor-pointer active:scale-[0.98]"
         >
           {actionLabel}
         </button>

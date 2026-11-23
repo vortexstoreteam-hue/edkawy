@@ -143,7 +143,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
 
   if (submittedRequestId) {
     return (
-      <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] p-4 flex flex-col justify-center items-center font-['Cairo',sans-serif] dir-rtl" dir="rtl">
+      <div className="min-h-screen bg-[#10192D] text-[#F8FAFC] p-4 flex flex-col justify-center items-center font-['Cairo',sans-serif] dir-rtl" dir="rtl">
         <div className="w-full max-w-lg bg-[#1E293B] border border-[#334155] rounded-2xl p-6 text-center space-y-5 shadow-2xl">
           <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/40">
             <CheckCircle2 className="w-10 h-10" />
@@ -154,14 +154,14 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
             <p className="text-sm text-[#94A3B8] leading-relaxed">
               أهلاً بك في عائلة شركاء إدكاوي. رقم طلبك المرجعي هو:
             </p>
-            <div className="inline-block bg-[#0F172A] border border-[#FF6B00]/40 rounded-xl px-4 py-2 font-mono text-[#FF6B00] font-bold text-lg select-all">
+            <div className="inline-block bg-[#10192D] border border-[#FF7100]/40 rounded-xl px-4 py-2 font-mono text-[#FF7100] font-bold text-lg select-all">
               {submittedRequestId}
             </div>
           </div>
 
-          <div className="bg-[#0F172A]/70 border border-[#334155] rounded-xl p-4 text-right space-y-2 text-sm text-[#94A3B8]">
+          <div className="bg-[#10192D]/70 border border-[#334155] rounded-xl p-4 text-right space-y-2 text-sm text-[#94A3B8]">
             <div className="flex items-center gap-2 text-[#F8FAFC] font-semibold">
-              <Clock className="w-4 h-4 text-[#FF6B00]" />
+              <Clock className="w-4 h-4 text-[#FF7100]" />
               <span>الخطوات القادمة:</span>
             </div>
             <ul className="list-disc list-inside space-y-1 text-xs text-[#94A3B8] pr-1">
@@ -173,7 +173,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
 
           <button
             onClick={onBackToHome}
-            className="w-full py-3.5 px-4 bg-[#FF6B00] hover:bg-[#FF6B00]/90 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B00]/20"
+            className="w-full py-3.5 px-4 bg-[#FF7100] hover:bg-[#FF7100]/90 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-[#FF7100]/20"
           >
             <span>العودة للرئيسية</span>
             <ArrowRight className="w-5 h-5 transform rotate-180" />
@@ -184,12 +184,12 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
   }
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] p-4 font-['Cairo',sans-serif] dir-rtl" dir="rtl">
+    <div className="min-h-screen bg-[#10192D] text-[#F8FAFC] p-4 font-['Cairo',sans-serif] dir-rtl" dir="rtl">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between bg-[#1E293B] border border-[#334155] rounded-2xl p-4 shadow-md">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#FF6B00]/15 border border-[#FF6B00]/30 flex items-center justify-center text-[#FF6B00]">
+            <div className="w-12 h-12 rounded-2xl bg-[#FF7100]/15 border border-[#FF7100]/30 flex items-center justify-center text-[#FF7100]">
               <Store className="w-6 h-6" />
             </div>
             <div>
@@ -199,7 +199,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
           </div>
           <button
             onClick={onBackToHome}
-            className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] bg-[#0F172A] border border-[#334155] px-3 py-2 rounded-xl flex items-center gap-1.5 transition"
+            className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] bg-[#10192D] border border-[#334155] px-3 py-2 rounded-xl flex items-center gap-1.5 transition"
           >
             <span>الرئيسية</span>
             <ArrowRight className="w-4 h-4 transform rotate-180" />
@@ -251,7 +251,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
             {/* Store Name */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
-                <Store className="w-4 h-4 text-[#FF6B00]" />
+                <Store className="w-4 h-4 text-[#FF7100]" />
                 <span>اسم المحل / النشاط التجاري *</span>
               </label>
               <input
@@ -260,14 +260,14 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 placeholder="مثال: أسماك بحري أو بروست البرنس"
-                className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition"
+                className="w-full bg-[#10192D] border border-[#334155] focus:border-[#FF7100] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition"
               />
             </div>
 
             {/* Owner Name */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
-                <User className="w-4 h-4 text-[#FF6B00]" />
+                <User className="w-4 h-4 text-[#FF7100]" />
                 <span>اسم المسؤول / المالك *</span>
               </label>
               <input
@@ -276,7 +276,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
                 value={ownerName}
                 onChange={(e) => setOwnerName(e.target.value)}
                 placeholder="الاسم ثلاثي"
-                className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition"
+                className="w-full bg-[#10192D] border border-[#334155] focus:border-[#FF7100] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition"
               />
             </div>
           </div>
@@ -285,7 +285,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
             {/* Phone */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
-                <Phone className="w-4 h-4 text-[#FF6B00]" />
+                <Phone className="w-4 h-4 text-[#FF7100]" />
                 <span>رقم الهاتف المحمول (واتساب وتواصل) *</span>
               </label>
               <input
@@ -294,7 +294,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="01012345678"
-                className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition text-left font-mono"
+                className="w-full bg-[#10192D] border border-[#334155] focus:border-[#FF7100] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition text-left font-mono"
                 dir="ltr"
               />
             </div>
@@ -302,13 +302,13 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
             {/* Neighborhood */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-[#FF6B00]" />
+                <MapPin className="w-4 h-4 text-[#FF7100]" />
                 <span>المنطقة / الحي في إدكو *</span>
               </label>
               <select
                 value={neighborhood}
                 onChange={(e) => setNeighborhood(e.target.value)}
-                className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition cursor-pointer"
+                className="w-full bg-[#10192D] border border-[#334155] focus:border-[#FF7100] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition cursor-pointer"
               >
                 {EDKU_NEIGHBORHOODS.map((nh) => (
                   <option key={nh} value={nh}>
@@ -326,7 +326,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
               <select
                 value={category}
                 onChange={handleCategoryChange}
-                className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition cursor-pointer"
+                className="w-full bg-[#10192D] border border-[#334155] focus:border-[#FF7100] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition cursor-pointer"
               >
                 {CATEGORY_OPTIONS.map((cat) => (
                   <option key={cat.category} value={cat.category}>
@@ -342,7 +342,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
               <select
                 value={subCategory}
                 onChange={(e) => setSubCategory(e.target.value)}
-                className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition cursor-pointer"
+                className="w-full bg-[#10192D] border border-[#334155] focus:border-[#FF7100] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] outline-none transition cursor-pointer"
               >
                 {currentSubCategories.map((sub) => (
                   <option key={sub} value={sub}>
@@ -355,7 +355,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
 
           {/* Mandatory Commercial Register & Tax Certificate Info */}
           <div className="space-y-4 pt-3 border-t border-[#334155]">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#FF6B00]">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#FF7100]">
               <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>التوثيق القانوني والضريبي الإجباري للمتجر</span>
             </div>
@@ -363,7 +363,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-[#FF6B00]" />
+                  <FileText className="w-4 h-4 text-[#FF7100]" />
                   <span>رقم السجل التجاري *</span>
                 </label>
                 <input
@@ -374,13 +374,13 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
                   value={commercialRegisterNumber}
                   onChange={(e) => setCommercialRegisterNumber(e.target.value)}
                   placeholder="مثال: 123456-CR"
-                  className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] font-mono tabular-nums text-left outline-none transition"
+                  className="w-full bg-[#10192D] border border-[#334155] focus:border-[#FF7100] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] font-mono tabular-nums text-left outline-none transition"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-[#94A3B8] flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-[#FF6B00]" />
+                  <ShieldCheck className="w-4 h-4 text-[#FF7100]" />
                   <span>رقم الشهادة / البطاقة الضريبية *</span>
                 </label>
                 <input
@@ -391,7 +391,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
                   value={taxCertificateNumber}
                   onChange={(e) => setTaxCertificateNumber(e.target.value)}
                   placeholder="مثال: 458-921-703"
-                  className="w-full bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] font-mono tabular-nums text-left outline-none transition"
+                  className="w-full bg-[#10192D] border border-[#334155] focus:border-[#FF7100] rounded-xl px-3.5 py-2.5 text-sm text-[#F8FAFC] font-mono tabular-nums text-left outline-none transition"
                 />
               </div>
             </div>
@@ -412,7 +412,7 @@ export const StoreJoinView: React.FC<StoreJoinViewProps> = ({ onBackToHome }) =>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full mt-4 py-3.5 px-4 bg-[#FF6B00] hover:bg-[#FF6B00]/90 disabled:opacity-50 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B00]/20 text-sm"
+            className="w-full mt-4 py-3.5 px-4 bg-[#FF7100] hover:bg-[#FF7100]/90 disabled:opacity-50 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-[#FF7100]/20 text-sm"
           >
             {isSubmitting ? (
               <span>جاري إرسال الطلب...</span>

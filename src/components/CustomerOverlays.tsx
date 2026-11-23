@@ -81,7 +81,7 @@ export const CustomerBottomNav: React.FC<CustomerBottomNavProps> = ({
     <nav
       dir="rtl"
       aria-label="التنقل السفلي للعميل"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 h-16 bg-[#0F172A]/95 backdrop-blur-md border-t border-[#334155] grid grid-cols-4 items-center px-2"
+      className="md:hidden fixed bottom-0 inset-x-0 z-40 h-16 bg-[#10192D]/95 backdrop-blur-md border-t border-[#334155] grid grid-cols-4 items-center px-2"
     >
       {navItems.map((item) => {
         const Icon = item.icon;
@@ -93,14 +93,14 @@ export const CustomerBottomNav: React.FC<CustomerBottomNavProps> = ({
             onClick={() => onSelectTab(item.id)}
             className={`min-h-[44px] flex flex-col items-center justify-center relative rounded-2xl transition-colors cursor-pointer ${
               isActive
-                ? 'text-[#FF6B00] font-bold'
+                ? 'text-[#FF7100] font-bold'
                 : 'text-[#94A3B8] hover:text-[#F8FAFC]'
             }`}
           >
             <div className="relative">
               <Icon className="w-5 h-5" />
               {typeof item.badge === 'number' && item.badge > 0 && (
-                <span className="absolute -top-1.5 -left-2.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6B00] text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+                <span className="absolute -top-1.5 -left-2.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF7100] text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
                   {item.badge > 99 ? '99+' : item.badge}
                 </span>
               )}
@@ -151,14 +151,14 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
         className="w-full max-w-md h-full bg-[#1E293B] border-r border-[#334155] shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 py-4 border-b border-[#334155] flex items-center justify-between gap-3 bg-[#0F172A]/60">
+        <div className="px-5 py-4 border-b border-[#334155] flex items-center justify-between gap-3 bg-[#10192D]/60">
           <div className="flex items-center gap-2.5">
-            <Bell className="w-5 h-5 text-[#FF6B00]" />
+            <Bell className="w-5 h-5 text-[#FF7100]" />
             <h2 className="text-base font-bold text-[#F8FAFC]">
               إشعارات إدكاوي
             </h2>
             {unreadCount > 0 && (
-              <span className="text-xs text-[#FF6B00] font-bold tabular-nums">
+              <span className="text-xs text-[#FF7100] font-bold tabular-nums">
                 ({unreadCount} جديد)
               </span>
             )}
@@ -168,7 +168,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
               <button
                 type="button"
                 onClick={onMarkAllRead}
-                className="min-h-[38px] px-3 py-1.5 rounded-2xl text-xs font-semibold text-[#94A3B8] hover:text-[#FF6B00] inline-flex items-center gap-1 cursor-pointer"
+                className="min-h-[38px] px-3 py-1.5 rounded-2xl text-xs font-semibold text-[#94A3B8] hover:text-[#FF7100] inline-flex items-center gap-1 cursor-pointer"
               >
                 <CheckCheck className="w-4 h-4" />
                 <span>تحديد الكل كمقروء</span>
@@ -178,7 +178,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
               type="button"
               onClick={onClose}
               aria-label="إغلاق الإشعارات"
-              className="min-h-[40px] min-w-[40px] rounded-2xl border border-[#334155] bg-[#0F172A] flex items-center justify-center text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+              className="min-h-[40px] min-w-[40px] rounded-2xl border border-[#334155] bg-[#10192D] flex items-center justify-center text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -226,14 +226,14 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
                   }}
                   className={`w-full text-right px-5 py-4 transition-colors flex flex-col gap-1.5 cursor-pointer ${
                     notif.isRead
-                      ? 'bg-[#1E293B] hover:bg-[#0F172A]/70'
-                      : 'bg-[#FF6B00]/10 hover:bg-[#FF6B00]/15'
+                      ? 'bg-[#1E293B] hover:bg-[#10192D]/70'
+                      : 'bg-[#FF7100]/10 hover:bg-[#FF7100]/15'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       {isAdminBroadcast && (
-                        <Megaphone className="w-3.5 h-3.5 text-[#FF6B00] shrink-0" />
+                        <Megaphone className="w-3.5 h-3.5 text-[#FF7100] shrink-0" />
                       )}
                       <span className="text-sm font-bold text-[#F8FAFC] truncate">
                         {notif.title}
@@ -244,7 +244,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
                     </span>
                   </div>
                   {isAdminBroadcast && (
-                    <span className="text-[11px] font-semibold text-[#FF6B00]">
+                    <span className="text-[11px] font-semibold text-[#FF7100]">
                       {notif.type === 'promo'
                         ? 'عرض ومكافآت إدكاوي'
                         : 'تنبيه من إدارة إدكاوي'}
@@ -254,7 +254,7 @@ export const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({
                     {notif.body}
                   </p>
                   {notif.orderId && (
-                    <span className="text-[11px] font-semibold text-[#FF6B00] pt-0.5">
+                    <span className="text-[11px] font-semibold text-[#FF7100] pt-0.5">
                       عرض تفاصيل الطلب ←
                     </span>
                   )}
@@ -361,7 +361,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="الاسم الثلاثي"
-                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm"
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm"
               />
             </div>
 
@@ -378,7 +378,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="01012345678"
-                  className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm text-right tabular-nums"
+                  className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm text-right tabular-nums"
                 />
               </div>
             </div>
@@ -421,7 +421,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
                   setLat(coords.lat);
                   setLng(coords.lng);
                 }}
-                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm"
+                className="w-full min-h-[44px] px-3.5 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm"
               >
                 {EDKU_NEIGHBORHOODS.map((area) => (
                   <option key={area} value={area}>
@@ -443,7 +443,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="بجوار مسجد... الدور الثاني"
-                  className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm"
+                  className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm"
                 />
               </div>
             </div>
@@ -453,7 +453,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 min-h-[46px] rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-sm font-bold cursor-pointer"
+              className="flex-1 min-h-[46px] rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-sm font-bold cursor-pointer"
             >
               {isSubmitting ? 'جارٍ حفظ الحساب...' : 'حفظ ومتابعة التسوق'}
             </button>
@@ -461,7 +461,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
               <button
                 type="button"
                 onClick={onSkipForNow}
-                className="min-h-[46px] px-4 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs font-semibold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                className="min-h-[46px] px-4 rounded-2xl border border-[#334155] bg-[#10192D] text-xs font-semibold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
               >
                 لاحقاً
               </button>
@@ -491,7 +491,7 @@ const StarRatingSelector: React.FC<{
   onChange: (rating: number) => void;
 }> = ({ label, sublabel, value, onChange }) => {
   return (
-    <div className="bg-[#0F172A] rounded-2xl p-4 space-y-2.5 border border-[#334155]">
+    <div className="bg-[#10192D] rounded-2xl p-4 space-y-2.5 border border-[#334155]">
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-sm font-bold text-[#F8FAFC]">
@@ -503,7 +503,7 @@ const StarRatingSelector: React.FC<{
             </p>
           )}
         </div>
-        <span className="text-xs font-bold text-[#FF6B00] tabular-nums">
+        <span className="text-xs font-bold text-[#FF7100] tabular-nums">
           {value} من 5
         </span>
       </div>
@@ -608,7 +608,7 @@ export const OrderReviewModal: React.FC<OrderReviewModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="إغلاق نافذة التقييم"
-            className="min-h-[40px] min-w-[40px] rounded-2xl border border-[#334155] bg-[#0F172A] flex items-center justify-center text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+            className="min-h-[40px] min-w-[40px] rounded-2xl border border-[#334155] bg-[#10192D] flex items-center justify-center text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -651,7 +651,7 @@ export const OrderReviewModal: React.FC<OrderReviewModalProps> = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="اكتب ملاحظتك حول جودة الطلب أو سرعة التوصيل..."
-              className="w-full px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm resize-none"
+              className="w-full px-3.5 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm resize-none"
             />
           </div>
 
@@ -659,14 +659,14 @@ export const OrderReviewModal: React.FC<OrderReviewModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 min-h-[46px] rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-sm font-bold cursor-pointer"
+              className="flex-1 min-h-[46px] rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-sm font-bold cursor-pointer"
             >
               {isSubmitting ? 'جارٍ إرسال التقييم...' : 'إرسال التقييم الآن'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="min-h-[46px] px-4 rounded-2xl border border-[#334155] bg-[#0F172A] text-xs font-semibold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+              className="min-h-[46px] px-4 rounded-2xl border border-[#334155] bg-[#10192D] text-xs font-semibold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
             >
               لاحقاً
             </button>
@@ -911,7 +911,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
             hasFloatingCart
               ? 'bottom-[9.25rem] md:bottom-24'
               : 'bottom-20 md:bottom-6'
-          } right-4 sm:right-6 z-40 min-h-[44px] px-4 py-2.5 rounded-full bg-[#FF6B00] hover:bg-[#E55F00] text-white shadow-xl border border-[#334155] inline-flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02]`}
+          } right-4 sm:right-6 z-40 min-h-[44px] px-4 py-2.5 rounded-full bg-[#FF7100] hover:bg-[#E66600] text-white shadow-xl border border-[#334155] inline-flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02]`}
         >
           <Sparkles className="w-4 h-4 text-white shrink-0" />
           <span className="text-xs sm:text-sm font-bold text-white whitespace-nowrap">
@@ -933,9 +933,9 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
             className="w-full sm:w-[410px] h-[82dvh] sm:h-[580px] max-h-[90dvh] bg-[#1E293B] rounded-t-3xl sm:rounded-2xl border border-[#334155] shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <header className="px-4 py-3.5 bg-[#0F172A] border-b border-[#334155] text-[#F8FAFC] flex items-center justify-between gap-3">
+            <header className="px-4 py-3.5 bg-[#10192D] border-b border-[#334155] text-[#F8FAFC] flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-[#FF6B00] text-white flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-2xl bg-[#FF7100] text-white flex items-center justify-center shrink-0">
                   <Bot className="w-5 h-5" />
                 </div>
                 <div>
@@ -945,7 +945,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                   <div className="flex items-center gap-2 text-[11px] text-[#94A3B8]">
                     <span>دليل المطاعم والصيدليات في إدكو</span>
                     <span>·</span>
-                    <span className="inline-flex items-center gap-1 text-[#FF6B00] font-semibold tabular-nums">
+                    <span className="inline-flex items-center gap-1 text-[#FF7100] font-semibold tabular-nums">
                       <Coins className="w-3 h-3" />
                       {points} نقطة
                     </span>
@@ -957,7 +957,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowMealPlanner((prev) => !prev)}
-                  className="min-h-[38px] px-3 py-1.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  className="min-h-[38px] px-3 py-1.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <UtensilsCrossed className="w-3.5 h-3.5" />
                   <span>خطط لوجباتي</span>
@@ -966,7 +966,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                   type="button"
                   onClick={() => setIsOpen(false)}
                   aria-label="إغلاق المحادثة"
-                  className="min-h-[38px] min-w-[38px] rounded-2xl border border-[#334155] bg-[#1E293B] hover:border-[#FF6B00] text-[#F8FAFC] flex items-center justify-center cursor-pointer"
+                  className="min-h-[38px] min-w-[38px] rounded-2xl border border-[#334155] bg-[#1E293B] hover:border-[#FF7100] text-[#F8FAFC] flex items-center justify-center cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -977,7 +977,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
             {showMealPlanner && (
               <form
                 onSubmit={handleGenerateMealPlan}
-                className="p-4 bg-[#0F172A] border-b border-[#334155] space-y-3"
+                className="p-4 bg-[#10192D] border-b border-[#334155] space-y-3"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-[#F8FAFC]">
@@ -1046,7 +1046,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="w-full min-h-[40px] rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full min-h-[40px] rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   {isSending ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1059,12 +1059,12 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
             )}
 
             {/* Quick Suggestion Chips */}
-            <div className="px-3 py-2 border-b border-[#334155] flex items-center gap-1.5 overflow-x-auto bg-[#0F172A]/80">
+            <div className="px-3 py-2 border-b border-[#334155] flex items-center gap-1.5 overflow-x-auto bg-[#10192D]/80">
               <button
                 type="button"
                 disabled={isSending}
                 onClick={() => setShowMealPlanner((prev) => !prev)}
-                className="px-2.5 py-1.5 rounded-2xl bg-[#FF6B00] text-white text-[11px] font-bold whitespace-nowrap cursor-pointer shrink-0 inline-flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-2xl bg-[#FF7100] text-white text-[11px] font-bold whitespace-nowrap cursor-pointer shrink-0 inline-flex items-center gap-1"
               >
                 <UtensilsCrossed className="w-3 h-3" />
                 <span>خطط لوجباتي</span>
@@ -1075,7 +1075,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                   type="button"
                   disabled={isSending}
                   onClick={() => void sendPrompt(chip)}
-                  className="px-2.5 py-1.5 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-[11px] font-semibold text-[#F8FAFC] whitespace-nowrap cursor-pointer shrink-0"
+                  className="px-2.5 py-1.5 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] text-[11px] font-semibold text-[#F8FAFC] whitespace-nowrap cursor-pointer shrink-0"
                 >
                   {chip}
                 </button>
@@ -1099,8 +1099,8 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                     <div
                       className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed ${
                         msg.role === 'user'
-                          ? 'bg-[#FF6B00] text-white font-medium rounded-tr-sm'
-                          : 'bg-[#0F172A] border border-[#334155] text-[#F8FAFC] rounded-tl-sm'
+                          ? 'bg-[#FF7100] text-white font-medium rounded-tr-sm'
+                          : 'bg-[#10192D] border border-[#334155] text-[#F8FAFC] rounded-tl-sm'
                       }`}
                     >
                       {msg.text}
@@ -1108,10 +1108,10 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
 
                     {/* Smart Meal Plan Daily Dish Cards with 1-Click Add to Cart */}
                     {msg.mealPlan && msg.mealPlan.days.length > 0 && (
-                      <div className="mt-2.5 w-full max-w-[94%] rounded-2xl bg-[#0F172A] border border-[#334155] p-3 space-y-2.5">
+                      <div className="mt-2.5 w-full max-w-[94%] rounded-2xl bg-[#10192D] border border-[#334155] p-3 space-y-2.5">
                         <div className="flex items-center justify-between gap-2 text-xs font-bold text-[#F8FAFC] pb-1.5 border-b border-[#334155]">
                           <span>إجمالي الخطة المقترحة</span>
-                          <span className="text-[#FF6B00] font-mono tabular-nums">
+                          <span className="text-[#FF7100] font-mono tabular-nums">
                             {msg.mealPlan.totalEstimatedEgp} / {msg.mealPlan.budgetEgp} ج.م
                           </span>
                         </div>
@@ -1129,7 +1129,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                               className="rounded-2xl bg-[#1E293B] border border-[#334155] p-2.5 flex items-center justify-between gap-2"
                             >
                               <div className="min-w-0">
-                                <p className="text-[11px] font-bold text-[#FF6B00]">
+                                <p className="text-[11px] font-bold text-[#FF7100]">
                                   {day.dayLabelAr} · {day.storeName}
                                 </p>
                                 <p className="text-xs font-bold text-[#F8FAFC] truncate">
@@ -1155,7 +1155,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                                       imageUrl: matchedProd?.imageUrl,
                                     });
                                   }}
-                                  className="min-h-[36px] px-3 py-1.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-[11px] font-bold inline-flex items-center gap-1 shrink-0 cursor-pointer whitespace-nowrap"
+                                  className="min-h-[36px] px-3 py-1.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-[11px] font-bold inline-flex items-center gap-1 shrink-0 cursor-pointer whitespace-nowrap"
                                 >
                                   <ShoppingBag className="w-3 h-3" />
                                   <span>أضف للسلة</span>
@@ -1174,9 +1174,9 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                           onSelectStore(suggestedStore);
                           setIsOpen(false);
                         }}
-                        className="mt-2 max-w-[86%] px-3.5 py-2 rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-2 cursor-pointer transition-colors"
+                        className="mt-2 max-w-[86%] px-3.5 py-2 rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-2 cursor-pointer transition-colors"
                       >
-                        <Store className="w-3.5 h-3.5 text-[#FF6B00] shrink-0" />
+                        <Store className="w-3.5 h-3.5 text-[#FF7100] shrink-0" />
                         <span>فتح {suggestedStore.name} الآن ←</span>
                       </button>
                     )}
@@ -1186,7 +1186,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
 
               {isSending && (
                 <div className="flex justify-end">
-                  <div className="rounded-2xl px-4 py-2.5 bg-[#0F172A] border border-[#334155] text-xs text-[#94A3B8]">
+                  <div className="rounded-2xl px-4 py-2.5 bg-[#10192D] border border-[#334155] text-xs text-[#94A3B8]">
                     جارٍ كتابة الرد من مساعد إدكاوي...
                   </div>
                 </div>
@@ -1201,7 +1201,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                 e.preventDefault();
                 void sendPrompt(inputText);
               }}
-              className="p-3 border-t border-[#334155] flex items-center gap-2 bg-[#0F172A]"
+              className="p-3 border-t border-[#334155] flex items-center gap-2 bg-[#10192D]"
             >
               <input
                 type="text"
@@ -1215,7 +1215,7 @@ export const EdkawyAiChatWidget: React.FC<EdkawyAiChatWidgetProps> = ({
                 type="submit"
                 disabled={isSending || !inputText.trim()}
                 aria-label="إرسال"
-                className="min-h-[44px] min-w-[44px] rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white flex items-center justify-center cursor-pointer"
+                className="min-h-[44px] min-w-[44px] rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white flex items-center justify-center cursor-pointer"
               >
                 <Send className="w-4 h-4" />
               </button>

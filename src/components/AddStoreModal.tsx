@@ -164,7 +164,7 @@ export function AddStoreModal({
             {category === 'صيدليات' ? (
               <Pill className="w-5 h-5 text-teal-400" aria-hidden="true" />
             ) : (
-              <Store className="w-5 h-5 text-[#FF6B00]" aria-hidden="true" />
+              <Store className="w-5 h-5 text-[#FF7100]" aria-hidden="true" />
             )}
             <h2
               id="add-store-title"
@@ -179,7 +179,7 @@ export function AddStoreModal({
             type="button"
             onClick={resetAndClose}
             aria-label="إغلاق النافذة"
-            className="p-2 rounded-2xl text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC] cursor-pointer"
+            className="p-2 rounded-2xl text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC] cursor-pointer"
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
@@ -213,7 +213,7 @@ export function AddStoreModal({
             )}
 
             <div className="space-y-3">
-              <div className="p-4 rounded-2xl bg-[#0F172A] border border-[#334155] flex items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-[#10192D] border border-[#334155] flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-[#94A3B8] mb-0.5">
                     البريد الإلكتروني المولّد للمتجر
@@ -230,7 +230,7 @@ export function AddStoreModal({
                   onClick={() =>
                     copyText(createdCredentials.loginEmail, 'email')
                   }
-                  className="py-1.5 px-3 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                  className="py-1.5 px-3 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
                 >
                   {copiedField === 'email' ? (
                     <>
@@ -249,7 +249,7 @@ export function AddStoreModal({
                 </button>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#0F172A] border border-[#334155] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-[#10192D] border border-[#334155] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-[#F8FAFC] mb-0.5">
                     رابط تعيين كلمة المرور
@@ -279,7 +279,7 @@ export function AddStoreModal({
                       setSendingReset(false);
                     }
                   }}
-                  className="py-2 px-3.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-xs font-bold text-[#F8FAFC] inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                  className="py-2 px-3.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-xs font-bold text-[#F8FAFC] inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{sendingReset ? 'جارٍ الإرسال...' : 'إرسال رابط تعيين كلمة المرور'}</span>
@@ -291,7 +291,7 @@ export function AddStoreModal({
               <button
                 type="button"
                 onClick={resetAndClose}
-                className="py-2.5 px-6 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-[#F8FAFC] text-xs sm:text-sm font-bold cursor-pointer whitespace-nowrap"
+                className="py-2.5 px-6 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-[#F8FAFC] text-xs sm:text-sm font-bold cursor-pointer whitespace-nowrap"
               >
                 تم — العودة للوحة الإدارة
               </button>
@@ -328,7 +328,7 @@ export function AddStoreModal({
                         : 'مثال: أسماك النورس إدكو'
                     }
                     maxLength={80}
-                    className="w-full px-3 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm"
+                    className="w-full px-3 py-2.5 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm"
                     required
                   />
                   {errors.name && (
@@ -351,7 +351,7 @@ export function AddStoreModal({
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="01012345678"
                     maxLength={11}
-                    className="w-full px-3 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                    className="w-full px-3 py-2.5 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                     required
                   />
                   {errors.phone && (
@@ -378,7 +378,7 @@ export function AddStoreModal({
                         setIsHomeFood(true);
                       }
                     }}
-                    className="w-full px-3 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm"
+                    className="w-full px-3 py-2.5 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm"
                   >
                     {STORE_CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>
@@ -403,7 +403,7 @@ export function AddStoreModal({
                     max={150}
                     value={deliveryFee}
                     onChange={(e) => setDeliveryFee(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                    className="w-full px-3 py-2.5 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                   />
                   {errors.deliveryFee && (
                     <p className="text-xs text-red-400 mt-1">
@@ -427,7 +427,7 @@ export function AddStoreModal({
                     max={120}
                     value={deliveryTimeMinutes}
                     onChange={(e) => setDeliveryTimeMinutes(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                    className="w-full px-3 py-2.5 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                   />
                   {errors.deliveryTimeMinutes && (
                     <p className="text-xs text-red-400 mt-1">
@@ -437,12 +437,12 @@ export function AddStoreModal({
                 </div>
               </div>
 
-              <label className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#0F172A] border border-[#334155] text-xs font-bold text-[#F8FAFC] cursor-pointer">
+              <label className="flex items-center gap-2.5 p-4 rounded-2xl bg-[#10192D] border border-[#334155] text-xs font-bold text-[#F8FAFC] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={isHomeFood || category === 'أكل بيتي'}
                   onChange={(e) => setIsHomeFood(e.target.checked)}
-                  className="w-4 h-4 accent-[#FF6B00] rounded"
+                  className="w-4 h-4 accent-[#FF7100] rounded"
                 />
                 <span>تمييز المتجر بعلامة «أكل بيتي — تحضير منزلي طازج»</span>
               </label>
@@ -469,8 +469,8 @@ export function AddStoreModal({
               </div>
 
               {/* Mandatory Legal & Tax Fields */}
-              <div className="p-4 rounded-2xl bg-[#0F172A] border border-[#334155] space-y-4">
-                <p className="text-xs font-bold text-[#FF6B00]">
+              <div className="p-4 rounded-2xl bg-[#10192D] border border-[#334155] space-y-4">
+                <p className="text-xs font-bold text-[#FF7100]">
                   التوثيق القانوني والضريبي الإجباري للمتجر (يظهر للعملاء)
                 </p>
 
@@ -555,7 +555,7 @@ export function AddStoreModal({
                 lat={lat}
                 lng={lng}
                 neighborhood={neighborhood}
-                pinColor={category === 'صيدليات' ? '#0D9488' : '#FF6B00'}
+                pinColor={category === 'صيدليات' ? '#0D9488' : '#FF7100'}
                 heightClassName="h-[235px]"
                 onWaterValidationChange={setIsWaterPin}
                 onChange={(picked) => {
@@ -582,7 +582,7 @@ export function AddStoreModal({
                           : 'مثال: وجبة بوري مشوي بالردة'
                       }
                       maxLength={80}
-                      className="w-full px-3 py-2 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm"
+                      className="w-full px-3 py-2 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm"
                     />
                   </div>
                   <div>
@@ -595,7 +595,7 @@ export function AddStoreModal({
                       value={firstItemPrice}
                       onChange={(e) => setFirstItemPrice(e.target.value)}
                       placeholder="120"
-                      className="w-full px-3 py-2 rounded-2xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                      className="w-full px-3 py-2 rounded-2xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                     />
                   </div>
                 </div>
@@ -605,14 +605,14 @@ export function AddStoreModal({
                 <button
                   type="button"
                   onClick={resetAndClose}
-                  className="py-2.5 px-4 rounded-2xl border border-[#334155] bg-[#0F172A] text-sm font-bold text-[#F8FAFC] hover:border-[#FF6B00] cursor-pointer whitespace-nowrap"
+                  className="py-2.5 px-4 rounded-2xl border border-[#334155] bg-[#10192D] text-sm font-bold text-[#F8FAFC] hover:border-[#FF7100] cursor-pointer whitespace-nowrap"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={submitting || isWaterPin}
-                  className="py-2.5 px-5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-[#F8FAFC] text-sm font-bold cursor-pointer whitespace-nowrap"
+                  className="py-2.5 px-5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-[#F8FAFC] text-sm font-bold cursor-pointer whitespace-nowrap"
                 >
                   {submitting
                     ? 'جارٍ الحفظ والتفعيل...'

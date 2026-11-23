@@ -41,21 +41,26 @@ import {
   updateProductFlashSaleInFirestore,
 } from '../services/edkawiFirebaseService';
 import {
+  FinancialTransactionRecord,
   NewProductInput,
   OcrExtractedMenuItem,
   OrderRecord,
   ProductRecord,
   ProductVariant,
+  RestaurantSettlementRecord,
   ReviewRecord,
   StoreOperationalSettingsInput,
   StoreRecord,
 } from '../types/edkawi';
 import {
   calculateStoreDashboardStats,
+  DEFAULT_EDKAWY_COMMISSION_RATE,
   filterProductsByCategoryAndQuery,
   formatAppErrorMessage,
+  getOrderFinancialSnapshot,
   getOrderStatusLabel,
   getPaymentMethodLabel,
+  getSettlementStatusLabelAr,
   isStoreCurrentlyOpen,
   validateNewProductForm,
   validateStoreSettingsForm,
@@ -87,6 +92,8 @@ interface StorePortalViewProps {
   orders: OrderRecord[];
   isLoadingOrders: boolean;
   storeReviews?: ReviewRecord[];
+  restaurantSettlements?: RestaurantSettlementRecord[];
+  financialTransactions?: FinancialTransactionRecord[];
   unreadNotificationsCount?: number;
   onOpenNotifications?: () => void;
   onAcceptOrder: (orderId: string, prepTimeMinutes: number) => Promise<void>;
@@ -131,6 +138,8 @@ export function StorePortalView({
   orders,
   isLoadingOrders,
   storeReviews = [],
+  restaurantSettlements = [],
+  financialTransactions = [],
   unreadNotificationsCount = 0,
   onOpenNotifications,
   onAcceptOrder,
@@ -796,10 +805,10 @@ export function StorePortalView({
 
   if (stores.length === 0 || !currentStore) {
     return (
-      <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#10192D] text-[#F8FAFC] flex items-center justify-center p-6">
         <div className="rounded-2xl bg-[#1E293B] border border-[#334155] max-w-lg w-full p-8 text-center space-y-5">
-          <div className="w-14 h-14 rounded-2xl bg-[#FF6B00]/15 border border-[#FF6B00]/30 flex items-center justify-center mx-auto">
-            <StoreIcon className="w-7 h-7 text-[#FF6B00]" aria-hidden="true" />
+          <div className="w-14 h-14 rounded-2xl bg-[#FF7100]/15 border border-[#FF7100]/30 flex items-center justify-center mx-auto">
+            <StoreIcon className="w-7 h-7 text-[#FF7100]" aria-hidden="true" />
           </div>
           <h1 className="text-xl font-bold text-[#F8FAFC]">
             لا يوجد متجر مرتبط بهذا الحساب حالياً
@@ -811,7 +820,7 @@ export function StorePortalView({
             <button
               type="button"
               onClick={() => setConfirmLogoutOpen(true)}
-              className="py-2.5 px-5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold cursor-pointer"
+              className="py-2.5 px-5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold cursor-pointer"
             >
               تسجيل الخروج
             </button>
@@ -850,7 +859,7 @@ export function StorePortalView({
           type="button"
           onClick={() => setMobileSidebarOpen(false)}
           aria-label="إغلاق القائمة الجانبية"
-          className="lg:hidden p-1.5 rounded-lg text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC] cursor-pointer"
+          className="lg:hidden p-1.5 rounded-lg text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC] cursor-pointer"
         >
           <X className="w-5 h-5" aria-hidden="true" />
         </button>
@@ -871,8 +880,8 @@ export function StorePortalView({
             onClick={() => selectSidebarPage('orders_new')}
             className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-between gap-2 transition-colors cursor-pointer ${
               activePage === 'orders_new'
-                ? 'bg-[#FF6B00] text-white'
-                : 'text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC]'
+                ? 'bg-[#FF7100] text-white'
+                : 'text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC]'
             }`}
           >
             <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
@@ -890,8 +899,8 @@ export function StorePortalView({
                 activePage === 'orders_new'
                   ? 'bg-white/20 text-white'
                   : newIncomingCount > 0
-                  ? 'bg-[#FF6B00] text-white'
-                  : 'bg-[#0F172A] text-[#94A3B8]'
+                  ? 'bg-[#FF7100] text-white'
+                  : 'bg-[#10192D] text-[#94A3B8]'
               }`}
             >
               {newIncomingCount}
@@ -903,8 +912,8 @@ export function StorePortalView({
             onClick={() => selectSidebarPage('orders_preparing')}
             className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-between gap-2 transition-colors cursor-pointer ${
               activePage === 'orders_preparing'
-                ? 'bg-[#FF6B00] text-white'
-                : 'text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC]'
+                ? 'bg-[#FF7100] text-white'
+                : 'text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC]'
             }`}
           >
             <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
@@ -917,7 +926,7 @@ export function StorePortalView({
                   ? 'bg-white/20 text-white'
                   : stats.preparingOrders.length > 0
                   ? 'bg-amber-500 text-slate-950'
-                  : 'bg-[#0F172A] text-[#94A3B8]'
+                  : 'bg-[#10192D] text-[#94A3B8]'
               }`}
             >
               {stats.preparingOrders.length}
@@ -929,8 +938,8 @@ export function StorePortalView({
             onClick={() => selectSidebarPage('orders_ready')}
             className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-between gap-2 transition-colors cursor-pointer ${
               activePage === 'orders_ready'
-                ? 'bg-[#FF6B00] text-white'
-                : 'text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC]'
+                ? 'bg-[#FF7100] text-white'
+                : 'text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC]'
             }`}
           >
             <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
@@ -941,7 +950,7 @@ export function StorePortalView({
               className={`font-mono text-xs font-bold tabular-nums px-2 py-0.5 rounded-md ${
                 activePage === 'orders_ready'
                   ? 'bg-white/20 text-white'
-                  : 'bg-[#0F172A] text-[#94A3B8]'
+                  : 'bg-[#10192D] text-[#94A3B8]'
               }`}
             >
               {stats.readyOrders.length}
@@ -959,8 +968,8 @@ export function StorePortalView({
             onClick={() => selectSidebarPage('menu')}
             className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-between gap-2 transition-colors cursor-pointer ${
               activePage === 'menu'
-                ? 'bg-[#FF6B00] text-white'
-                : 'text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC]'
+                ? 'bg-[#FF7100] text-white'
+                : 'text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC]'
             }`}
           >
             <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
@@ -974,7 +983,7 @@ export function StorePortalView({
               className={`font-mono text-xs font-bold tabular-nums px-2 py-0.5 rounded-md ${
                 activePage === 'menu'
                   ? 'bg-white/20 text-white'
-                  : 'bg-[#0F172A] text-[#94A3B8]'
+                  : 'bg-[#10192D] text-[#94A3B8]'
               }`}
             >
               {products.length}
@@ -986,8 +995,8 @@ export function StorePortalView({
             onClick={() => selectSidebarPage('reports')}
             className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2.5 transition-colors cursor-pointer whitespace-nowrap ${
               activePage === 'reports'
-                ? 'bg-[#FF6B00] text-white'
-                : 'text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC]'
+                ? 'bg-[#FF7100] text-white'
+                : 'text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC]'
             }`}
           >
             <BarChart3 className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -999,8 +1008,8 @@ export function StorePortalView({
             onClick={() => selectSidebarPage('settings')}
             className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2.5 transition-colors cursor-pointer whitespace-nowrap ${
               activePage === 'settings'
-                ? 'bg-[#FF6B00] text-white'
-                : 'text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC]'
+                ? 'bg-[#FF7100] text-white'
+                : 'text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC]'
             }`}
           >
             <Settings className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -1022,9 +1031,9 @@ export function StorePortalView({
           <button
             type="button"
             onClick={() => setConfirmLogoutOpen(true)}
-            className="w-full py-2.5 px-3 rounded-xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+            className="w-full py-2.5 px-3 rounded-xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-xs font-bold text-[#F8FAFC] inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
           >
-            <LogOut className="w-3.5 h-3.5 text-[#FF6B00]" aria-hidden="true" />
+            <LogOut className="w-3.5 h-3.5 text-[#FF7100]" aria-hidden="true" />
             <span>تسجيل الخروج</span>
           </button>
         </div>
@@ -1033,7 +1042,7 @@ export function StorePortalView({
   );
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[#10192D] text-[#F8FAFC] flex flex-col lg:flex-row">
       {/* Desktop Sticky RTL Sidebar */}
       <aside className="hidden lg:block w-[264px] shrink-0 sticky top-0 h-screen border-l border-[#334155]">
         {sidebarContent}
@@ -1066,7 +1075,7 @@ export function StorePortalView({
               type="button"
               onClick={() => setMobileSidebarOpen(true)}
               aria-label="فتح القائمة الجانبية"
-              className="lg:hidden p-2 rounded-lg border border-[#334155] bg-[#0F172A] text-[#F8FAFC] hover:border-[#FF6B00] cursor-pointer shrink-0"
+              className="lg:hidden p-2 rounded-lg border border-[#334155] bg-[#10192D] text-[#F8FAFC] hover:border-[#FF7100] cursor-pointer shrink-0"
             >
               <Menu className="w-5 h-5" aria-hidden="true" />
             </button>
@@ -1077,7 +1086,7 @@ export function StorePortalView({
                   aria-label="اختيار المتجر"
                   value={currentStore.id}
                   onChange={(e) => onSelectStoreId(e.target.value)}
-                  className="text-sm sm:text-base font-bold text-[#F8FAFC] bg-[#0F172A] border border-[#334155] rounded-lg px-2.5 py-1"
+                  className="text-sm sm:text-base font-bold text-[#F8FAFC] bg-[#10192D] border border-[#334155] rounded-lg px-2.5 py-1"
                 >
                   {stores.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -1102,7 +1111,7 @@ export function StorePortalView({
               <button
                 type="button"
                 onClick={() => setIsSupportModalOpen(true)}
-                className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                className="min-h-[40px] px-3 py-1.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <Headphones className="w-4 h-4 shrink-0" />
                 <span className="hidden sm:inline">الدعم الفني</span>
@@ -1114,11 +1123,11 @@ export function StorePortalView({
                 type="button"
                 onClick={onOpenNotifications}
                 aria-label="الإشعارات الداخلية وتنبيهات الطلبات"
-                className="relative min-h-[40px] min-w-[40px] rounded-xl border border-[#334155] bg-[#0F172A] flex items-center justify-center text-[#F8FAFC] hover:border-[#FF6B00] cursor-pointer"
+                className="relative min-h-[40px] min-w-[40px] rounded-xl border border-[#334155] bg-[#10192D] flex items-center justify-center text-[#F8FAFC] hover:border-[#FF7100] cursor-pointer"
               >
                 <Bell className="w-4 h-4" aria-hidden="true" />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1.5 -left-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6B00] text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+                  <span className="absolute -top-1.5 -left-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF7100] text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
                     {unreadNotificationsCount > 99
                       ? '99+'
                       : unreadNotificationsCount}
@@ -1127,7 +1136,7 @@ export function StorePortalView({
               </button>
             )}
 
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-[#334155] bg-[#0F172A]">
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-[#334155] bg-[#10192D]">
               <span
                 className={`text-xs font-bold whitespace-nowrap ${
                   isStoreOpen
@@ -1159,9 +1168,9 @@ export function StorePortalView({
             <button
               type="button"
               onClick={() => setConfirmLogoutOpen(true)}
-              className="hidden sm:inline-flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs font-bold cursor-pointer whitespace-nowrap"
+              className="hidden sm:inline-flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs font-bold cursor-pointer whitespace-nowrap"
             >
-              <LogOut className="w-3.5 h-3.5 text-[#FF6B00]" aria-hidden="true" />
+              <LogOut className="w-3.5 h-3.5 text-[#FF7100]" aria-hidden="true" />
               <span>خروج</span>
             </button>
           </div>
@@ -1188,15 +1197,15 @@ export function StorePortalView({
                     setIsOcrModalOpen(true);
                     setOcrError(null);
                   }}
-                  className="py-2.5 px-4 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+                  className="py-2.5 px-4 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
                 >
-                  <ScanLine className="w-4 h-4 text-[#FF6B00]" aria-hidden="true" />
+                  <ScanLine className="w-4 h-4 text-[#FF7100]" aria-hidden="true" />
                   <span>مسح المنيو الورقي بالذكاء الاصطناعي</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsAddProductModalOpen(true)}
-                  className="py-2.5 px-5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.98] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+                  className="py-2.5 px-5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <Plus className="w-4 h-4" aria-hidden="true" />
                   <span>إضافة منتج بصورة من جهازك</span>
@@ -1216,7 +1225,7 @@ export function StorePortalView({
               <button
                 type="button"
                 onClick={handleTopbarOpenToggle}
-                className="py-1.5 px-3.5 rounded-lg bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold cursor-pointer whitespace-nowrap"
+                className="py-1.5 px-3.5 rounded-lg bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold cursor-pointer whitespace-nowrap"
               >
                 تحويل إلى مفتوح الآن
               </button>
@@ -1232,7 +1241,7 @@ export function StorePortalView({
               <button
                 type="button"
                 onClick={() => setActionError(null)}
-                className="px-2.5 py-1 rounded-lg bg-[#0F172A] border border-rose-700 text-rose-200 text-xs font-bold cursor-pointer"
+                className="px-2.5 py-1 rounded-lg bg-[#10192D] border border-rose-700 text-rose-200 text-xs font-bold cursor-pointer"
               >
                 إغلاق
               </button>
@@ -1310,7 +1319,7 @@ export function StorePortalView({
                                         #{order.id.slice(0, 8)}
                                       </span>{' '}
                                       · رسوم توصيل إدكاوي:{' '}
-                                      <strong className="text-[#FF6B00]">
+                                      <strong className="text-[#FF7100]">
                                         {order.deliveryFee} ج.م
                                       </strong>
                                     </p>
@@ -1338,7 +1347,7 @@ export function StorePortalView({
                                             order.prescriptionImageUrl!
                                           )
                                         }
-                                        className="inline-flex items-center gap-1 text-xs font-bold text-[#FF6B00] hover:underline cursor-pointer"
+                                        className="inline-flex items-center gap-1 text-xs font-bold text-[#FF7100] hover:underline cursor-pointer"
                                       >
                                         <Eye className="w-3.5 h-3.5" />
                                         <span>تكبير الروشتة بملء الشاشة</span>
@@ -1351,7 +1360,7 @@ export function StorePortalView({
                                           order.prescriptionImageUrl!
                                         )
                                       }
-                                      className="block w-full h-48 rounded-xl overflow-hidden border border-[#334155] bg-[#0F172A] cursor-pointer"
+                                      className="block w-full h-48 rounded-xl overflow-hidden border border-[#334155] bg-[#10192D] cursor-pointer"
                                     >
                                       <img
                                         src={order.prescriptionImageUrl}
@@ -1381,7 +1390,7 @@ export function StorePortalView({
 
                                 <div className="text-xs sm:text-sm text-[#94A3B8] space-y-1">
                                   <p className="flex items-start gap-2">
-                                    <MapPin className="w-4 h-4 text-[#FF6B00] shrink-0 mt-0.5" />
+                                    <MapPin className="w-4 h-4 text-[#FF7100] shrink-0 mt-0.5" />
                                     <span>
                                       <strong className="text-[#F8FAFC]">
                                         موقع العميل على الخريطة:
@@ -1421,7 +1430,7 @@ export function StorePortalView({
                                         }))
                                       }
                                       placeholder="مثال: 145"
-                                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono font-bold text-left"
+                                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono font-bold text-left"
                                     />
                                   </div>
 
@@ -1437,7 +1446,7 @@ export function StorePortalView({
                                           [order.id]: Number(e.target.value),
                                         }))
                                       }
-                                      className="w-full px-3 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs font-bold"
+                                      className="w-full px-3 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs font-bold"
                                     >
                                       {PREP_TIME_OPTIONS.map((m) => (
                                         <option key={m} value={m}>
@@ -1463,7 +1472,7 @@ export function StorePortalView({
                                       }))
                                     }
                                     placeholder="مثال: جميع الأصناف متوفرة، وتم توفير البديل بنفس المادة الفعالة..."
-                                    className="w-full px-3.5 py-2 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs"
+                                    className="w-full px-3.5 py-2 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs"
                                   />
                                 </div>
 
@@ -1474,7 +1483,7 @@ export function StorePortalView({
                                     onClick={() =>
                                       void handleQuotePharmacyClick(order)
                                     }
-                                    className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
+                                    className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer"
                                   >
                                     <Check className="w-4 h-4" />
                                     <span>
@@ -1488,9 +1497,9 @@ export function StorePortalView({
                                     type="button"
                                     onClick={() => setPrintingOrder(order)}
                                     title="طباعة فاتورة"
-                                    className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] hover:border-[#FF6B00] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                                    className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] hover:border-[#FF7100] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                                   >
-                                    <Printer className="w-4 h-4 text-[#FF6B00]" />
+                                    <Printer className="w-4 h-4 text-[#FF7100]" />
                                     <span>طباعة فاتورة</span>
                                   </button>
 
@@ -1498,7 +1507,7 @@ export function StorePortalView({
                                     type="button"
                                     disabled={isQuoting || isRejecting}
                                     onClick={() => setConfirmCancelOrderId(order.id)}
-                                    className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#0F172A] border border-red-800 text-red-400 hover:bg-red-950/40 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+                                    className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#10192D] border border-red-800 text-red-400 hover:bg-red-950/40 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
                                   >
                                     <XCircle className="w-4 h-4" />
                                     <span>اعتذار</span>
@@ -1536,7 +1545,7 @@ export function StorePortalView({
                                 </h4>
                               </div>
                               <div className="text-left">
-                                <p className="text-lg font-bold text-[#FF6B00] font-mono tabular-nums">
+                                <p className="text-lg font-bold text-[#FF7100] font-mono tabular-nums">
                                   {order.subtotal} ج.م
                                 </p>
                                 <p className="text-[11px] text-[#94A3B8]">
@@ -1623,7 +1632,7 @@ export function StorePortalView({
                                 </div>
 
                                 <div className="text-left shrink-0">
-                                  <p className="text-lg sm:text-xl font-bold text-[#FF6B00] font-mono tabular-nums">
+                                  <p className="text-lg sm:text-xl font-bold text-[#FF7100] font-mono tabular-nums">
                                     {order.totalAmount}{' '}
                                     <span className="text-xs font-sans font-semibold text-[#94A3B8]">
                                       ج.م
@@ -1640,7 +1649,7 @@ export function StorePortalView({
                                   الأصناف المطلوبة
                                 </p>
                                 {order.items && order.items.length > 0 ? (
-                                  <ul className="divide-y divide-[#334155] text-sm border border-[#334155] rounded-xl px-3.5 py-1 bg-[#0F172A]">
+                                  <ul className="divide-y divide-[#334155] text-sm border border-[#334155] rounded-xl px-3.5 py-1 bg-[#10192D]">
                                     {order.items.map((item) => (
                                       <li
                                         key={item.productId}
@@ -1648,7 +1657,7 @@ export function StorePortalView({
                                       >
                                         <span className="font-semibold text-[#F8FAFC]">
                                           {item.name}{' '}
-                                          <span className="font-mono text-xs text-[#FF6B00] font-bold tabular-nums">
+                                          <span className="font-mono text-xs text-[#FF7100] font-bold tabular-nums">
                                             × {item.quantity}
                                           </span>
                                         </span>
@@ -1675,7 +1684,7 @@ export function StorePortalView({
                               <div className="text-xs sm:text-sm text-[#94A3B8] space-y-1.5 pt-1">
                                 <p className="flex items-start gap-2">
                                   <MapPin
-                                    className="w-4 h-4 text-[#FF6B00] shrink-0 mt-0.5"
+                                    className="w-4 h-4 text-[#FF7100] shrink-0 mt-0.5"
                                     aria-hidden="true"
                                   />
                                   <span>
@@ -1718,7 +1727,7 @@ export function StorePortalView({
                                       [order.id]: Number(e.target.value),
                                     }))
                                   }
-                                  className="px-3 py-1.5 rounded-lg bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs font-bold font-mono tabular-nums"
+                                  className="px-3 py-1.5 rounded-lg bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs font-bold font-mono tabular-nums"
                                 >
                                   {PREP_TIME_OPTIONS.map((m) => (
                                     <option key={m} value={m}>
@@ -1735,7 +1744,7 @@ export function StorePortalView({
                                   onClick={() =>
                                     void handleAcceptOrderClick(order.id)
                                   }
-                                  className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.98] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                                  className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                                 >
                                   <Check className="w-4 h-4" aria-hidden="true" />
                                   <span>
@@ -1749,9 +1758,9 @@ export function StorePortalView({
                                   type="button"
                                   onClick={() => setPrintingOrder(order)}
                                   title="طباعة فاتورة"
-                                  className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] hover:border-[#FF6B00] text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                                  className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] hover:border-[#FF7100] text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                                 >
-                                  <Printer className="w-4 h-4 text-[#FF6B00]" aria-hidden="true" />
+                                  <Printer className="w-4 h-4 text-[#FF7100]" aria-hidden="true" />
                                   <span>طباعة فاتورة</span>
                                 </button>
 
@@ -1759,7 +1768,7 @@ export function StorePortalView({
                                   type="button"
                                   disabled={isAccepting || isRejecting}
                                   onClick={() => setConfirmCancelOrderId(order.id)}
-                                  className="min-h-[44px] py-2.5 px-4 rounded-xl bg-[#0F172A] border border-red-800 hover:bg-red-950/40 active:scale-[0.98] disabled:opacity-60 text-red-400 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                                  className="min-h-[44px] py-2.5 px-4 rounded-xl bg-[#10192D] border border-red-800 hover:bg-red-950/40 active:scale-[0.98] disabled:opacity-60 text-red-400 text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                                 >
                                   <XCircle
                                     className="w-4 h-4"
@@ -1833,7 +1842,7 @@ export function StorePortalView({
                                   #{order.id.slice(0, 8)}
                                 </span>
                                 <span aria-hidden="true">·</span>
-                                <span className="inline-flex items-center gap-1 font-semibold text-[#FF6B00]">
+                                <span className="inline-flex items-center gap-1 font-semibold text-[#FF7100]">
                                   <Clock
                                     className="w-3.5 h-3.5"
                                     aria-hidden="true"
@@ -1874,7 +1883,7 @@ export function StorePortalView({
 
                           {isPharmacyRx &&
                             order.prescriptionMedicineRequest && (
-                              <div className="p-3 rounded-xl bg-[#0F172A] border border-[#334155] text-xs space-y-1">
+                              <div className="p-3 rounded-xl bg-[#10192D] border border-[#334155] text-xs space-y-1">
                                 <p className="font-bold text-[#94A3B8]">
                                   الأدوية المطلوبة:
                                 </p>
@@ -1886,7 +1895,7 @@ export function StorePortalView({
 
                           <div className="space-y-2">
                             {order.items && order.items.length > 0 ? (
-                              <ul className="divide-y divide-[#334155] text-sm border border-[#334155] rounded-xl px-3.5 py-1 bg-[#0F172A]">
+                              <ul className="divide-y divide-[#334155] text-sm border border-[#334155] rounded-xl px-3.5 py-1 bg-[#10192D]">
                                 {order.items.map((item) => (
                                   <li
                                     key={item.productId}
@@ -1894,7 +1903,7 @@ export function StorePortalView({
                                   >
                                     <span className="font-semibold text-[#F8FAFC]">
                                       {item.name}{' '}
-                                      <span className="font-mono text-xs text-[#FF6B00] font-bold tabular-nums">
+                                      <span className="font-mono text-xs text-[#FF7100] font-bold tabular-nums">
                                         × {item.quantity}
                                       </span>
                                     </span>
@@ -1925,7 +1934,7 @@ export function StorePortalView({
                             type="button"
                             disabled={isMarkingReady || isCancelling}
                             onClick={() => void handleMarkReadyClick(order.id)}
-                            className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.98] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                            className="flex-1 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                           >
                             <PackageCheck
                               className="w-4 h-4"
@@ -1944,9 +1953,9 @@ export function StorePortalView({
                             type="button"
                             onClick={() => setPrintingOrder(order)}
                             title="طباعة فاتورة"
-                            className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] hover:border-[#FF6B00] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                            className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] hover:border-[#FF7100] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                           >
-                            <Printer className="w-4 h-4 text-[#FF6B00]" aria-hidden="true" />
+                            <Printer className="w-4 h-4 text-[#FF7100]" aria-hidden="true" />
                             <span>طباعة فاتورة</span>
                           </button>
 
@@ -1954,7 +1963,7 @@ export function StorePortalView({
                             type="button"
                             disabled={isMarkingReady || isCancelling}
                             onClick={() => setConfirmCancelOrderId(order.id)}
-                            className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#0F172A] border border-[#334155] hover:bg-red-950/40 hover:border-red-800 hover:text-red-400 text-[#94A3B8] text-xs font-bold cursor-pointer whitespace-nowrap"
+                            className="min-h-[44px] py-2.5 px-3.5 rounded-xl bg-[#10192D] border border-[#334155] hover:bg-red-950/40 hover:border-red-800 hover:text-red-400 text-[#94A3B8] text-xs font-bold cursor-pointer whitespace-nowrap"
                           >
                             إلغاء
                           </button>
@@ -2018,11 +2027,11 @@ export function StorePortalView({
                             type="button"
                             onClick={() => setPrintingOrder(order)}
                             title="طباعة فاتورة"
-                            className="p-2 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] hover:border-[#FF6B00] cursor-pointer"
+                            className="p-2 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] hover:border-[#FF7100] cursor-pointer"
                           >
-                            <Printer className="w-4 h-4 text-[#FF6B00]" aria-hidden="true" />
+                            <Printer className="w-4 h-4 text-[#FF7100]" aria-hidden="true" />
                           </button>
-                          <p className="text-lg font-bold text-[#FF6B00] font-mono tabular-nums">
+                          <p className="text-lg font-bold text-[#FF7100] font-mono tabular-nums">
                             {order.totalAmount}{' '}
                             <span className="text-xs font-sans font-semibold text-[#94A3B8]">
                               ج.م
@@ -2063,7 +2072,7 @@ export function StorePortalView({
                     <h3 className="text-sm font-bold text-[#F8FAFC]">
                       طلبات تم استلامها وفي الطريق للعملاء الآن
                     </h3>
-                    <span className="font-mono text-xs font-bold text-[#FF6B00] tabular-nums">
+                    <span className="font-mono text-xs font-bold text-[#FF7100] tabular-nums">
                       {stats.outForDeliveryOrders.length}
                     </span>
                   </div>
@@ -2124,7 +2133,7 @@ export function StorePortalView({
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
                     placeholder="ابحث باسم المنتج أو الوصف أو القسم..."
-                    className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm"
+                    className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm"
                   />
                 </div>
 
@@ -2137,8 +2146,8 @@ export function StorePortalView({
                         onClick={() => setMenuCategoryFilter(cat)}
                         className={`px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer ${
                           menuCategoryFilter === cat
-                            ? 'bg-[#FF6B00] text-white'
-                            : 'bg-[#0F172A] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]'
+                            ? 'bg-[#FF7100] text-white'
+                            : 'bg-[#10192D] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]'
                         }`}
                       >
                         {cat}
@@ -2169,7 +2178,7 @@ export function StorePortalView({
                   <button
                     type="button"
                     onClick={() => setIsAddProductModalOpen(true)}
-                    className="py-2.5 px-5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
+                    className="py-2.5 px-5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" aria-hidden="true" />
                     <span>إضافة أول منتج بصورة من جهازك</span>
@@ -2180,7 +2189,7 @@ export function StorePortalView({
                   <div className="overflow-x-auto">
                     <table className="w-full text-right border-collapse">
                       <thead>
-                        <tr className="border-b border-[#334155] bg-[#0F172A] text-xs font-bold text-[#94A3B8]">
+                        <tr className="border-b border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8]">
                           <th className="py-3.5 px-5">المنتج</th>
                           <th className="py-3.5 px-4">القسم</th>
                           <th className="py-3.5 px-4">السعر</th>
@@ -2202,11 +2211,11 @@ export function StorePortalView({
                           return (
                             <tr
                               key={product.id}
-                              className="hover:bg-[#0F172A]/60 transition-colors"
+                              className="hover:bg-[#10192D]/60 transition-colors"
                             >
                               <td className="py-3.5 px-5">
                                 <div className="flex items-center gap-3.5 min-w-[220px]">
-                                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#0F172A] shrink-0 border border-[#334155]">
+                                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#10192D] shrink-0 border border-[#334155]">
                                     <ResilientImage
                                       src={product.imageUrl || ''}
                                       alt={product.name}
@@ -2220,7 +2229,7 @@ export function StorePortalView({
                                         {product.name}
                                       </p>
                                       {product.isMysteryBox && (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-950/60 border border-orange-800/60 text-[#FF6B00] text-[10px] font-bold shrink-0">
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-950/60 border border-orange-800/60 text-[#FF7100] text-[10px] font-bold shrink-0">
                                           <Gift className="w-3 h-3" />
                                           بوكس مفاجآت
                                         </span>
@@ -2258,7 +2267,7 @@ export function StorePortalView({
                                     className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md tabular-nums ${
                                       currentStock <= 0
                                         ? 'bg-red-950/60 border border-red-800/60 text-red-300'
-                                        : 'bg-[#0F172A] border border-[#334155] text-[#F8FAFC]'
+                                        : 'bg-[#10192D] border border-[#334155] text-[#F8FAFC]'
                                     }`}
                                   >
                                     {currentStock <= 0
@@ -2276,7 +2285,7 @@ export function StorePortalView({
                                             currentStock + 5
                                           )
                                         }
-                                        className="px-2 py-1 rounded-md bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-[11px] font-bold hover:border-[#FF6B00] cursor-pointer"
+                                        className="px-2 py-1 rounded-md bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-[11px] font-bold hover:border-[#FF7100] cursor-pointer"
                                       >
                                         +5
                                       </button>
@@ -2290,7 +2299,7 @@ export function StorePortalView({
                                               0
                                             )
                                           }
-                                          className="px-2 py-1 rounded-md bg-[#0F172A] border border-red-900/70 text-[11px] text-red-400 font-bold cursor-pointer"
+                                          className="px-2 py-1 rounded-md bg-[#10192D] border border-red-900/70 text-[11px] text-red-400 font-bold cursor-pointer"
                                         >
                                           نفدت
                                         </button>
@@ -2319,9 +2328,9 @@ export function StorePortalView({
                                       type="button"
                                       disabled={isFlashBusy}
                                       onClick={() => openFlashSaleEditor(product)}
-                                      className="px-2.5 py-1 rounded-lg bg-[#0F172A] border border-[#334155] text-[#F8FAFC] hover:border-[#FF6B00] text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                                      className="px-2.5 py-1 rounded-lg bg-[#10192D] border border-[#334155] text-[#F8FAFC] hover:border-[#FF7100] text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
                                     >
-                                      <Zap className="w-3.5 h-3.5 text-[#FF6B00]" />
+                                      <Zap className="w-3.5 h-3.5 text-[#FF7100]" />
                                       <span>عرض فلاش</span>
                                     </button>
                                   )}
@@ -2346,7 +2355,7 @@ export function StorePortalView({
                                     }
                                     className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer disabled:opacity-50 ${
                                       product.isAvailable
-                                        ? 'bg-[#FF6B00]'
+                                        ? 'bg-[#FF7100]'
                                         : 'bg-[#334155]'
                                     }`}
                                   >
@@ -2370,7 +2379,7 @@ export function StorePortalView({
                                       onClick={() =>
                                         setConfirmDeleteProduct(product)
                                       }
-                                      className="p-2 rounded-lg bg-[#0F172A] border border-[#334155] text-red-400 hover:bg-red-950/40 hover:border-red-800 disabled:opacity-50 cursor-pointer"
+                                      className="p-2 rounded-lg bg-[#10192D] border border-[#334155] text-red-400 hover:bg-red-950/40 hover:border-red-800 disabled:opacity-50 cursor-pointer"
                                     >
                                       <Trash2
                                         className="w-4 h-4"
@@ -2415,7 +2424,7 @@ export function StorePortalView({
                       <p className="text-xs font-bold text-[#94A3B8]">
                         إجمالي مبيعات اليوم
                       </p>
-                      <p className="text-3xl font-bold text-[#FF6B00] font-mono tabular-nums">
+                      <p className="text-3xl font-bold text-[#FF7100] font-mono tabular-nums">
                         {stats.todaySalesTotal}{' '}
                         <span className="text-sm font-sans font-semibold text-[#94A3B8]">
                           ج.م
@@ -2474,6 +2483,134 @@ export function StorePortalView({
                 );
               })()}
 
+              {/* Store 86% / 14% Financial Split & Daily Settlements */}
+              {(() => {
+                const rate =
+                  currentStore.commissionRate ?? DEFAULT_EDKAWY_COMMISSION_RATE;
+                const commPct = Math.round(rate * 100);
+                const storePct = 100 - commPct;
+                let grossSales = 0;
+                let edkawyComm = 0;
+                let storeNet = 0;
+                let unsettledNet = 0;
+                stats.deliveredOrders.forEach((o) => {
+                  if (o.isTestSimulation) return;
+                  const snap = getOrderFinancialSnapshot(o, rate);
+                  grossSales += o.subtotal;
+                  edkawyComm += snap.commissionAmount;
+                  storeNet += snap.restaurantNet;
+                  if (!o.isFinancialSettled) {
+                    unsettledNet += snap.restaurantNet;
+                  }
+                });
+                const scopedSettlements = restaurantSettlements.filter(
+                  (s) => s.storeId === currentStore.id
+                );
+                const paidTotal = scopedSettlements
+                  .filter((s) => s.status === 'paid')
+                  .reduce((sum, s) => sum + s.restaurantNetPayable, 0);
+                const scopedTxCount = financialTransactions.filter(
+                  (t) => t.storeId === currentStore.id
+                ).length;
+
+                return (
+                  <div className="bg-[#1E293B] border border-[#334155] rounded-2xl p-6 space-y-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-bold text-[#F8FAFC]">
+                          الحسابات المالية والتسويات اليومية ({storePct}% للمتجر / {commPct}% عمولة إدكاوي)
+                        </h3>
+                        <p className="text-xs text-[#94A3B8] mt-0.5">
+                          رسوم التوصيل تذهب بالكامل للمندوب ولا تدخل في حساب العمولة · إغلاق التسوية اليومية 12 منتصف الليل.
+                        </p>
+                      </div>
+                      <span className="text-xs font-mono text-[#94A3B8] tabular-nums">
+                        قيود مسجلة: {scopedTxCount}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="p-4 rounded-xl bg-[#10192D] border border-[#334155] space-y-1">
+                        <p className="text-xs font-bold text-[#94A3B8]">
+                          إجمالي مبيعات المنتجات
+                        </p>
+                        <p className="font-mono text-xl font-bold tabular-nums text-[#F8FAFC]">
+                          {grossSales.toFixed(2)} ج.م
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-[#10192D] border border-[#334155] space-y-1">
+                        <p className="text-xs font-bold text-[#94A3B8]">
+                          عمولة إدكاوي ({commPct}%)
+                        </p>
+                        <p className="font-mono text-xl font-bold tabular-nums text-[#FF7100]">
+                          {edkawyComm.toFixed(2)} ج.م
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-[#10192D] border border-[#334155] space-y-1">
+                        <p className="text-xs font-bold text-[#94A3B8]">
+                          صافي مستحقات المتجر ({storePct}%)
+                        </p>
+                        <p className="font-mono text-xl font-bold tabular-nums text-emerald-400">
+                          {storeNet.toFixed(2)} ج.م
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-[#10192D] border border-[#334155] space-y-1">
+                        <p className="text-xs font-bold text-[#94A3B8]">
+                          المدفوع / المتبقي للتسوية
+                        </p>
+                        <p className="font-mono text-sm font-bold tabular-nums text-[#F8FAFC]">
+                          مدفوع: {paidTotal.toFixed(2)} ج.م
+                        </p>
+                        <p className="font-mono text-xs font-bold tabular-nums text-amber-300">
+                          متبقي: {unsettledNet.toFixed(2)} ج.م
+                        </p>
+                      </div>
+                    </div>
+
+                    {scopedSettlements.length > 0 && (
+                      <div className="overflow-x-auto border border-[#334155] rounded-xl">
+                        <table className="w-full text-right border-collapse text-xs sm:text-sm">
+                          <thead>
+                            <tr className="border-b border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8]">
+                              <th className="py-2.5 px-4">التاريخ</th>
+                              <th className="py-2.5 px-4">الطلبات</th>
+                              <th className="py-2.5 px-4">إجمالي المنتجات</th>
+                              <th className="py-2.5 px-4">العمولة</th>
+                              <th className="py-2.5 px-4">صافي المتجر</th>
+                              <th className="py-2.5 px-4">الحالة</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#334155]">
+                            {scopedSettlements.map((s) => (
+                              <tr key={s.id}>
+                                <td dir="ltr" className="py-2.5 px-4 font-mono text-right">
+                                  {s.settlementDateKey}
+                                </td>
+                                <td className="py-2.5 px-4 font-mono tabular-nums">
+                                  {s.ordersCount}
+                                </td>
+                                <td className="py-2.5 px-4 font-mono tabular-nums">
+                                  {s.grossProductsSales} ج.م
+                                </td>
+                                <td className="py-2.5 px-4 font-mono tabular-nums text-[#FF7100]">
+                                  {s.edkawyCommission} ج.م
+                                </td>
+                                <td className="py-2.5 px-4 font-mono tabular-nums font-bold text-emerald-400">
+                                  {s.restaurantNetPayable} ج.م
+                                </td>
+                                <td className="py-2.5 px-4 text-xs font-bold">
+                                  {getSettlementStatusLabelAr(s.status)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="bg-[#1E293B] border border-[#334155] rounded-2xl overflow-hidden">
                 <div className="px-5 py-4 border-b border-[#334155] flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -2486,7 +2623,7 @@ export function StorePortalView({
                         {stats.deliveredOrders.length}
                       </span>{' '}
                       · صافي مبيعات المنتجات الكلي:{' '}
-                      <span className="font-mono font-bold text-[#FF6B00] tabular-nums">
+                      <span className="font-mono font-bold text-[#FF7100] tabular-nums">
                         {stats.storeSalesTotal}
                       </span>{' '}
                       ج.م
@@ -2502,7 +2639,7 @@ export function StorePortalView({
                   <div className="overflow-x-auto">
                     <table className="w-full text-right border-collapse">
                       <thead>
-                        <tr className="border-b border-[#334155] bg-[#0F172A] text-xs font-bold text-[#94A3B8]">
+                        <tr className="border-b border-[#334155] bg-[#10192D] text-xs font-bold text-[#94A3B8]">
                           <th className="py-3 px-5">رقم الطلب</th>
                           <th className="py-3 px-4">العميل</th>
                           <th className="py-3 px-4">الأصناف</th>
@@ -2514,7 +2651,7 @@ export function StorePortalView({
                         {stats.scopedOrders.slice(0, 20).map((order) => (
                           <tr
                             key={order.id}
-                            className="hover:bg-[#0F172A]/60"
+                            className="hover:bg-[#10192D]/60"
                           >
                             <td
                               dir="ltr"
@@ -2570,7 +2707,7 @@ export function StorePortalView({
                     {storeReviews.slice(0, 6).map((rev) => (
                       <div
                         key={rev.id}
-                        className="p-4 rounded-xl bg-[#0F172A] border border-[#334155] space-y-1.5"
+                        className="p-4 rounded-xl bg-[#10192D] border border-[#334155] space-y-1.5"
                       >
                         <div className="flex items-center justify-between gap-2 text-xs">
                           <span className="font-bold text-[#F8FAFC]">
@@ -2647,7 +2784,7 @@ export function StorePortalView({
                 <div className="pb-5 border-b border-[#334155] space-y-4">
                   <div>
                     <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC] flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-[#FF6B00]" />
+                      <ShieldCheck className="w-4 h-4 text-[#FF7100]" />
                       <span>البيانات القانونية والضريبية للمتجر (إجباري)</span>
                     </h3>
                     <p className="text-xs text-[#94A3B8] mt-1">
@@ -2673,7 +2810,7 @@ export function StorePortalView({
                           setSettingsCommercialRegisterNumber(e.target.value)
                         }
                         placeholder="مثال: 123456"
-                        className="w-full px-4 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                         required
                       />
                       {settingsErrors.commercialRegisterNumber && (
@@ -2700,7 +2837,7 @@ export function StorePortalView({
                           setSettingsTaxCertificateNumber(e.target.value)
                         }
                         placeholder="مثال: 458-921-703"
-                        className="w-full px-4 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                         required
                       />
                       {settingsErrors.taxCertificateNumber && (
@@ -2728,7 +2865,7 @@ export function StorePortalView({
                 <div className="flex items-center justify-between gap-4 pb-5 border-b border-[#334155]">
                   <div>
                     <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC] flex items-center gap-1.5">
-                      <ChefHat className="w-4 h-4 text-[#FF6B00]" aria-hidden="true" />
+                      <ChefHat className="w-4 h-4 text-[#FF7100]" aria-hidden="true" />
                       <span>تصنيف أكل بيتي (تحضير منزلي طازج)</span>
                     </h3>
                     <p className="text-xs text-[#94A3B8] mt-1">
@@ -2741,7 +2878,7 @@ export function StorePortalView({
                     aria-checked={settingsIsHomeFood}
                     onClick={() => setSettingsIsHomeFood((prev) => !prev)}
                     className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors cursor-pointer ${
-                      settingsIsHomeFood ? 'bg-[#FF6B00]' : 'bg-[#334155]'
+                      settingsIsHomeFood ? 'bg-[#FF7100]' : 'bg-[#334155]'
                     }`}
                   >
                     <span
@@ -2795,7 +2932,7 @@ export function StorePortalView({
                       max={180}
                       value={settingsPrepMinutes}
                       onChange={(e) => setSettingsPrepMinutes(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                     />
                     {settingsErrors.prepTimeMinutes && (
                       <p className="text-xs text-red-400 mt-1">
@@ -2819,7 +2956,7 @@ export function StorePortalView({
                       max={5000}
                       value={settingsMinOrder}
                       onChange={(e) => setSettingsMinOrder(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                     />
                     <p className="text-[11px] text-[#94A3B8] mt-1">
                       اكتب 0 لعدم اشتراط حد أدنى لقيمة السلة.
@@ -2837,7 +2974,7 @@ export function StorePortalView({
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <h3 className="text-sm font-bold text-[#F8FAFC] flex items-center gap-1.5">
-                        <Clock className="w-4 h-4 text-[#FF6B00]" />
+                        <Clock className="w-4 h-4 text-[#FF7100]" />
                         <span>ساعات العمل اليومية (توقيت مصر)</span>
                       </h3>
                       <p className="text-xs text-[#94A3B8] mt-0.5">
@@ -2853,7 +2990,7 @@ export function StorePortalView({
                       className={`min-h-[40px] px-4 py-2 rounded-2xl border text-xs font-bold inline-flex items-center gap-2 cursor-pointer transition-colors ${
                         settingsIsManuallyClosed
                           ? 'bg-rose-950/60 border-rose-500/50 text-rose-200'
-                          : 'bg-[#0F172A] border-[#334155] text-[#F8FAFC] hover:border-[#FF6B00]'
+                          : 'bg-[#10192D] border-[#334155] text-[#F8FAFC] hover:border-[#FF7100]'
                       }`}
                     >
                       <span>
@@ -2877,7 +3014,7 @@ export function StorePortalView({
                         type="time"
                         value={settingsOpeningTime}
                         onChange={(e) => setSettingsOpeningTime(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm font-mono text-center"
+                        className="w-full px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm font-mono text-center"
                       />
                     </div>
 
@@ -2893,7 +3030,7 @@ export function StorePortalView({
                         type="time"
                         value={settingsClosingTime}
                         onChange={(e) => setSettingsClosingTime(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm font-mono text-center"
+                        className="w-full px-4 py-2.5 rounded-2xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm font-mono text-center"
                       />
                     </div>
                   </div>
@@ -2906,7 +3043,7 @@ export function StorePortalView({
                       setIsDeleteAccountOpen(true);
                       setDeleteAccountError(null);
                     }}
-                    className="py-2 px-3.5 rounded-xl bg-[#0F172A] border border-red-900/60 hover:bg-red-950/40 text-red-400 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                    className="py-2 px-3.5 rounded-xl bg-[#10192D] border border-red-900/60 hover:bg-red-950/40 text-red-400 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>حذف حساب المتجر نهائياً</span>
@@ -2915,7 +3052,7 @@ export function StorePortalView({
                   <button
                     type="submit"
                     disabled={busyActionKey === 'save_settings'}
-                    className="min-h-[44px] py-2.5 px-6 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] active:scale-[0.98] disabled:opacity-60 text-white text-sm font-bold cursor-pointer whitespace-nowrap"
+                    className="min-h-[44px] py-2.5 px-6 rounded-xl bg-[#FF7100] hover:bg-[#E66600] active:scale-[0.98] disabled:opacity-60 text-white text-sm font-bold cursor-pointer whitespace-nowrap"
                   >
                     {busyActionKey === 'save_settings'
                       ? 'جارٍ الحفظ...'
@@ -2950,7 +3087,7 @@ export function StorePortalView({
                 type="button"
                 onClick={resetAddProductModal}
                 aria-label="إغلاق النافذة"
-                className="p-1.5 rounded-lg text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC] cursor-pointer"
+                className="p-1.5 rounded-lg text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC] cursor-pointer"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
@@ -2994,7 +3131,7 @@ export function StorePortalView({
                     value={prodName}
                     onChange={(e) => setProdName(e.target.value)}
                     placeholder="مثال: وجبة جمبري مشوي جامبو"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm"
                     required
                   />
                   {prodFormErrors.name && (
@@ -3020,7 +3157,7 @@ export function StorePortalView({
                     value={prodPrice}
                     onChange={(e) => setProdPrice(e.target.value)}
                     placeholder="185"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                     required
                   />
                   {prodFormErrors.price && (
@@ -3046,7 +3183,7 @@ export function StorePortalView({
                     value={prodCategory}
                     onChange={(e) => setProdCategory(e.target.value)}
                     placeholder="مثال: الوجبات الرئيسية"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm"
                     required
                   />
                   {prodFormErrors.category && (
@@ -3071,7 +3208,7 @@ export function StorePortalView({
                     max={10000}
                     value={prodStockQuantity}
                     onChange={(e) => setProdStockQuantity(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                   />
                   {prodFormErrors.stockQuantity && (
                     <p className="text-xs text-red-400 mt-1">
@@ -3095,7 +3232,7 @@ export function StorePortalView({
                   value={prodDescription}
                   onChange={(e) => setProdDescription(e.target.value)}
                   placeholder="وصف مختصر لمكونات الوجبة أو حجمها..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm"
                   required
                 />
                 {prodFormErrors.description && (
@@ -3106,7 +3243,7 @@ export function StorePortalView({
               </div>
 
               {/* Smart Variants Builder */}
-              <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#334155] space-y-3">
+              <div className="p-3.5 rounded-xl bg-[#10192D] border border-[#334155] space-y-3">
                 <label className="flex items-center justify-between gap-3 cursor-pointer">
                   <div>
                     <span className="block text-xs font-bold text-[#F8FAFC]">
@@ -3129,7 +3266,7 @@ export function StorePortalView({
                         ]);
                       }
                     }}
-                    className="w-4 h-4 accent-[#FF6B00]"
+                    className="w-4 h-4 accent-[#FF7100]"
                   />
                 </label>
 
@@ -3145,7 +3282,7 @@ export function StorePortalView({
                           className="p-2.5 rounded-lg bg-[#1E293B] border border-[#334155] space-y-2"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] font-bold text-[#FF6B00]">
+                            <span className="text-[11px] font-bold text-[#FF7100]">
                               خيار #{idx + 1}
                             </span>
                             {prodVariants.length > 1 && (
@@ -3179,7 +3316,7 @@ export function StorePortalView({
                                   );
                                 }}
                                 placeholder="مثلاً: لارج"
-                                className="w-full px-2 py-1 rounded bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs"
+                                className="w-full px-2 py-1 rounded bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs"
                               />
                             </div>
                             <div>
@@ -3199,7 +3336,7 @@ export function StorePortalView({
                                     )
                                   );
                                 }}
-                                className="w-full px-2 py-1 rounded bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs font-mono text-left"
+                                className="w-full px-2 py-1 rounded bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs font-mono text-left"
                               />
                             </div>
                             <div>
@@ -3221,7 +3358,7 @@ export function StorePortalView({
                                     )
                                   );
                                 }}
-                                className="w-full px-2 py-1 rounded bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs font-mono text-left"
+                                className="w-full px-2 py-1 rounded bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs font-mono text-left"
                               />
                             </div>
                           </div>
@@ -3242,7 +3379,7 @@ export function StorePortalView({
                           },
                         ])
                       }
-                      className="w-full py-1.5 px-3 rounded-lg border border-dashed border-[#FF6B00] text-[#FF6B00] hover:bg-orange-950/40 text-xs font-bold inline-flex items-center justify-center gap-1 cursor-pointer"
+                      className="w-full py-1.5 px-3 rounded-lg border border-dashed border-[#FF7100] text-[#FF7100] hover:bg-orange-950/40 text-xs font-bold inline-flex items-center justify-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>إضافة خيار أو مقاس إضافي</span>
@@ -3252,17 +3389,17 @@ export function StorePortalView({
               </div>
 
               {/* Mystery Box Option */}
-              <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#334155] space-y-3">
+              <div className="p-3.5 rounded-xl bg-[#10192D] border border-[#334155] space-y-3">
                 <label className="flex items-center justify-between gap-3 cursor-pointer">
                   <span className="flex items-center gap-2 text-xs font-bold text-[#F8FAFC]">
-                    <Gift className="w-4 h-4 text-[#FF6B00]" />
+                    <Gift className="w-4 h-4 text-[#FF7100]" />
                     <span>طرح هذا الصنف كبوكس مفاجآت مخفض (Mystery Box)</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={prodIsMysteryBox}
                     onChange={(e) => setProdIsMysteryBox(e.target.checked)}
-                    className="w-4 h-4 accent-[#FF6B00]"
+                    className="w-4 h-4 accent-[#FF7100]"
                   />
                 </label>
 
@@ -3289,14 +3426,14 @@ export function StorePortalView({
                 <button
                   type="button"
                   onClick={resetAddProductModal}
-                  className="min-h-[44px] px-4 rounded-xl bg-[#0F172A] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                  className="min-h-[44px] px-4 rounded-xl bg-[#10192D] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={submittingProduct}
-                  className="min-h-[44px] px-6 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs sm:text-sm font-bold cursor-pointer"
+                  className="min-h-[44px] px-6 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs sm:text-sm font-bold cursor-pointer"
                 >
                   {submittingProduct ? 'جارٍ الحفظ...' : 'حفظ المنتج في المنيو'}
                 </button>
@@ -3325,12 +3462,12 @@ export function StorePortalView({
               <button
                 type="button"
                 onClick={() => setZoomedPrescriptionUrl(null)}
-                className="px-3.5 py-1.5 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-xs font-bold cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] text-xs font-bold cursor-pointer"
               >
                 إغلاق المعاينة
               </button>
             </div>
-            <div className="bg-[#0F172A] rounded-2xl border border-[#334155] p-2 overflow-auto max-h-[82vh] flex items-center justify-center">
+            <div className="bg-[#10192D] rounded-2xl border border-[#334155] p-2 overflow-auto max-h-[82vh] flex items-center justify-center">
               <img
                 src={zoomedPrescriptionUrl}
                 alt="معاينة الروشتة الطبية"
@@ -3354,7 +3491,7 @@ export function StorePortalView({
           <div className="bg-[#1E293B] border border-[#334155] rounded-2xl max-w-2xl w-full p-6 sm:p-7 my-8 shadow-2xl space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-[#334155]">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-orange-950/60 border border-orange-800/50 text-[#FF6B00] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-orange-950/60 border border-orange-800/50 text-[#FF7100] flex items-center justify-center">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
@@ -3399,7 +3536,7 @@ export function StorePortalView({
                   <button
                     type="button"
                     onClick={() => setIsOcrModalOpen(false)}
-                    className="min-h-[44px] px-4 rounded-xl bg-[#0F172A] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                    className="min-h-[44px] px-4 rounded-xl bg-[#10192D] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
                   >
                     إلغاء
                   </button>
@@ -3407,7 +3544,7 @@ export function StorePortalView({
                     type="button"
                     disabled={!ocrImageDataUrl || ocrScanning}
                     onClick={() => void handleRunOcrScan()}
-                    className="min-h-[44px] px-6 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
+                    className="min-h-[44px] px-6 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
                   >
                     <Sparkles className="w-4 h-4" />
                     <span>{ocrScanning ? 'جارٍ تحليل المنيو بالذكاء الاصطناعي...' : 'بدء المسح واستخراج الأصناف'}</span>
@@ -3428,13 +3565,13 @@ export function StorePortalView({
                       });
                       setOcrSelectedMap(next);
                     }}
-                    className="text-[#FF6B00] hover:underline cursor-pointer"
+                    className="text-[#FF7100] hover:underline cursor-pointer"
                   >
                     تحديد / إلغاء تحديد الكل
                   </button>
                 </div>
 
-                <div className="max-h-72 overflow-y-auto space-y-2 border border-[#334155] bg-[#0F172A] rounded-xl p-2">
+                <div className="max-h-72 overflow-y-auto space-y-2 border border-[#334155] bg-[#10192D] rounded-xl p-2">
                   {ocrExtractedItems.map((item, idx) => (
                     <div
                       key={idx}
@@ -3453,7 +3590,7 @@ export function StorePortalView({
                             [idx]: e.target.checked,
                           }))
                         }
-                        className="w-4 h-4 mt-1 accent-[#FF6B00] cursor-pointer"
+                        className="w-4 h-4 mt-1 accent-[#FF7100] cursor-pointer"
                       />
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div>
@@ -3467,7 +3604,7 @@ export function StorePortalView({
                                 prev.map((it, i) => (i === idx ? { ...it, name: v } : it))
                               );
                             }}
-                            className="w-full px-2 py-1 rounded bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs font-bold"
+                            className="w-full px-2 py-1 rounded bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs font-bold"
                           />
                         </div>
                         <div>
@@ -3482,7 +3619,7 @@ export function StorePortalView({
                                 prev.map((it, i) => (i === idx ? { ...it, price: v } : it))
                               );
                             }}
-                            className="w-full px-2 py-1 rounded bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs font-mono"
+                            className="w-full px-2 py-1 rounded bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs font-mono"
                           />
                         </div>
                         <div>
@@ -3496,7 +3633,7 @@ export function StorePortalView({
                                 prev.map((it, i) => (i === idx ? { ...it, category: v } : it))
                               );
                             }}
-                            className="w-full px-2 py-1 rounded bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-xs"
+                            className="w-full px-2 py-1 rounded bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-xs"
                           />
                         </div>
                       </div>
@@ -3511,7 +3648,7 @@ export function StorePortalView({
                       setOcrExtractedItems([]);
                       setOcrSelectedMap({});
                     }}
-                    className="min-h-[44px] px-4 rounded-xl bg-[#0F172A] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                    className="min-h-[44px] px-4 rounded-xl bg-[#10192D] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
                   >
                     مسح صورة أخرى
                   </button>
@@ -3519,7 +3656,7 @@ export function StorePortalView({
                     type="button"
                     disabled={ocrBatchSaving}
                     onClick={() => void handleSaveOcrBatch()}
-                    className="min-h-[44px] px-6 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
+                    className="min-h-[44px] px-6 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
                   >
                     <Check className="w-4 h-4" />
                     <span>{ocrBatchSaving ? 'جارٍ الحفظ في المنيو...' : 'حفظ الأصناف المحددة في المنيو'}</span>
@@ -3543,7 +3680,7 @@ export function StorePortalView({
           <div className="bg-[#1E293B] border border-[#334155] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
             <div className="no-print flex items-center justify-between border-b border-[#334155] pb-3">
               <div className="flex items-center gap-2">
-                <Printer className="w-5 h-5 text-[#FF6B00]" />
+                <Printer className="w-5 h-5 text-[#FF7100]" />
                 <h3 className="text-base font-bold text-[#F8FAFC]">
                   معاينة وطباعة فاتورة المطبخ
                 </h3>
@@ -3557,9 +3694,9 @@ export function StorePortalView({
               </button>
             </div>
 
-            <div className="edkawi-print-area bg-[#0F172A] border border-[#334155] rounded-2xl p-5 space-y-4 text-[#F8FAFC]">
+            <div className="edkawi-print-area bg-[#10192D] border border-[#334155] rounded-2xl p-5 space-y-4 text-[#F8FAFC]">
               <div className="text-center border-b border-dashed border-[#334155] pb-3 space-y-1">
-                <p className="text-lg font-extrabold text-[#FF6B00]">إدكاوي — فاتورة تحضير</p>
+                <p className="text-lg font-extrabold text-[#FF7100]">إدكاوي — فاتورة تحضير</p>
                 <p className="text-sm font-bold">{currentStore.name}</p>
                 <p className="text-xs font-mono text-[#94A3B8]">
                   #{printingOrder.id.slice(0, 8)} ·{' '}
@@ -3610,7 +3747,7 @@ export function StorePortalView({
                   <span>رسوم التوصيل</span>
                   <span className="font-mono">{printingOrder.deliveryFee} ج.م</span>
                 </div>
-                <div className="flex items-center justify-between text-sm font-extrabold text-[#FF6B00] pt-1 border-t border-[#334155]">
+                <div className="flex items-center justify-between text-sm font-extrabold text-[#FF7100] pt-1 border-t border-[#334155]">
                   <span>الإجمالي</span>
                   <span className="font-mono">{printingOrder.totalAmount} ج.م</span>
                 </div>
@@ -3621,14 +3758,14 @@ export function StorePortalView({
               <button
                 type="button"
                 onClick={() => setPrintingOrder(null)}
-                className="min-h-[44px] px-4 rounded-xl bg-[#0F172A] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                className="min-h-[44px] px-4 rounded-xl bg-[#10192D] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
               >
                 إغلاق
               </button>
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="min-h-[44px] px-5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer"
+                className="min-h-[44px] px-5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 <span>طباعة الفاتورة الآن</span>
@@ -3653,7 +3790,7 @@ export function StorePortalView({
           >
             <div className="flex items-center justify-between pb-3 border-b border-[#334155]">
               <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-[#FF6B00]" />
+                <Zap className="w-5 h-5 text-[#FF7100]" />
                 <h3 className="text-base font-bold text-[#F8FAFC]">
                   تفعيل عرض فلاش سريع
                 </h3>
@@ -3683,7 +3820,7 @@ export function StorePortalView({
                   max={90}
                   value={flashDiscountInput}
                   onChange={(e) => setFlashDiscountInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono text-left"
+                  className="w-full px-3 py-2 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono text-left"
                 />
               </div>
               <div>
@@ -3697,7 +3834,7 @@ export function StorePortalView({
                   max={72}
                   value={flashDurationHoursInput}
                   onChange={(e) => setFlashDurationHoursInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-sm font-mono text-left"
+                  className="w-full px-3 py-2 rounded-xl bg-[#10192D] border border-[#334155] text-[#F8FAFC] text-sm font-mono text-left"
                 />
               </div>
             </div>
@@ -3707,14 +3844,14 @@ export function StorePortalView({
                 type="button"
                 disabled={savingFlashSale}
                 onClick={() => setFlashSaleModalProduct(null)}
-                className="min-h-[44px] px-4 rounded-xl bg-[#0F172A] border border-[#334155] text-xs font-bold text-[#94A3B8] cursor-pointer"
+                className="min-h-[44px] px-4 rounded-xl bg-[#10192D] border border-[#334155] text-xs font-bold text-[#94A3B8] cursor-pointer"
               >
                 إلغاء
               </button>
               <button
                 type="submit"
                 disabled={savingFlashSale}
-                className="min-h-[44px] px-5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                className="min-h-[44px] px-5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Zap className="w-4 h-4" />
                 <span>{savingFlashSale ? 'جارٍ التفعيل...' : 'تفعيل العرض الآن'}</span>
@@ -3757,7 +3894,7 @@ export function StorePortalView({
                 type="button"
                 disabled={deleteAccountBusy}
                 onClick={() => setIsDeleteAccountOpen(false)}
-                className="min-h-[44px] px-4 rounded-xl bg-[#0F172A] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                className="min-h-[44px] px-4 rounded-xl bg-[#10192D] border border-[#334155] text-xs font-bold text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
               >
                 إلغاء
               </button>

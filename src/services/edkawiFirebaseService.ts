@@ -75,6 +75,7 @@ import {
   AdminNotificationSendInput,
   AdminOtpRequestResult,
   AdminOtpVerifyResult,
+  AdminSetupStatusResult,
   AiAssistantApiResponse,
   AiChatMessage,
   AppliedCoupon,
@@ -109,11 +110,18 @@ import {
   CustomErrandOrderInput,
   DailySpinResult,
   DispatchTicketRecord,
+  DriverWalletRecord,
   EdkoZoneId,
   EdkoZoneRecord,
   EdkuWeatherPromoResponse,
   EmailVerificationRequestResult,
   EmailVerificationVerifyResult,
+  ExceptionResponsibleParty,
+  FinancialExceptionRecord,
+  FinancialExceptionStatus,
+  FinancialExceptionType,
+  FinancialTransactionRecord,
+  FinancialTransactionType,
   FirebaseConnectionHealthResult,
   GroupSessionCartItem,
   GroupSessionChatMessage,
@@ -150,6 +158,9 @@ import {
   QaSimulationReport,
   QaSimulationStep,
   ReferralAccountRecord,
+  RestaurantSettlementMethod,
+  RestaurantSettlementRecord,
+  RestaurantSettlementStatus,
   ReverseGeocodeApiResponse,
   ReviewRecord,
   ReviewSubmitInput,
@@ -174,6 +185,7 @@ import {
   SupportTicketRecord,
   SupportTicketStatus,
   SystemMaintenanceConfig,
+  TreasuryReceiptRecord,
   UserProfileRecord,
   UserRole,
   VisualSearchApiResponse,
@@ -184,6 +196,8 @@ import {
 import {
   buildCartItemId,
   calculateCartTotals,
+  calculateOrderFinancialSplit,
+  DEFAULT_EDKAWY_COMMISSION_RATE,
   EDKU_NEIGHBORHOODS,
   EDKU_ROUTE_WAYPOINTS,
   EGYPT_PHONE_REGEX,
@@ -192,12 +206,16 @@ import {
   generateStoreCredentials,
   generateUniqueCustomerCode,
   getAuditActionLabelAr,
+  getCairoDateKey,
+  getOrderFinancialSnapshot,
   isCouponExpired,
   isEdkuWaterCoordinate,
   isStoreOpen,
   isCourierDrivingLicenseRequired,
   isValidCustomerCodeFormat,
   isValidFirestoreId,
+  MIN_COURIER_DELIVERY_FEE_EGP,
+  normalizeCommissionRate,
   normalizeEgyptPhoneOrEmpty,
   REFERRAL_CODE_REGEX,
   validateAdBannerForm,
@@ -222,23 +240,33 @@ import {
 } from '../utils/orderLogic';
 
 export const OFFICIAL_ADMIN_PORTAL_EMAIL = 'vortexstore.team@gmail.com';
-const VERIFIED_ADMIN_FALLBACK_EMAIL = 'vortexstore.admin@adkawy.com';
-const LEGACY_ADMIN_PASSWORDS_FOR_MIGRATION = [
-  '963835#274193#38763#54',
+export const ALLOWED_ADMIN_PORTAL_EMAILS = [
+  'vortexstore.team@gmail.com',
+  'alaslybys46@gmail.com',
 ] as const;
 
-function isInternalAdminAliasEmail(email: string): boolean {
-  return email.trim().toLowerCase().startsWith('vortexstore.admin');
+export function isAllowlistedAdminEmail(email: string): boolean {
+  const clean = email.trim().toLowerCase();
+  return (ALLOWED_ADMIN_PORTAL_EMAILS as readonly string[]).includes(clean);
 }
 
-function buildDeterministicAdminAliasEmail(password: string): string {
-  let hash = 2166136261;
-  for (let i = 0; i < password.length; i += 1) {
-    hash ^= password.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
+async function getFirebaseAuthHeaders(
+  baseHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+): Promise<Record<string, string>> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) return baseHeaders;
+  try {
+    const idToken = await currentUser.getIdToken();
+    if (idToken) {
+      return {
+        ...baseHeaders,
+        Authorization: `Bearer ${idToken}`,
+      };
+    }
+  } catch {
+    // Non-fatal fallback
   }
-  const suffix = (hash >>> 0).toString(36);
-  return `vortexstore.admin.${suffix}@adkawy.com`;
+  return baseHeaders;
 }
 
 const CATEGORY_TO_STORE_IMAGE: Record<StoreCategory, StoreImageKey> = {
@@ -638,6 +666,23 @@ function parseStoreSnapshotDoc(
       typeof d.taxCertificateNumber === 'string'
         ? d.taxCertificateNumber
         : undefined,
+    commissionRate:
+      typeof d.commissionRate === 'number'
+        ? normalizeCommissionRate(d.commissionRate)
+        : DEFAULT_EDKAWY_COMMISSION_RATE,
+    ownerName:
+      typeof d.ownerName === 'string' && d.ownerName.trim()
+        ? d.ownerName.trim()
+        : undefined,
+    phone:
+      typeof d.phone === 'string' && d.phone.trim()
+        ? d.phone.trim()
+        : undefined,
+    pausedReason:
+      typeof d.pausedReason === 'string' && d.pausedReason.trim()
+        ? d.pausedReason.trim()
+        : undefined,
+    suspended: typeof d.suspended === 'boolean' ? d.suspended : false,
     referredByAgentId:
       typeof d.referredByAgentId === 'string' ? d.referredByAgentId : undefined,
     referredByCode:
@@ -737,9 +782,11 @@ function parseOrderSnapshotDoc(
   );
 
   const rawMethod = String(d.paymentMethod ?? 'cash');
-  const paymentMethod =
+  const paymentMethod: PaymentMethod =
     rawMethod === 'visa'
       ? 'visa'
+      : rawMethod === 'wallet'
+      ? 'wallet'
       : rawMethod === 'cash_on_delivery'
       ? 'cash_on_delivery'
       : 'cash';
@@ -857,6 +904,38 @@ function parseOrderSnapshotDoc(
         : undefined,
     pointsAwarded:
       typeof d.pointsAwarded === 'boolean' ? d.pointsAwarded : false,
+    commissionRate:
+      typeof d.commissionRate === 'number'
+        ? normalizeCommissionRate(d.commissionRate)
+        : DEFAULT_EDKAWY_COMMISSION_RATE,
+    commissionAmount:
+      typeof d.commissionAmount === 'number'
+        ? Number(d.commissionAmount)
+        : undefined,
+    restaurantNet:
+      typeof d.restaurantNet === 'number'
+        ? Number(d.restaurantNet)
+        : undefined,
+    courierDeliveryCompensation:
+      typeof d.courierDeliveryCompensation === 'number'
+        ? Number(d.courierDeliveryCompensation)
+        : undefined,
+    freeDeliveryFundedByEdkawy:
+      typeof d.freeDeliveryFundedByEdkawy === 'boolean'
+        ? d.freeDeliveryFundedByEdkawy
+        : undefined,
+    settlementId:
+      typeof d.settlementId === 'string' && d.settlementId.trim()
+        ? d.settlementId.trim()
+        : undefined,
+    treasuryReceiptId:
+      typeof d.treasuryReceiptId === 'string' && d.treasuryReceiptId.trim()
+        ? d.treasuryReceiptId.trim()
+        : undefined,
+    isFinancialSettled:
+      typeof d.isFinancialSettled === 'boolean'
+        ? d.isFinancialSettled
+        : undefined,
     notes: String(d.notes ?? ''),
     createdAtIso: toIsoString(d.createdAt),
     updatedAtIso: toIsoString(d.updatedAt),
@@ -868,9 +947,11 @@ function parseDispatchTicketDoc(
 ): DispatchTicketRecord {
   const d = docSnap.data() ?? {};
   const rawMethod = String(d.paymentMethod ?? 'cash');
-  const paymentMethod =
+  const paymentMethod: PaymentMethod =
     rawMethod === 'visa'
       ? 'visa'
+      : rawMethod === 'wallet'
+      ? 'wallet'
       : rawMethod === 'cash_on_delivery'
       ? 'cash_on_delivery'
       : 'cash';
@@ -956,6 +1037,26 @@ function parseDispatchTicketDoc(
       : undefined,
     isTestSimulation:
       typeof d.isTestSimulation === 'boolean' ? d.isTestSimulation : undefined,
+    commissionRate:
+      typeof d.commissionRate === 'number'
+        ? normalizeCommissionRate(d.commissionRate)
+        : undefined,
+    commissionAmount:
+      typeof d.commissionAmount === 'number'
+        ? Number(d.commissionAmount)
+        : undefined,
+    restaurantNet:
+      typeof d.restaurantNet === 'number'
+        ? Number(d.restaurantNet)
+        : undefined,
+    courierDeliveryCompensation:
+      typeof d.courierDeliveryCompensation === 'number'
+        ? Number(d.courierDeliveryCompensation)
+        : undefined,
+    freeDeliveryFundedByEdkawy:
+      typeof d.freeDeliveryFundedByEdkawy === 'boolean'
+        ? d.freeDeliveryFundedByEdkawy
+        : undefined,
     createdAtIso: toIsoString(d.createdAt),
     updatedAtIso: toIsoString(d.updatedAt),
   };
@@ -1134,13 +1235,18 @@ export async function syncRegisteredAccountMarker(
     return;
   }
 
-  fetch('/api/auth/password-reset/register-account', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: normalized, role }),
-  }).catch(() => {});
-
   if (!auth.currentUser || auth.currentUser.isAnonymous) return;
+
+  void getFirebaseAuthHeaders()
+    .then((headers) =>
+      fetch('/api/auth/password-reset/register-account', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ email: normalized, role }),
+      })
+    )
+    .catch(() => {});
+
   try {
     const emailHash = await computeEmailSha256Hex(normalized);
     await setDoc(doc(db, 'registeredAccounts', emailHash), {
@@ -1426,13 +1532,10 @@ export async function loginWithGoogleCustomer(): Promise<{
   const credential = await signInWithPopup(auth, googleProvider);
   const normalizedEmail = (credential.user.email ?? '').trim().toLowerCase();
 
-  if (
-    normalizedEmail === OFFICIAL_ADMIN_PORTAL_EMAIL ||
-    isInternalAdminAliasEmail(normalizedEmail)
-  ) {
+  if (isAllowlistedAdminEmail(normalizedEmail)) {
     await signOut(auth);
     throw new Error(
-      'بريد الإدارة الرسمي يتطلب تسجيل الدخول عبر البريد الإلكتروني وكلمة المرور وكود التحقق المكوّن من ٦ أرقام.'
+      'حساب الإدارة يستخدم زر «دخول الإدارة بحساب Google المعتمد» أو تسجيل الدخول ببريد الإدارة وكود التحقق.'
     );
   }
 
@@ -1516,10 +1619,7 @@ export async function sendPasswordResetEmailForUser(
     throw new Error('يرجى إدخال عنوان بريد إلكتروني صحيح لإرسال رابط الاستعادة.');
   }
 
-  if (
-    normalizedEmail === OFFICIAL_ADMIN_PORTAL_EMAIL ||
-    isInternalAdminAliasEmail(normalizedEmail)
-  ) {
+  if (isAllowlistedAdminEmail(normalizedEmail)) {
     throw new Error(
       'بريد الإدارة الرسمي محمي بتحقق ثنائي (OTP) ولا يدعم إعادة التعيين عبر هذا النموذج.'
     );
@@ -1574,12 +1674,9 @@ export async function loginUnifiedWithEmailAndPassword(
   password: string
 ): Promise<{ user: User; role: PortalRole }> {
   const normalizedEmail = email.trim().toLowerCase();
-  if (
-    normalizedEmail === OFFICIAL_ADMIN_PORTAL_EMAIL ||
-    isInternalAdminAliasEmail(normalizedEmail)
-  ) {
+  if (isAllowlistedAdminEmail(normalizedEmail)) {
     throw new Error(
-      'دخول لوحة الإدارة يتم حصرياً عبر بريد الإدارة الرسمي وكود التحقق المكوّن من ٦ أرقام.'
+      'دخول لوحة الإدارة يتم حصرياً عبر بريد الإدارة المعتمد وكود التحقق أو حساب Google المعتمد.'
     );
   }
 
@@ -1611,8 +1708,7 @@ export async function registerCustomerWithEmailAndPassword(
   const normalizedEmail = email.trim().toLowerCase();
 
   if (
-    normalizedEmail === OFFICIAL_ADMIN_PORTAL_EMAIL ||
-    isInternalAdminAliasEmail(normalizedEmail) ||
+    isAllowlistedAdminEmail(normalizedEmail) ||
     normalizedEmail.endsWith('@adkawy.com')
   ) {
     throw new Error(
@@ -1658,6 +1754,42 @@ export async function registerCustomerWithEmailAndPassword(
   return { user: credential.user, role: 'customer' };
 }
 
+export async function fetchAdminSetupStatus(): Promise<AdminSetupStatusResult> {
+  const response = await fetch('/api/auth/admin/setup-status');
+  const data = (await response.json()) as AdminSetupStatusResult;
+  if (!response.ok || !data.ok) {
+    throw new Error('تعذر التحقق من حالة تهيئة كلمة مرور الإدارة.');
+  }
+  return data;
+}
+
+export async function submitInitialAdminSetup(
+  email: string,
+  password: string
+): Promise<{ ok: boolean; adminEmail: string; message?: string }> {
+  const response = await fetch('/api/auth/admin/initial-setup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.trim(), password }),
+  });
+  const data = (await response.json()) as {
+    ok: boolean;
+    adminEmail?: string;
+    message?: string;
+    error?: string;
+  };
+  if (!response.ok || !data.ok) {
+    throw new Error(
+      data.error || 'تعذر حفظ كلمة مرور الإدارة الأولية.'
+    );
+  }
+  return {
+    ok: true,
+    adminEmail: data.adminEmail || email.trim().toLowerCase(),
+    message: data.message,
+  };
+}
+
 export async function requestAdminOtpFromServer(
   email: string,
   password: string
@@ -1670,10 +1802,13 @@ export async function requestAdminOtpFromServer(
 
   const data = (await response.json()) as AdminOtpRequestResult;
   if (!response.ok || !data.ok) {
-    throw new Error(
+    const err = new Error(
       data.error ||
         'بيانات البريد الإلكتروني أو كلمة المرور الخاصة بالإدارة غير صحيحة.'
-    );
+    ) as Error & { setupRequired?: boolean; smtpConfigured?: boolean };
+    err.setupRequired = data.setupRequired;
+    err.smtpConfigured = data.smtpConfigured;
+    throw err;
   }
   return data;
 }
@@ -1689,7 +1824,7 @@ export async function verifyAdminOtpFromServer(
   });
 
   const data = (await response.json()) as AdminOtpVerifyResult;
-  if (!response.ok || !data.ok || !data.adminBootstrapGate) {
+  if (!response.ok || !data.ok || !data.verifiedAt) {
     throw new Error(data.error || 'كود التحقق غير صحيح أو منتهي الصلاحية.');
   }
   return data;
@@ -1697,8 +1832,7 @@ export async function verifyAdminOtpFromServer(
 
 async function signInOrCreateEmailIdentity(
   targetEmail: string,
-  targetPassword: string,
-  tryLegacyMigration = false
+  targetPassword: string
 ): Promise<User> {
   try {
     const cred = await signInWithEmailAndPassword(
@@ -1713,33 +1847,26 @@ async function signInOrCreateEmailIdentity(
         ? String((err as { code?: unknown }).code)
         : '';
 
-    if (
-      code === 'auth/invalid-credential' ||
-      code === 'auth/wrong-password' ||
-      code === 'auth/user-not-found'
-    ) {
-      if (tryLegacyMigration) {
-        for (const legacyPass of LEGACY_ADMIN_PASSWORDS_FOR_MIGRATION) {
-          try {
-            const legacyCred = await signInWithEmailAndPassword(
-              auth,
-              targetEmail,
-              legacyPass
-            );
-            await updatePassword(legacyCred.user, targetPassword);
-            return legacyCred.user;
-          } catch {
-            // Continue
-          }
+    if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
+      try {
+        const created = await createUserWithEmailAndPassword(
+          auth,
+          targetEmail,
+          targetPassword
+        );
+        return created.user;
+      } catch (createErr) {
+        const createCode =
+          typeof createErr === 'object' &&
+          createErr !== null &&
+          'code' in createErr
+            ? String((createErr as { code?: unknown }).code)
+            : '';
+        if (createCode === 'auth/email-already-in-use') {
+          throw err;
         }
+        throw createErr;
       }
-
-      const created = await createUserWithEmailAndPassword(
-        auth,
-        targetEmail,
-        targetPassword
-      );
-      return created.user;
     }
 
     throw err;
@@ -1793,7 +1920,7 @@ async function purgeConflictingAccountsForAdminEmail(
             .toLowerCase();
           if (
             candidateId === adminUid ||
-            candidateEmail === OFFICIAL_ADMIN_PORTAL_EMAIL
+            isAllowlistedAdminEmail(candidateEmail)
           ) {
             await deleteDoc(doc(db, 'couriers', candidateId)).catch(() => {});
             await deleteDoc(doc(db, 'courierDirectory', candidateId)).catch(
@@ -1813,72 +1940,13 @@ async function purgeConflictingAccountsForAdminEmail(
   }
 }
 
-export async function signInAndBootstrapAdmin(
-  email: string,
-  password: string,
-  adminBootstrapGate: string
+async function finalizeAdminBootstrap(
+  adminUser: User,
+  normalizedEmail: string
 ): Promise<User> {
-  const normalizedEmail = email.trim().toLowerCase();
-  if (normalizedEmail !== OFFICIAL_ADMIN_PORTAL_EMAIL) {
-    throw new Error('البريد الإلكتروني غير مصرح له بصلاحيات الإدارة.');
-  }
-
-  let adminUser: User;
-
-  try {
-    adminUser = await signInOrCreateEmailIdentity(
-      normalizedEmail,
-      password,
-      true
-    );
-  } catch (primaryErr) {
-    const primaryCode =
-      typeof primaryErr === 'object' &&
-      primaryErr !== null &&
-      'code' in primaryErr
-        ? String((primaryErr as { code?: unknown }).code)
-        : '';
-
-    if (
-      primaryCode === 'auth/email-already-in-use' ||
-      primaryCode === 'auth/invalid-credential' ||
-      primaryCode === 'auth/wrong-password'
-    ) {
-      try {
-        adminUser = await signInOrCreateEmailIdentity(
-          VERIFIED_ADMIN_FALLBACK_EMAIL,
-          password,
-          true
-        );
-      } catch (fallbackErr) {
-        const fallbackCode =
-          typeof fallbackErr === 'object' &&
-          fallbackErr !== null &&
-          'code' in fallbackErr
-            ? String((fallbackErr as { code?: unknown }).code)
-            : '';
-
-        if (
-          fallbackCode === 'auth/email-already-in-use' ||
-          fallbackCode === 'auth/invalid-credential' ||
-          fallbackCode === 'auth/wrong-password'
-        ) {
-          adminUser = await signInOrCreateEmailIdentity(
-            buildDeterministicAdminAliasEmail(password),
-            password,
-            false
-          );
-        } else {
-          throw fallbackErr;
-        }
-      }
-    } else {
-      throw primaryErr;
-    }
-  }
-
   const adminDocPath = `admins/${adminUser.uid}`;
   try {
+    await adminUser.getIdToken(true);
     await waitForFirestoreWarmup();
     const adminRef = doc(db, 'admins', adminUser.uid);
     const existingAdminSnap = await getDocWithRetry(
@@ -1890,8 +1958,7 @@ export async function signInAndBootstrapAdmin(
       const batch = writeBatch(db);
       batch.set(adminRef, {
         role: 'admin',
-        email: OFFICIAL_ADMIN_PORTAL_EMAIL,
-        activationGate: adminBootstrapGate,
+        email: normalizedEmail,
         createdAt: serverTimestamp(),
       });
       batch.set(doc(db, 'appConfig', 'bootstrap'), {
@@ -1902,7 +1969,7 @@ export async function signInAndBootstrapAdmin(
     }
 
     await ensureUserProfileDoc(adminUser.uid, 'admin', {
-      email: OFFICIAL_ADMIN_PORTAL_EMAIL,
+      email: normalizedEmail,
       name: 'إدارة إدكاوي المركزية',
     });
 
@@ -1910,9 +1977,43 @@ export async function signInAndBootstrapAdmin(
     writeCachedUserRole(adminUser.uid, 'admin');
     return adminUser;
   } catch (error) {
-    logFirestoreFailure('admins', adminUser.uid, 'signInAndBootstrapAdmin', error);
+    logFirestoreFailure('admins', adminUser.uid, 'bootstrap', error);
     handleFirestoreError(error, OperationType.WRITE, adminDocPath);
   }
+}
+
+export async function loginAdminWithGoogle(): Promise<User> {
+  const credential = await signInWithPopup(auth, googleProvider);
+  const normalizedEmail = (credential.user.email ?? '').trim().toLowerCase();
+  if (!isAllowlistedAdminEmail(normalizedEmail) || !credential.user.emailVerified) {
+    await signOut(auth).catch(() => {});
+    throw new Error(
+      'حساب Google هذا غير مصرح له بصلاحيات الإدارة أو بريده غير موثق.'
+    );
+  }
+  return finalizeAdminBootstrap(credential.user, normalizedEmail);
+}
+
+export async function signInAndBootstrapAdmin(
+  email: string,
+  password: string
+): Promise<User> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!isAllowlistedAdminEmail(normalizedEmail)) {
+    throw new Error('البريد الإلكتروني غير مصرح له بصلاحيات الإدارة.');
+  }
+
+  const adminUser = await signInOrCreateEmailIdentity(normalizedEmail, password);
+  await reload(adminUser).catch(() => {});
+  if (!adminUser.emailVerified) {
+    await sendEmailVerification(adminUser).catch(() => {});
+    await signOut(auth).catch(() => {});
+    throw new Error(
+      'تم إرسال رابط تأكيد البريد الإلكتروني من Firebase إلى بريد الإدارة. يرجى تأكيد البريد من الرابط ثم إعادة المحاولة، أو استخدم زر «دخول الإدارة بحساب Google المعتمد» للدخول فوراً.'
+    );
+  }
+
+  return finalizeAdminBootstrap(adminUser, normalizedEmail);
 }
 
 export async function registerCourierAccount(
@@ -2225,7 +2326,7 @@ export async function resolveUserPortalRole(user: User): Promise<PortalRole> {
 
     if (
       normalizedEmail.endsWith('@adkawy.com') &&
-      !isInternalAdminAliasEmail(normalizedEmail)
+      !isAllowlistedAdminEmail(normalizedEmail)
     ) {
       const createdStoresSnap = await getDocsWithRetry(
         query(collection(db, 'stores'), where('createdBy', '==', user.uid)),
@@ -2408,7 +2509,10 @@ export async function createStoreByAdminInFirestore(
   ).slice(0, 220);
   const deliveryFee = Math.min(
     250,
-    Math.max(0, Math.trunc(Number(input.deliveryFee ?? 15)))
+    Math.max(
+      MIN_COURIER_DELIVERY_FEE_EGP,
+      Math.trunc(Number(input.deliveryFee ?? MIN_COURIER_DELIVERY_FEE_EGP))
+    )
   );
   const deliveryTimeMinutes = Math.min(
     120,
@@ -2465,6 +2569,8 @@ export async function createStoreByAdminInFirestore(
       isOpen: true,
       prepTimeMinutes: deliveryTimeMinutes,
       minOrderAmount: 0,
+      commissionRate: DEFAULT_EDKAWY_COMMISSION_RATE,
+      ...(phone ? { phone } : {}),
       ...(cleanCommercialRegNumber
         ? { commercialRegisterNumber: cleanCommercialRegNumber }
         : {}),
@@ -3350,7 +3456,10 @@ export async function addStoreToFirestore(
       isHomeFood,
       neighborhood: input.neighborhood.trim().slice(0, 80),
       description: input.description.trim().slice(0, 220),
-      deliveryFee: Math.trunc(Number(input.deliveryFee)),
+      deliveryFee: Math.max(
+        MIN_COURIER_DELIVERY_FEE_EGP,
+        Math.trunc(Number(input.deliveryFee))
+      ),
       deliveryTimeMinutes: Math.trunc(Number(input.deliveryTimeMinutes)),
       rating: 5,
       lat: coords.lat,
@@ -3361,6 +3470,7 @@ export async function addStoreToFirestore(
       isOpen: true,
       prepTimeMinutes: Math.trunc(Number(input.deliveryTimeMinutes)),
       minOrderAmount: 0,
+      commissionRate: DEFAULT_EDKAWY_COMMISSION_RATE,
       menuItems,
       ownerUid: currentUserUid,
       createdBy: currentUserUid,
@@ -3824,6 +3934,19 @@ export async function placeOrderInFirestore(
   const initialOrderStatus: 'confirmed' | 'pending_payment' =
     resolvedPaymentMethod === 'visa' ? 'pending_payment' : 'confirmed';
 
+  const storeCommissionRate = normalizeCommissionRate(
+    typeof storeData.commissionRate === 'number'
+      ? storeData.commissionRate
+      : DEFAULT_EDKAWY_COMMISSION_RATE
+  );
+  const financialSplit = calculateOrderFinancialSplit({
+    subtotal: totals.subtotal,
+    deliveryFee: totals.deliveryFee,
+    commissionRate: storeCommissionRate,
+    isFreeDeliveryReward: canRedeemFreeDelivery,
+    freeDeliveryBaseFee: checkout.zoneDeliveryFee,
+  });
+
   const orderPayload: Record<string, unknown> = {
     orderType: 'standard',
     customerId: effectiveCustomerUid,
@@ -3849,6 +3972,11 @@ export async function placeOrderInFirestore(
     ...sharedCouponFields,
     deliveryFee: totals.deliveryFee,
     totalAmount: totals.totalAmount,
+    commissionRate: financialSplit.commissionRate,
+    commissionAmount: financialSplit.commissionAmount,
+    restaurantNet: financialSplit.restaurantNet,
+    courierDeliveryCompensation: financialSplit.courierDeliveryCompensation,
+    freeDeliveryFundedByEdkawy: financialSplit.freeDeliveryFundedByEdkawy,
     paymentMethod: resolvedPaymentMethod,
     status: initialOrderStatus,
     notes: checkout.notes.trim().slice(0, 200),
@@ -3875,6 +4003,11 @@ export async function placeOrderInFirestore(
     ...sharedCouponFields,
     deliveryFee: totals.deliveryFee,
     totalAmount: totals.totalAmount,
+    commissionRate: financialSplit.commissionRate,
+    commissionAmount: financialSplit.commissionAmount,
+    restaurantNet: financialSplit.restaurantNet,
+    courierDeliveryCompensation: financialSplit.courierDeliveryCompensation,
+    freeDeliveryFundedByEdkawy: financialSplit.freeDeliveryFundedByEdkawy,
     paymentMethod: resolvedPaymentMethod,
     status: initialOrderStatus,
     createdAt: serverTimestamp(),
@@ -5216,31 +5349,216 @@ export async function completeOrderDeliveryInFirestore(
       )
     );
     const basePoints = Math.max(10, Math.floor(subtotalEgp / 10) * 5);
+    const actorUid =
+      auth.currentUser?.uid || resolvedCourierUid || 'edkawy_system';
+    const rawOrderData = orderSnap?.data() ?? dispatchSnap.data() ?? {};
+    const targetStoreId = String(rawOrderData.storeId ?? '').trim();
 
     await runWriteWithNetworkRetry(async () => {
-      const batch = writeBatch(db);
-      batch.update(orderRef, {
-        status: 'delivered',
-        ...(resolvedCourierUid
-          ? { courierId: resolvedCourierUid, courierName: cleanCourierName }
-          : {}),
-        courierLocation: cleanFinalLocation,
-        ...cleanCoords,
-        pointsEarned: basePoints,
-        pointsAwarded: true,
-        updatedAt: serverTimestamp(),
-      });
-      if (dispatchSnap.exists()) {
-        batch.update(dispatchRef, {
+      await runTransaction(db, async (tx) => {
+        const liveOrderSnap = await tx.get(orderRef);
+        const liveDispatchSnap = dispatchSnap.exists()
+          ? await tx.get(dispatchRef)
+          : null;
+        const liveOrderData = liveOrderSnap.exists()
+          ? liveOrderSnap.data() ?? {}
+          : rawOrderData;
+
+        if (String(liveOrderData.status ?? '') === 'delivered') {
+          return;
+        }
+
+        let commissionRateToFreeze =
+          typeof liveOrderData.commissionRate === 'number'
+            ? normalizeCommissionRate(liveOrderData.commissionRate)
+            : DEFAULT_EDKAWY_COMMISSION_RATE;
+
+        if (
+          typeof liveOrderData.commissionRate !== 'number' &&
+          isValidFirestoreId(targetStoreId)
+        ) {
+          const storeSnap = await tx
+            .get(doc(db, 'stores', targetStoreId))
+            .catch(() => null);
+          if (storeSnap?.exists()) {
+            const rawRate = storeSnap.data()?.commissionRate;
+            if (typeof rawRate === 'number') {
+              commissionRateToFreeze = normalizeCommissionRate(rawRate);
+            }
+          }
+        }
+
+        const liveDeliveryFee = Math.max(
+          0,
+          Number(liveOrderData.deliveryFee ?? 0)
+        );
+        const liveTotalAmount = Math.max(
+          0,
+          Number(liveOrderData.totalAmount ?? subtotalEgp + liveDeliveryFee)
+        );
+        const isFreeDelivery = Boolean(liveOrderData.freeDeliveryFundedByEdkawy);
+        const split = calculateOrderFinancialSplit({
+          subtotal: subtotalEgp,
+          deliveryFee: liveDeliveryFee,
+          commissionRate: commissionRateToFreeze,
+          isFreeDeliveryReward: isFreeDelivery,
+          freeDeliveryBaseFee:
+            typeof liveOrderData.courierDeliveryCompensation === 'number'
+              ? Number(liveOrderData.courierDeliveryCompensation)
+              : undefined,
+        });
+
+        const txDrvRef = doc(db, 'transactions', `tx_drv_${orderId}`);
+        const txColRef = doc(db, 'transactions', `tx_col_${orderId}`);
+        const txComRef = doc(db, 'transactions', `tx_com_${orderId}`);
+        const txStrRef = doc(db, 'transactions', `tx_str_${orderId}`);
+        const walletRef = resolvedCourierUid
+          ? doc(db, 'driver_wallets', resolvedCourierUid)
+          : null;
+
+        const [txDrvSnap, walletSnap] = await Promise.all([
+          tx.get(txDrvRef),
+          walletRef ? tx.get(walletRef) : Promise.resolve(null),
+        ]);
+
+        tx.update(orderRef, {
           status: 'delivered',
           ...(resolvedCourierUid
             ? { courierId: resolvedCourierUid, courierName: cleanCourierName }
             : {}),
+          courierLocation: cleanFinalLocation,
           ...cleanCoords,
+          pointsEarned: basePoints,
+          pointsAwarded: true,
+          commissionRate: split.commissionRate,
+          commissionAmount: split.commissionAmount,
+          restaurantNet: split.restaurantNet,
+          courierDeliveryCompensation: split.courierDeliveryCompensation,
           updatedAt: serverTimestamp(),
         });
-      }
-      await batch.commit();
+
+        if (liveDispatchSnap?.exists()) {
+          tx.update(dispatchRef, {
+            status: 'delivered',
+            ...(resolvedCourierUid
+              ? { courierId: resolvedCourierUid, courierName: cleanCourierName }
+              : {}),
+            ...cleanCoords,
+            commissionRate: split.commissionRate,
+            commissionAmount: split.commissionAmount,
+            restaurantNet: split.restaurantNet,
+            courierDeliveryCompensation: split.courierDeliveryCompensation,
+            updatedAt: serverTimestamp(),
+          });
+        }
+
+        if (resolvedCourierUid && walletRef && !txDrvSnap.exists()) {
+          const pm = String(liveOrderData.paymentMethod ?? 'cash');
+          const isCod = pm === 'cash' || pm === 'cash_on_delivery';
+          const custodyDelta = isCod ? liveTotalAmount : 0;
+
+          const prevWallet = walletSnap?.exists()
+            ? walletSnap.data() ?? {}
+            : {};
+          const prevCustody = Math.max(
+            0,
+            Number(prevWallet.collectionCustody ?? 0)
+          );
+          const prevDues = Math.max(0, Number(prevWallet.courierDues ?? 0));
+          const prevHandedOver = Math.max(
+            0,
+            Number(prevWallet.handedOverAmount ?? 0)
+          );
+          const prevPaidDues = Math.max(
+            0,
+            Number(prevWallet.totalDuesPaid ?? 0)
+          );
+          const prevDelivered = Math.max(
+            0,
+            Math.trunc(Number(prevWallet.totalOrdersDelivered ?? 0))
+          );
+
+          tx.set(walletRef, {
+            courierId: resolvedCourierUid,
+            courierName: cleanCourierName,
+            collectionCustody: Number((prevCustody + custodyDelta).toFixed(2)),
+            courierDues: Number(
+              (prevDues + split.courierDeliveryCompensation).toFixed(2)
+            ),
+            handedOverAmount: Number(prevHandedOver.toFixed(2)),
+            totalDuesPaid: Number(prevPaidDues.toFixed(2)),
+            totalOrdersDelivered: prevDelivered + 1,
+            ...(typeof prevWallet.lastHandoverAtIso === 'string'
+              ? { lastHandoverAtIso: prevWallet.lastHandoverAtIso }
+              : {}),
+            ...(typeof prevWallet.lastDuesPaidAtIso === 'string'
+              ? { lastDuesPaidAtIso: prevWallet.lastDuesPaidAtIso }
+              : {}),
+            updatedAt: serverTimestamp(),
+          });
+
+          const storeNameLabel = String(
+            liveOrderData.storeName ?? 'متجر إدكاوي'
+          ).slice(0, 80);
+          const storeOwnerIdVal =
+            typeof liveOrderData.storeOwnerId === 'string' &&
+            isValidFirestoreId(liveOrderData.storeOwnerId)
+              ? liveOrderData.storeOwnerId
+              : undefined;
+          const sharedLedgerMeta = {
+            orderId,
+            storeId: targetStoreId || undefined,
+            storeName: storeNameLabel,
+            ...(storeOwnerIdVal ? { storeOwnerId: storeOwnerIdVal } : {}),
+            courierId: resolvedCourierUid,
+            courierName: cleanCourierName,
+            subtotalAmount: subtotalEgp,
+            commissionAmount: split.commissionAmount,
+            restaurantNetAmount: split.restaurantNet,
+            deliveryFeeAmount: split.courierDeliveryCompensation,
+            createdBy: actorUid,
+            createdAt: serverTimestamp(),
+          };
+
+          if (custodyDelta > 0) {
+            tx.set(txColRef, {
+              id: txColRef.id,
+              type: 'order_collection',
+              amount: custodyDelta,
+              notes: `تحصيل نقدي عند الاستلام للطلب من ${storeNameLabel} (${custodyDelta} ج.م)`,
+              ...sharedLedgerMeta,
+            });
+          }
+
+          tx.set(txDrvRef, {
+            id: txDrvRef.id,
+            type: 'courier_earning',
+            amount: split.courierDeliveryCompensation,
+            notes: `أجر توصيل مستحق للمندوب عن الطلب (${split.courierDeliveryCompensation} ج.م)`,
+            ...sharedLedgerMeta,
+          });
+
+          if (split.commissionAmount > 0) {
+            tx.set(txComRef, {
+              id: txComRef.id,
+              type: 'edkawy_commission',
+              amount: split.commissionAmount,
+              notes: `عمولة إدكاوي (${Math.round(split.commissionRate * 100)}%) عن منتجات الطلب`,
+              ...sharedLedgerMeta,
+            });
+          }
+
+          if (split.restaurantNet > 0) {
+            tx.set(txStrRef, {
+              id: txStrRef.id,
+              type: 'restaurant_payable',
+              amount: split.restaurantNet,
+              notes: `صافي مستحقات ${storeNameLabel} (${Math.round((1 - split.commissionRate) * 100)}%) عن الطلب`,
+              ...sharedLedgerMeta,
+            });
+          }
+        }
+      });
     });
 
     // Award Sales Agent 24h Escrow Commission if order's Store or Customer was referred
@@ -7919,7 +8237,7 @@ export async function askEdkawyAiAssistant(input: {
 }): Promise<AiAssistantApiResponse> {
   const response = await fetch('/api/ai/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await getFirebaseAuthHeaders(),
     body: JSON.stringify({
       message: input.message.trim(),
       customerName: input.customerName ?? '',
@@ -8591,8 +8909,14 @@ export async function quoteCustomErrandByCourierInFirestore(
   coords?: { lat?: number; lng?: number }
 ): Promise<void> {
   const cleanFee = Math.trunc(Number(deliveryFeeEgp));
-  if (!Number.isFinite(cleanFee) || cleanFee < 10 || cleanFee > 500) {
-    throw new Error('يرجى تحديد تكلفة مشوار عادلة بين 10 و 500 ج.م.');
+  if (
+    !Number.isFinite(cleanFee) ||
+    cleanFee < MIN_COURIER_DELIVERY_FEE_EGP ||
+    cleanFee > 500
+  ) {
+    throw new Error(
+      `يرجى تحديد تكلفة مشوار عادلة بين ${MIN_COURIER_DELIVERY_FEE_EGP} و 500 ج.م.`
+    );
   }
 
   const orderPath = `orders/${orderId}`;
@@ -9565,7 +9889,7 @@ export async function searchProductsByImageWithAi(
 
   const res = await fetch('/api/ai/visual-search', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await getFirebaseAuthHeaders(),
     body: JSON.stringify({
       imageDataUrl,
       productsCatalog: catalogPayload,
@@ -9626,7 +9950,7 @@ export async function generateSmartMealPlanWithAi(
 
   const res = await fetch('/api/ai/meal-plan', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await getFirebaseAuthHeaders(),
     body: JSON.stringify({
       budgetEgp: input.budgetEgp,
       daysCount: input.daysCount,
@@ -10007,8 +10331,14 @@ export async function updateStoreDeliveryFeeByAdminInFirestore(
   nextDeliveryFeeEgp: number
 ): Promise<void> {
   const cleanFee = Math.trunc(Number(nextDeliveryFeeEgp));
-  if (!Number.isFinite(cleanFee) || cleanFee < 0 || cleanFee > 250) {
-    throw new Error('سعر التوصيل يجب أن يكون بين 0 و 250 ج.م.');
+  if (
+    !Number.isFinite(cleanFee) ||
+    cleanFee < MIN_COURIER_DELIVERY_FEE_EGP ||
+    cleanFee > 250
+  ) {
+    throw new Error(
+      `سعر التوصيل يجب أن يكون بين ${MIN_COURIER_DELIVERY_FEE_EGP} و 250 ج.م كحد أدنى لضمان مستحقات المندوب.`
+    );
   }
 
   await waitForFirestoreWarmup();
@@ -10207,48 +10537,81 @@ export async function runSimulateOrderCycleTestInFirestore(
 
   const overallStart = performance.now();
   const steps: QaSimulationStep[] = [];
-  const simOrderId = `qa_sim_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
+  const stamp = Date.now();
+  const rand = Math.floor(100 + Math.random() * 900);
+  const simOrderId = `qa_sim_${stamp}_${rand}`;
+  const simStoreId = 'qa_test_store_edku';
+  const simCourierId = `qa_courier_${stamp}`;
   const orderRef = doc(db, 'orders', simOrderId);
   const ticketRef = doc(db, 'dispatchQueue', simOrderId);
+  const walletRef = doc(db, 'driver_wallets', simCourierId);
+  const txIds = [
+    `tx_col_${simOrderId}`,
+    `tx_drv_${simOrderId}`,
+    `tx_com_${simOrderId}`,
+    `tx_str_${simOrderId}`,
+  ];
+  let createdReceiptId: string | null = null;
+  let createdSettlementId: string | null = null;
+  let createdHandoverTxId: string | null = null;
+  let createdSettlementTxId: string | null = null;
 
   try {
     await waitForFirestoreWarmup();
 
-    // Step 1: Atomic Create of Order + DispatchTicket
+    // Step 1: Create QA COD Order (Subtotal 200 + Delivery 20 = Total 220 -> 172 Store / 28 Edkawy / 20 Courier)
     const step1Start = performance.now();
+    const simSplit = calculateOrderFinancialSplit({
+      subtotal: 200,
+      deliveryFee: 20,
+      commissionRate: DEFAULT_EDKAWY_COMMISSION_RATE,
+    });
+    if (
+      simSplit.restaurantNet !== 172 ||
+      simSplit.commissionAmount !== 28 ||
+      simSplit.courierDeliveryCompensation !== 20
+    ) {
+      throw new Error('فشل التحقق الرياضي لتوزيع النسب (86% / 14% / 20 ج.م).');
+    }
+
     const batchCreate = writeBatch(db);
     batchCreate.set(orderRef, {
       orderType: 'standard',
       isTestSimulation: true,
       customerId: adminUid,
-      storeId: 'qa_test_store_edku',
-      storeName: 'متجر اختبار الجودة (QA)',
+      storeId: simStoreId,
+      storeName: 'مطعم اختبار الجودة المالي (QA)',
       storeLat: EDKU_CITY_CENTER.lat,
       storeLng: EDKU_CITY_CENTER.lng,
-      customerName: 'اختبار تلقائي — مركز الاختبارات',
+      customerName: 'عميل اختبار دورة الماليات',
       customerPhone: '01000000000',
       deliveryNeighborhood: 'شارع البحر',
-      deliveryAddress: 'عنوان اختبار تلقائي — مدينة إدكو',
+      deliveryAddress: 'شارع البحر — مدينة إدكو (اختبار)',
       customerLat: EDKU_CITY_CENTER.lat,
       customerLng: EDKU_CITY_CENTER.lng,
       items: [
         {
           productId: 'qa_item_1',
-          name: 'وجبة اختبار دورة الطلبات',
-          price: 100,
+          name: 'وجبة اختبار مالي شاملة',
+          price: 200,
           quantity: 1,
         },
       ],
-      itemsSummary: '١ × وجبة اختبار دورة الطلبات',
-      itemNames: ['وجبة اختبار دورة الطلبات'],
+      itemsSummary: '1 × وجبة اختبار مالي شاملة',
+      itemNames: ['وجبة اختبار مالي شاملة'],
       itemCount: 1,
-      subtotal: 100,
+      subtotal: 200,
       smallOrderFee: 0,
       deliveryFee: 20,
-      totalAmount: 120,
-      paymentMethod: 'cash',
+      totalAmount: 220,
+      commissionRate: simSplit.commissionRate,
+      commissionAmount: simSplit.commissionAmount,
+      restaurantNet: simSplit.restaurantNet,
+      courierDeliveryCompensation: simSplit.courierDeliveryCompensation,
+      freeDeliveryFundedByEdkawy: false,
+      paymentMethod: 'cash_on_delivery',
       status: 'pending',
-      notes: 'طلب اختبار آلي مؤقت (يتم حذفه تلقائياً)',
+      notes: 'طلب اختبار دورة كاملة (يتم حذفه تلقائياً)',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -10258,20 +10621,24 @@ export async function runSimulateOrderCycleTestInFirestore(
       orderType: 'standard',
       isTestSimulation: true,
       customerId: adminUid,
-      storeId: 'qa_test_store_edku',
-      storeName: 'متجر اختبار الجودة (QA)',
+      storeId: simStoreId,
+      storeName: 'مطعم اختبار الجودة المالي (QA)',
       storeNeighborhood: 'شارع البحر',
       storeLat: EDKU_CITY_CENTER.lat,
       storeLng: EDKU_CITY_CENTER.lng,
       deliveryNeighborhood: 'شارع البحر',
       customerLat: EDKU_CITY_CENTER.lat,
       customerLng: EDKU_CITY_CENTER.lng,
-      itemsSummary: '١ × وجبة اختبار دورة الطلبات',
-      subtotal: 100,
+      itemsSummary: '1 × وجبة اختبار مالي شاملة',
+      subtotal: 200,
       smallOrderFee: 0,
       deliveryFee: 20,
-      totalAmount: 120,
-      paymentMethod: 'cash',
+      totalAmount: 220,
+      commissionRate: simSplit.commissionRate,
+      commissionAmount: simSplit.commissionAmount,
+      restaurantNet: simSplit.restaurantNet,
+      courierDeliveryCompensation: simSplit.courierDeliveryCompensation,
+      paymentMethod: 'cash_on_delivery',
       status: 'pending',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -10279,54 +10646,162 @@ export async function runSimulateOrderCycleTestInFirestore(
 
     await batchCreate.commit();
     steps.push({
-      stepNameAr: 'إنشاء الطلب الوهمي وقائمة التوجيه ذرياً',
+      stepNameAr: '1. إنشاء الطلب وتجميد التوزيع المالي (200 + 20 = 220 ج.م)',
       passed: true,
       durationMs: Math.max(1, Math.round(performance.now() - step1Start)),
-      detailAr: `تمت كتابة الوثيقة (${simOrderId}) في orders و dispatchQueue بنجاح.`,
+      detailAr: `طلب (${simOrderId}): صافي المطعم 172 ج.م، عمولة إدكاوي 28 ج.م، التوصيل 20 ج.م.`,
     });
 
-    // Step 2: Verify Server Readback + Status Transition
+    // Step 2: Store Workflow (pending -> preparing -> ready)
     const step2Start = performance.now();
-    const [verifyOrderSnap, verifyTicketSnap] = await Promise.all([
-      getDocFromServer(orderRef),
-      getDocFromServer(ticketRef),
-    ]);
-    if (!verifyOrderSnap.exists() || !verifyTicketSnap.exists()) {
-      throw new Error('لم يتم العثور على الطلب التجريبي على الخادم بعد الإنشاء.');
-    }
-
-    const batchUpdate = writeBatch(db);
-    batchUpdate.update(orderRef, {
+    await updateDoc(orderRef, {
       status: 'preparing',
       prepTimeMinutes: 15,
       updatedAt: serverTimestamp(),
     });
-    batchUpdate.update(ticketRef, {
+    await updateDoc(ticketRef, {
       status: 'preparing',
       prepTimeMinutes: 15,
       updatedAt: serverTimestamp(),
     });
-    await batchUpdate.commit();
-
+    await updateDoc(orderRef, { status: 'ready', updatedAt: serverTimestamp() });
+    await updateDoc(ticketRef, { status: 'ready', updatedAt: serverTimestamp() });
     steps.push({
-      stepNameAr: 'التحقق من القراءة المباشرة وتحديث حالة الطلب',
+      stepNameAr: '2. دورة المطعم (معلق ← قيد التحضير ← جاهز للاستلام)',
       passed: true,
       durationMs: Math.max(1, Math.round(performance.now() - step2Start)),
-      detailAr: 'تم التحقق من قراءة الخادم وتحديث الحالة إلى (قيد التحضير) بنجاح.',
+      detailAr: 'تمت قراءة وانتقال حالات المتجر ذرياً بنجاح.',
     });
 
-    // Step 3: Clean Teardown Deletion
+    // Step 3: Courier Delivery & 3-Balance Wallet + Immutable Ledger
     const step3Start = performance.now();
+    await completeOrderDeliveryInFirestore(
+      simOrderId,
+      'شارع البحر — إدكو',
+      simCourierId,
+      'مندوب اختبار الجودة'
+    );
+    const walletAfterDelivery = await getDocFromServer(walletRef);
+    const wd = walletAfterDelivery.data() ?? {};
+    if (
+      Number(wd.collectionCustody ?? -1) !== 220 ||
+      Number(wd.courierDues ?? -1) !== 20
+    ) {
+      throw new Error(
+        `خلل في محفظة المندوب بعد التسليم: عهدة=${wd.collectionCustody}, مستحقات=${wd.courierDues}`
+      );
+    }
+    const ledgerSnaps = await Promise.all(
+      txIds.map((id) => getDocFromServer(doc(db, 'transactions', id)))
+    );
+    if (ledgerSnaps.some((s) => !s.exists())) {
+      throw new Error('لم يتم تسجيل جميع القيود المحاسبية الأربعة في دفتر المعاملات.');
+    }
+    steps.push({
+      stepNameAr: '3. تسليم المندوب وتحديث المحفظة الثلاثية ودفتر القيود',
+      passed: true,
+      durationMs: Math.max(1, Math.round(performance.now() - step3Start)),
+      detailAr:
+        'عهدة التحصيل = 220 ج.م، مستحقات المندوب = 20 ج.م، وسُجّلت قيود 172 و 28 و 20 في transactions.',
+    });
+
+    // Step 4: Treasury Cash Handover & Numbered Receipt
+    const step4Start = performance.now();
+    const handoverRes = await recordTreasuryHandoverInFirestore({
+      courierId: simCourierId,
+      courierName: 'مندوب اختبار الجودة',
+      expectedAmount: 220,
+      actualAmount: 220,
+      orderIds: [simOrderId],
+      notes: 'توريد اختبار آلي لخزينة إدكاوي',
+      adminUid,
+      adminName: 'اختبار QA',
+      skipAuditLog: true,
+    });
+    createdReceiptId = handoverRes.receiptId;
+    createdHandoverTxId = handoverRes.handoverTxId;
+    const walletAfterHandover = await getDocFromServer(walletRef);
+    const wd2 = walletAfterHandover.data() ?? {};
+    if (
+      Number(wd2.collectionCustody ?? -1) !== 0 ||
+      Number(wd2.handedOverAmount ?? -1) !== 220 ||
+      Number(wd2.courierDues ?? -1) !== 20
+    ) {
+      throw new Error('فشل مطابقة تصفير عهدة التحصيل بعد التوريد للخزينة.');
+    }
+    steps.push({
+      stepNameAr: '4. توريد النقدية لخزينة إدكاوي وإصدار الإيصال المرقم',
+      passed: true,
+      durationMs: Math.max(1, Math.round(performance.now() - step4Start)),
+      detailAr: `إيصال رقم ${handoverRes.receiptNumber}: عهدة المندوب = 0، المسلّم = 220، أجر المندوب الباقي = 20 ج.م.`,
+    });
+
+    // Step 5: Daily Settlement + Mark Paid
+    const step5Start = performance.now();
+    const todayKey = getCairoDateKey();
+    const settlementBatches = await generateDailyRestaurantSettlementsInFirestore({
+      targetDateKey: todayKey,
+      storeIdFilter: simStoreId,
+      onlyOrderIds: [simOrderId],
+      adminUid,
+      adminName: 'اختبار QA',
+    });
+    if (settlementBatches.length === 0) {
+      throw new Error('تعذر إنشاء دفعة التسوية اليومية لطلب الاختبار.');
+    }
+    createdSettlementId = settlementBatches[0].id;
+    const settlePaidRes = await markRestaurantSettlementPaidInFirestore({
+      settlementId: createdSettlementId,
+      paymentMethod: 'instapay',
+      transferReference: `QA-REF-${rand}`,
+      notes: 'تسوية اختبار الجودة',
+      adminUid,
+      adminName: 'اختبار QA',
+      skipAuditLog: true,
+    });
+    createdSettlementTxId = settlePaidRes.txId;
+    const finalOrderSnap = await getDocFromServer(orderRef);
+    if (finalOrderSnap.data()?.isFinancialSettled !== true) {
+      throw new Error('لم يتم تحديث علامة التسوية النهائية على الطلب.');
+    }
+    steps.push({
+      stepNameAr: '5. التسوية اليومية للمطعم (86% = 172 ج.م) وسداد المستحقات',
+      passed: true,
+      durationMs: Math.max(1, Math.round(performance.now() - step5Start)),
+      detailAr: `دفعة ${createdSettlementId} تم سدادها وإغلاقها محاسبياً بنجاح.`,
+    });
+
+    // Step 6: Clean Teardown Deletion
+    const step6Start = performance.now();
     const batchDelete = writeBatch(db);
     batchDelete.delete(orderRef);
     batchDelete.delete(ticketRef);
+    batchDelete.delete(walletRef);
+    for (const id of txIds) {
+      batchDelete.delete(doc(db, 'transactions', id));
+    }
+    if (createdHandoverTxId) {
+      batchDelete.delete(doc(db, 'transactions', createdHandoverTxId));
+    }
+    if (createdSettlementTxId) {
+      batchDelete.delete(doc(db, 'transactions', createdSettlementTxId));
+    }
+    if (createdReceiptId) {
+      batchDelete.delete(doc(db, 'treasury_receipts', createdReceiptId));
+    }
+    if (createdSettlementId) {
+      batchDelete.delete(
+        doc(db, 'restaurant_settlements', createdSettlementId)
+      );
+    }
     await batchDelete.commit();
 
     steps.push({
-      stepNameAr: 'حذف الطلب الوهمي وتنظيف قاعدة البيانات',
+      stepNameAr: '6. تنظيف قاعدة البيانات ومسح كل وثائق الاختبار',
       passed: true,
-      durationMs: Math.max(1, Math.round(performance.now() - step3Start)),
-      detailAr: 'تم مسح الطلب الوهمي وتذكرة التوجيه بالكامل دون ترك أي أثر.',
+      durationMs: Math.max(1, Math.round(performance.now() - step6Start)),
+      detailAr:
+        'تم حذف الطلب والتذكرة والمحفظة والقيود والإيصال والتسوية دون ترك أي أثر.',
     });
 
     const totalDurationMs = Math.max(
@@ -10338,13 +10813,29 @@ export async function runSimulateOrderCycleTestInFirestore(
       simulatedOrderId: simOrderId,
       totalDurationMs,
       testedAtIso: new Date().toISOString(),
-      summaryAr: `نجحت دورة الاختبار الكاملة (إنشاء ← تحقق وتحديث ← مسح) خلال ${totalDurationMs} مللي ثانية.`,
+      summaryAr: `نجحت دورة الطلب والسياسة المالية الكاملة (6 مراحل من الطلب حتى التسوية) خلال ${totalDurationMs} مللي ثانية.`,
       steps,
     };
   } catch (error) {
     // Best-effort cleanup if failed mid-flight
-    await deleteDoc(orderRef).catch(() => {});
-    await deleteDoc(ticketRef).catch(() => {});
+    await Promise.all([
+      deleteDoc(orderRef).catch(() => {}),
+      deleteDoc(ticketRef).catch(() => {}),
+      deleteDoc(walletRef).catch(() => {}),
+      ...txIds.map((id) => deleteDoc(doc(db, 'transactions', id)).catch(() => {})),
+      ...(createdHandoverTxId
+        ? [deleteDoc(doc(db, 'transactions', createdHandoverTxId)).catch(() => {})]
+        : []),
+      ...(createdSettlementTxId
+        ? [deleteDoc(doc(db, 'transactions', createdSettlementTxId)).catch(() => {})]
+        : []),
+      ...(createdReceiptId
+        ? [deleteDoc(doc(db, 'treasury_receipts', createdReceiptId)).catch(() => {})]
+        : []),
+      ...(createdSettlementId
+        ? [deleteDoc(doc(db, 'restaurant_settlements', createdSettlementId)).catch(() => {})]
+        : []),
+    ]);
 
     const errMsg = error instanceof Error ? error.message : String(error);
     steps.push({
@@ -10359,7 +10850,7 @@ export async function runSimulateOrderCycleTestInFirestore(
       simulatedOrderId: simOrderId,
       totalDurationMs: Math.max(1, Math.round(performance.now() - overallStart)),
       testedAtIso: new Date().toISOString(),
-      summaryAr: `تعذر إكمال اختبار الطلب الوهمي: ${errMsg.slice(0, 140)}`,
+      summaryAr: `تعذر إكمال اختبار الدورة المالية الكاملة: ${errMsg.slice(0, 140)}`,
       steps,
     };
   }
@@ -10549,8 +11040,14 @@ export async function updateEdkoZonePriceByAdminInFirestore(
     throw new Error('معرّف المنطقة غير معتمد في نظام تسعير إدكو.');
   }
   const cleanPrice = Math.trunc(Number(nextPriceEgp));
-  if (!Number.isFinite(cleanPrice) || cleanPrice < 5 || cleanPrice > 250) {
-    throw new Error('سعر توصيل المنطقة يجب أن يكون بين 5 و 250 ج.م.');
+  if (
+    !Number.isFinite(cleanPrice) ||
+    cleanPrice < MIN_COURIER_DELIVERY_FEE_EGP ||
+    cleanPrice > 250
+  ) {
+    throw new Error(
+      `سعر توصيل المنطقة يجب أن يكون بين ${MIN_COURIER_DELIVERY_FEE_EGP} و 250 ج.م كحد أدنى.`
+    );
   }
 
   await waitForFirestoreWarmup();
@@ -10770,7 +11267,7 @@ export async function extractMenuItemsFromImageWithAi(
 ): Promise<OcrExtractedMenuItem[]> {
   const res = await fetch('/api/ocr-menu', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await getFirebaseAuthHeaders(),
     body: JSON.stringify({
       imageDataUrl,
       storeCategory: storeCategory ?? 'مشويات ومطاعم',
@@ -11616,7 +12113,7 @@ export function buildInvitationRegistrationUrl(
   referralCode?: string
 ): string {
   const origin = resolvePublicAppOrigin();
-  const url = new URL('/', origin);
+  const url = new URL('/register', origin);
   url.searchParams.set('token', token);
   url.searchParams.set('type', userType);
   if (referralCode && referralCode.trim()) {
@@ -11697,7 +12194,7 @@ async function sendInvitationEmailViaServer(params: {
   try {
     const res = await fetch('/api/invitations/send-email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getFirebaseAuthHeaders(),
       body: JSON.stringify({
         ...params,
         inviterName: params.invitedByName,
@@ -12322,7 +12819,9 @@ export async function registerAccountFromInvitationInFirestore(
           cleanPassword
         );
       } catch {
-        throw authErr;
+        throw new Error(
+          'هذا البريد الإلكتروني مسجل مسبقاً في النظام. لإتمام ربط الدعوة أدخل كلمة مرور حسابك الحالية، أو استخدم «نسيت كلمة المرور؟» ثم أعد فتح رابط الدعوة.'
+        );
       }
     } else {
       throw authErr;
@@ -12368,6 +12867,27 @@ export async function registerAccountFromInvitationInFirestore(
       }
 
       const existingUserSnap = createdFreshAuthUser ? null : await tx.get(userRef);
+      const invIdxSnap = await tx.get(invIdxRef);
+      const courierRef = doc(db, 'couriers', uid);
+      const courierDirRef = doc(db, 'courierDirectory', uid);
+      const existingCourierSnap =
+        !createdFreshAuthUser && inv.userType === 'courier'
+          ? await tx.get(courierRef)
+          : null;
+      const existingCourierDirSnap =
+        !createdFreshAuthUser && inv.userType === 'courier'
+          ? await tx.get(courierDirRef)
+          : null;
+      const agentRef = doc(db, 'sales_agents', uid);
+      const agentDirRef = doc(db, 'salesAgentDirectory', uid);
+      const existingAgentSnap =
+        !createdFreshAuthUser && inv.userType === 'sales_agent'
+          ? await tx.get(agentRef)
+          : null;
+      const existingAgentDirSnap =
+        !createdFreshAuthUser && inv.userType === 'sales_agent'
+          ? await tx.get(agentDirRef)
+          : null;
 
       tx.update(invRef, {
         status: 'accepted',
@@ -12375,10 +12895,12 @@ export async function registerAccountFromInvitationInFirestore(
         acceptedAtIso,
         updatedAt: serverTimestamp(),
       });
-      tx.update(invIdxRef, {
-        status: 'accepted',
-        updatedAt: serverTimestamp(),
-      });
+      if (invIdxSnap.exists()) {
+        tx.update(invIdxRef, {
+          status: 'accepted',
+          updatedAt: serverTimestamp(),
+        });
+      }
       tx.set(lockRef, {
         token: inv.token,
         status: 'accepted',
@@ -12474,47 +12996,60 @@ export async function registerAccountFromInvitationInFirestore(
       }
 
       if (inv.userType === 'sales_agent') {
-        tx.set(doc(db, 'sales_agents', uid), {
-          id: uid,
-          name: cleanName,
-          email: cleanEmail,
-          phone: cleanPhone,
-          referralCode: preGeneratedRefCode,
-          isActive: true,
-          inviteToken: inv.token,
-          createdBy: uid,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-        tx.set(doc(db, 'salesAgentDirectory', uid), {
-          id: uid,
-          name: cleanName,
-          referralCode: preGeneratedRefCode,
-          commissionRatePercent: 5,
-          availableBalance: 0,
-          pendingBalance: 0,
-          totalEarnings: 0,
-          invitedStoresCount: 0,
-          invitedCustomersCount: 0,
-          invitedCouriersCount: 0,
-          isActive: true,
-          createdBy: uid,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-        tx.set(doc(db, 'referralCodes', preGeneratedRefCode), {
-          code: preGeneratedRefCode,
-          agentId: uid,
-          agentName: cleanName,
-          isActive: true,
-          createdAt: serverTimestamp(),
-        });
+        const effectiveRefCode = String(
+          existingAgentSnap?.data()?.referralCode || preGeneratedRefCode
+        );
+        if (existingAgentSnap?.exists()) {
+          tx.update(agentRef, {
+            name: cleanName,
+            phone: cleanPhone,
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          tx.set(agentRef, {
+            id: uid,
+            name: cleanName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            referralCode: effectiveRefCode,
+            isActive: true,
+            inviteToken: inv.token,
+            createdBy: uid,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        }
+        if (!existingAgentDirSnap?.exists()) {
+          tx.set(agentDirRef, {
+            id: uid,
+            name: cleanName,
+            referralCode: effectiveRefCode,
+            commissionRatePercent: 5,
+            availableBalance: 0,
+            pendingBalance: 0,
+            totalEarnings: 0,
+            invitedStoresCount: 0,
+            invitedCustomersCount: 0,
+            invitedCouriersCount: 0,
+            isActive: true,
+            createdBy: uid,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          tx.set(doc(db, 'referralCodes', effectiveRefCode), {
+            code: effectiveRefCode,
+            agentId: uid,
+            agentName: cleanName,
+            isActive: true,
+            createdAt: serverTimestamp(),
+          });
+        }
         const agentUserPatch = {
           role: 'sales_agent',
           name: cleanName,
           email: cleanEmail,
           phone: cleanPhone,
-          referralCode: preGeneratedRefCode,
+          referralCode: effectiveRefCode,
           requiresEmailVerification: true,
           updatedAt: serverTimestamp(),
         };
@@ -12531,17 +13066,7 @@ export async function registerAccountFromInvitationInFirestore(
 
       if (inv.userType === 'courier') {
         const vehicleType = payload.vehicleType || 'دراجة نارية';
-        tx.set(doc(db, 'couriers', uid), {
-          name: cleanName,
-          phone: cleanPhone,
-          email: cleanEmail,
-          vehicleType,
-          neighborhood: cleanNeighborhood,
-          lat: coords.lat,
-          lng: coords.lng,
-          isAvailable: false,
-          approvalStatus: 'pending',
-          completedDeliveries: 0,
+        const courierKycPatch = {
           ...(payload.nationalIdFrontUrl
             ? { nationalIdFrontUrl: payload.nationalIdFrontUrl.trim().slice(0, 130000) }
             : {}),
@@ -12561,21 +13086,63 @@ export async function registerAccountFromInvitationInFirestore(
             ? { selfieWithIdUrl: payload.selfieWithIdUrl.trim().slice(0, 130000) }
             : {}),
           kycSubmittedAtIso: acceptedAtIso,
-          updatedBy: uid,
-          updatedAt: serverTimestamp(),
-        });
-        tx.set(doc(db, 'courierDirectory', uid), {
-          name: cleanName,
-          vehicleType,
-          neighborhood: cleanNeighborhood,
-          lat: coords.lat,
-          lng: coords.lng,
-          isAvailable: false,
-          approvalStatus: 'pending',
-          completedDeliveries: 0,
-          updatedBy: uid,
-          updatedAt: serverTimestamp(),
-        });
+        };
+        if (existingCourierSnap?.exists()) {
+          tx.update(courierRef, {
+            name: cleanName,
+            phone: cleanPhone,
+            email: cleanEmail,
+            vehicleType,
+            neighborhood: cleanNeighborhood,
+            lat: coords.lat,
+            lng: coords.lng,
+            isAvailable: false,
+            approvalStatus: 'pending',
+            ...courierKycPatch,
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          tx.set(courierRef, {
+            name: cleanName,
+            phone: cleanPhone,
+            email: cleanEmail,
+            vehicleType,
+            neighborhood: cleanNeighborhood,
+            lat: coords.lat,
+            lng: coords.lng,
+            isAvailable: false,
+            approvalStatus: 'pending',
+            completedDeliveries: 0,
+            ...courierKycPatch,
+            updatedBy: uid,
+            updatedAt: serverTimestamp(),
+          });
+        }
+        if (existingCourierDirSnap?.exists()) {
+          tx.update(courierDirRef, {
+            name: cleanName,
+            vehicleType,
+            neighborhood: cleanNeighborhood,
+            lat: coords.lat,
+            lng: coords.lng,
+            isAvailable: false,
+            approvalStatus: 'pending',
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          tx.set(courierDirRef, {
+            name: cleanName,
+            vehicleType,
+            neighborhood: cleanNeighborhood,
+            lat: coords.lat,
+            lng: coords.lng,
+            isAvailable: false,
+            approvalStatus: 'pending',
+            completedDeliveries: 0,
+            updatedBy: uid,
+            updatedAt: serverTimestamp(),
+          });
+        }
         const courierUserPatch = {
           role: 'courier',
           name: cleanName,
@@ -14039,7 +14606,7 @@ export async function updateEdkoZoneInFirestore(
     Number(updates.deliveryFeeEgp ?? updates.deliveryFee ?? 15)
   );
   await updateDoc(zRef, {
-    ...(Number.isFinite(nextFee) && nextFee >= 5
+    ...(Number.isFinite(nextFee) && nextFee >= MIN_COURIER_DELIVERY_FEE_EGP
       ? { price: nextFee, deliveryFee: nextFee }
       : {}),
     ...(updates.name ? { name: updates.name } : {}),
@@ -14603,4 +15170,1349 @@ export function listenToLiveEvents(
     }
   );
 }
+
+/* ============================================================================
+ * EDKAWY FINANCIAL POLICY SYSTEM (WALLETS, LEDGER, TREASURY, SETTLEMENTS, EXCEPTIONS)
+ * ========================================================================== */
+
+function parseDriverWalletDoc(
+  snap: DocumentSnapshot<DocumentData> | QueryDocumentSnapshot<DocumentData>
+): DriverWalletRecord {
+  const d = snap.data() ?? {};
+  return {
+    courierId: String(d.courierId ?? snap.id),
+    courierName: String(d.courierName ?? 'مندوب إدكاوي'),
+    collectionCustody: Math.max(0, Number(d.collectionCustody ?? 0)),
+    courierDues: Math.max(0, Number(d.courierDues ?? 0)),
+    handedOverAmount: Math.max(0, Number(d.handedOverAmount ?? 0)),
+    totalDuesPaid: Math.max(0, Number(d.totalDuesPaid ?? 0)),
+    totalOrdersDelivered: Math.max(
+      0,
+      Math.trunc(Number(d.totalOrdersDelivered ?? 0))
+    ),
+    lastHandoverAtIso:
+      typeof d.lastHandoverAtIso === 'string' && d.lastHandoverAtIso.trim()
+        ? d.lastHandoverAtIso
+        : undefined,
+    lastDuesPaidAtIso:
+      typeof d.lastDuesPaidAtIso === 'string' && d.lastDuesPaidAtIso.trim()
+        ? d.lastDuesPaidAtIso
+        : undefined,
+    updatedAtIso: toIsoString(d.updatedAt),
+  };
+}
+
+function parseFinancialTransactionDoc(
+  snap: DocumentSnapshot<DocumentData> | QueryDocumentSnapshot<DocumentData>
+): FinancialTransactionRecord {
+  const d = snap.data() ?? {};
+  const validTypes: FinancialTransactionType[] = [
+    'order_collection',
+    'courier_earning',
+    'edkawy_commission',
+    'restaurant_payable',
+    'cash_handover',
+    'courier_payout',
+    'restaurant_settlement',
+    'exception_adjustment',
+  ];
+  const rawType = String(d.type ?? 'order_collection') as FinancialTransactionType;
+  const type = validTypes.includes(rawType) ? rawType : 'order_collection';
+
+  return {
+    id: String(d.id ?? snap.id),
+    type,
+    orderId: typeof d.orderId === 'string' ? d.orderId : undefined,
+    storeId: typeof d.storeId === 'string' ? d.storeId : undefined,
+    storeOwnerId:
+      typeof d.storeOwnerId === 'string' ? d.storeOwnerId : undefined,
+    storeName: typeof d.storeName === 'string' ? d.storeName : undefined,
+    courierId: typeof d.courierId === 'string' ? d.courierId : undefined,
+    courierName: typeof d.courierName === 'string' ? d.courierName : undefined,
+    receiptId: typeof d.receiptId === 'string' ? d.receiptId : undefined,
+    settlementId:
+      typeof d.settlementId === 'string' ? d.settlementId : undefined,
+    amount: Math.max(0, Number(d.amount ?? 0)),
+    subtotalAmount:
+      typeof d.subtotalAmount === 'number' ? Number(d.subtotalAmount) : undefined,
+    commissionAmount:
+      typeof d.commissionAmount === 'number'
+        ? Number(d.commissionAmount)
+        : undefined,
+    restaurantNetAmount:
+      typeof d.restaurantNetAmount === 'number'
+        ? Number(d.restaurantNetAmount)
+        : undefined,
+    deliveryFeeAmount:
+      typeof d.deliveryFeeAmount === 'number'
+        ? Number(d.deliveryFeeAmount)
+        : undefined,
+    notes: String(d.notes ?? ''),
+    createdBy: String(d.createdBy ?? ''),
+    createdAtIso: toIsoString(d.createdAt),
+  };
+}
+
+function parseTreasuryReceiptDoc(
+  snap: DocumentSnapshot<DocumentData> | QueryDocumentSnapshot<DocumentData>
+): TreasuryReceiptRecord {
+  const d = snap.data() ?? {};
+  return {
+    id: String(d.id ?? snap.id),
+    receiptNumber: String(d.receiptNumber ?? snap.id),
+    courierId: String(d.courierId ?? ''),
+    courierName: String(d.courierName ?? 'مندوب إدكاوي'),
+    ordersCount: Math.max(0, Math.trunc(Number(d.ordersCount ?? 0))),
+    orderIds: Array.isArray(d.orderIds)
+      ? d.orderIds.filter((x: unknown): x is string => typeof x === 'string')
+      : undefined,
+    expectedAmount: Math.max(0, Number(d.expectedAmount ?? 0)),
+    actualAmount: Math.max(0, Number(d.actualAmount ?? 0)),
+    varianceAmount: Number(d.varianceAmount ?? 0),
+    courierDuesSnapshot: Math.max(0, Number(d.courierDuesSnapshot ?? 0)),
+    duesPaidSeparately:
+      typeof d.duesPaidSeparately === 'number'
+        ? Math.max(0, Number(d.duesPaidSeparately))
+        : undefined,
+    receivedByUid: String(d.receivedByUid ?? ''),
+    receivedByName: String(d.receivedByName ?? 'خزينة إدكاوي'),
+    notes: String(d.notes ?? ''),
+    createdAtIso: toIsoString(d.createdAt),
+  };
+}
+
+function parseRestaurantSettlementDoc(
+  snap: DocumentSnapshot<DocumentData> | QueryDocumentSnapshot<DocumentData>
+): RestaurantSettlementRecord {
+  const d = snap.data() ?? {};
+  const rawStatus = String(d.status ?? 'pending_review');
+  const status: RestaurantSettlementStatus =
+    rawStatus === 'paid' || rawStatus === 'disputed'
+      ? rawStatus
+      : 'pending_review';
+  const rawMethod =
+    typeof d.paymentMethod === 'string' ? d.paymentMethod : undefined;
+  const paymentMethod: RestaurantSettlementMethod | undefined =
+    rawMethod === 'vodafone_cash' ||
+    rawMethod === 'instapay' ||
+    rawMethod === 'bank_transfer' ||
+    rawMethod === 'cash_at_hq'
+      ? rawMethod
+      : undefined;
+
+  return {
+    id: String(d.id ?? snap.id),
+    storeId: String(d.storeId ?? ''),
+    storeOwnerId:
+      typeof d.storeOwnerId === 'string' ? d.storeOwnerId : undefined,
+    storeName: String(d.storeName ?? 'متجر إدكاوي'),
+    settlementDateKey: String(d.settlementDateKey ?? ''),
+    cutoffLabel: String(
+      d.cutoffLabel ?? '12:00 منتصف الليل (توقيت القاهرة)'
+    ),
+    ordersCount: Math.max(0, Math.trunc(Number(d.ordersCount ?? 0))),
+    orderIds: Array.isArray(d.orderIds)
+      ? d.orderIds.filter((x: unknown): x is string => typeof x === 'string')
+      : [],
+    grossProductsSales: Math.max(0, Number(d.grossProductsSales ?? 0)),
+    commissionRate: normalizeCommissionRate(
+      typeof d.commissionRate === 'number'
+        ? d.commissionRate
+        : DEFAULT_EDKAWY_COMMISSION_RATE
+    ),
+    edkawyCommission: Math.max(0, Number(d.edkawyCommission ?? 0)),
+    restaurantNetPayable: Math.max(0, Number(d.restaurantNetPayable ?? 0)),
+    deliveryFeesTotal: Math.max(0, Number(d.deliveryFeesTotal ?? 0)),
+    status,
+    paymentMethod,
+    transferReference:
+      typeof d.transferReference === 'string' ? d.transferReference : undefined,
+    paidAtIso: typeof d.paidAtIso === 'string' ? d.paidAtIso : undefined,
+    paidByUid: typeof d.paidByUid === 'string' ? d.paidByUid : undefined,
+    paidByName: typeof d.paidByName === 'string' ? d.paidByName : undefined,
+    notes: typeof d.notes === 'string' ? d.notes : undefined,
+    createdAtIso: toIsoString(d.createdAt),
+    updatedAtIso: toIsoString(d.updatedAt),
+  };
+}
+
+function parseFinancialExceptionDoc(
+  snap: DocumentSnapshot<DocumentData> | QueryDocumentSnapshot<DocumentData>
+): FinancialExceptionRecord {
+  const d = snap.data() ?? {};
+  const rawType = String(d.exceptionType ?? 'cash_shortage');
+  const validTypes: FinancialExceptionType[] = [
+    'cancelled_before_prep',
+    'store_rejected',
+    'customer_refused_door',
+    'courier_failed_delivery',
+    'cash_shortage',
+    'wrong_order',
+  ];
+  const exceptionType = validTypes.includes(rawType as FinancialExceptionType)
+    ? (rawType as FinancialExceptionType)
+    : 'cash_shortage';
+
+  const rawStatus = String(d.status ?? 'pending_review');
+  const status: FinancialExceptionStatus =
+    rawStatus === 'resolved_no_deduction' ||
+    rawStatus === 'resolved_with_adjustment'
+      ? rawStatus
+      : 'pending_review';
+
+  const rawParty = typeof d.responsibleParty === 'string' ? d.responsibleParty : '';
+  const responsibleParty: ExceptionResponsibleParty | undefined =
+    rawParty === 'customer' ||
+    rawParty === 'store' ||
+    rawParty === 'courier' ||
+    rawParty === 'edkawy' ||
+    rawParty === 'shared'
+      ? rawParty
+      : undefined;
+
+  return {
+    id: String(d.id ?? snap.id),
+    orderId: typeof d.orderId === 'string' ? d.orderId : undefined,
+    receiptId: typeof d.receiptId === 'string' ? d.receiptId : undefined,
+    storeId: typeof d.storeId === 'string' ? d.storeId : undefined,
+    storeOwnerId:
+      typeof d.storeOwnerId === 'string' ? d.storeOwnerId : undefined,
+    storeName: typeof d.storeName === 'string' ? d.storeName : undefined,
+    courierId: typeof d.courierId === 'string' ? d.courierId : undefined,
+    courierName: typeof d.courierName === 'string' ? d.courierName : undefined,
+    exceptionType,
+    disputedAmount: Math.max(0, Number(d.disputedAmount ?? 0)),
+    responsibleParty,
+    holdSettlement: Boolean(d.holdSettlement),
+    status,
+    description: String(d.description ?? ''),
+    adminResolutionNote:
+      typeof d.adminResolutionNote === 'string'
+        ? d.adminResolutionNote
+        : undefined,
+    resolvedByUid:
+      typeof d.resolvedByUid === 'string' ? d.resolvedByUid : undefined,
+    resolvedByName:
+      typeof d.resolvedByName === 'string' ? d.resolvedByName : undefined,
+    createdBy: String(d.createdBy ?? ''),
+    createdAtIso: toIsoString(d.createdAt),
+    resolvedAtIso:
+      typeof d.resolvedAtIso === 'string' ? d.resolvedAtIso : undefined,
+  };
+}
+
+export function listenToAllDriverWallets(
+  onData: (wallets: DriverWalletRecord[]) => void
+): Unsubscribe {
+  if (!auth.currentUser) {
+    onData([]);
+    return () => {};
+  }
+  return onSnapshot(
+    collection(db, 'driver_wallets'),
+    (snap) => {
+      const list = snap.docs
+        .map(parseDriverWalletDoc)
+        .sort(
+          (a, b) =>
+            b.collectionCustody - a.collectionCustody ||
+            b.courierDues - a.courierDues
+        );
+      onData(list);
+    },
+    (error) => {
+      logFirestoreFailure('driver_wallets', '*', 'listenToAllDriverWallets', error);
+      onData([]);
+    }
+  );
+}
+
+export function listenToCourierDriverWallet(
+  courierUid: string,
+  onData: (wallet: DriverWalletRecord | null) => void
+): Unsubscribe {
+  if (!courierUid || !isValidFirestoreId(courierUid)) {
+    onData(null);
+    return () => {};
+  }
+  return onSnapshot(
+    doc(db, 'driver_wallets', courierUid),
+    (snap) => {
+      if (!snap.exists()) {
+        onData(null);
+        return;
+      }
+      onData(parseDriverWalletDoc(snap));
+    },
+    (error) => {
+      logFirestoreFailure(
+        'driver_wallets',
+        courierUid,
+        'listenToCourierDriverWallet',
+        error
+      );
+      onData(null);
+    }
+  );
+}
+
+export function listenToFinancialTransactions(
+  onData: (txs: FinancialTransactionRecord[]) => void,
+  filter?: { courierId?: string; storeOwnerId?: string }
+): Unsubscribe {
+  if (!auth.currentUser) {
+    onData([]);
+    return () => {};
+  }
+  const baseCol = collection(db, 'transactions');
+  const q = filter?.courierId
+    ? query(baseCol, where('courierId', '==', filter.courierId))
+    : filter?.storeOwnerId
+    ? query(baseCol, where('storeOwnerId', '==', filter.storeOwnerId))
+    : query(baseCol, limit(400));
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = snap.docs
+        .map(parseFinancialTransactionDoc)
+        .sort((a, b) => b.createdAtIso.localeCompare(a.createdAtIso));
+      onData(list);
+    },
+    (error) => {
+      logFirestoreFailure(
+        'transactions',
+        '*',
+        'listenToFinancialTransactions',
+        error
+      );
+      onData([]);
+    }
+  );
+}
+
+export function listenToTreasuryReceipts(
+  onData: (receipts: TreasuryReceiptRecord[]) => void,
+  courierUidFilter?: string
+): Unsubscribe {
+  if (!auth.currentUser) {
+    onData([]);
+    return () => {};
+  }
+  const baseCol = collection(db, 'treasury_receipts');
+  const q = courierUidFilter
+    ? query(baseCol, where('courierId', '==', courierUidFilter))
+    : baseCol;
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = snap.docs
+        .map(parseTreasuryReceiptDoc)
+        .sort((a, b) => b.createdAtIso.localeCompare(a.createdAtIso));
+      onData(list);
+    },
+    (error) => {
+      logFirestoreFailure(
+        'treasury_receipts',
+        '*',
+        'listenToTreasuryReceipts',
+        error
+      );
+      onData([]);
+    }
+  );
+}
+
+export function listenToRestaurantSettlements(
+  onData: (settlements: RestaurantSettlementRecord[]) => void,
+  storeOwnerUidFilter?: string
+): Unsubscribe {
+  if (!auth.currentUser) {
+    onData([]);
+    return () => {};
+  }
+  const baseCol = collection(db, 'restaurant_settlements');
+  const q = storeOwnerUidFilter
+    ? query(baseCol, where('storeOwnerId', '==', storeOwnerUidFilter))
+    : baseCol;
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = snap.docs
+        .map(parseRestaurantSettlementDoc)
+        .sort((a, b) => b.updatedAtIso.localeCompare(a.updatedAtIso));
+      onData(list);
+    },
+    (error) => {
+      logFirestoreFailure(
+        'restaurant_settlements',
+        '*',
+        'listenToRestaurantSettlements',
+        error
+      );
+      onData([]);
+    }
+  );
+}
+
+export function listenToFinancialExceptions(
+  onData: (exceptions: FinancialExceptionRecord[]) => void,
+  filter?: { courierId?: string; storeOwnerId?: string }
+): Unsubscribe {
+  if (!auth.currentUser) {
+    onData([]);
+    return () => {};
+  }
+  const baseCol = collection(db, 'financial_exceptions');
+  const q = filter?.courierId
+    ? query(baseCol, where('courierId', '==', filter.courierId))
+    : filter?.storeOwnerId
+    ? query(baseCol, where('storeOwnerId', '==', filter.storeOwnerId))
+    : baseCol;
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = snap.docs
+        .map(parseFinancialExceptionDoc)
+        .sort((a, b) => {
+          if (a.status === 'pending_review' && b.status !== 'pending_review')
+            return -1;
+          if (a.status !== 'pending_review' && b.status === 'pending_review')
+            return 1;
+          return b.createdAtIso.localeCompare(a.createdAtIso);
+        });
+      onData(list);
+    },
+    (error) => {
+      logFirestoreFailure(
+        'financial_exceptions',
+        '*',
+        'listenToFinancialExceptions',
+        error
+      );
+      onData([]);
+    }
+  );
+}
+
+export async function recordTreasuryHandoverInFirestore(input: {
+  courierId: string;
+  courierName: string;
+  expectedAmount: number;
+  actualAmount: number;
+  payCourierDuesAmount?: number;
+  orderIds?: string[];
+  notes?: string;
+  adminUid: string;
+  adminName: string;
+  skipAuditLog?: boolean;
+}): Promise<{
+  receiptId: string;
+  receiptNumber: string;
+  varianceAmount: number;
+  handoverTxId: string;
+  exceptionId?: string;
+}> {
+  if (!isValidFirestoreId(input.courierId) || !isValidFirestoreId(input.adminUid)) {
+    throw new Error('معرف المندوب أو موظف الخزينة غير صالح.');
+  }
+  const expectedAmount = Math.max(0, Number(input.expectedAmount));
+  const actualAmount = Math.max(0, Number(input.actualAmount));
+  const payDues = Math.max(0, Number(input.payCourierDuesAmount ?? 0));
+  if (actualAmount <= 0 && payDues <= 0) {
+    throw new Error('يرجى إدخال مبلغ نقدي مستلم أو مستحقات منصرفة أكبر من صفر.');
+  }
+
+  await waitForFirestoreWarmup();
+  const receiptRef = doc(collection(db, 'treasury_receipts'));
+  const handoverTxRef = doc(collection(db, 'transactions'));
+  const duesTxRef = doc(collection(db, 'transactions'));
+  const walletRef = doc(db, 'driver_wallets', input.courierId);
+  const datePart = getCairoDateKey().replace(/-/g, '');
+  const seqSuffix = Math.floor(1000 + Math.random() * 9000);
+  const receiptNumber = `TR-${datePart}-${seqSuffix}`;
+  const varianceAmount = Number((actualAmount - expectedAmount).toFixed(2));
+  const shortageAmount =
+    varianceAmount < 0 ? Number(Math.abs(varianceAmount).toFixed(2)) : 0;
+  const exceptionRef =
+    shortageAmount > 0 ? doc(collection(db, 'financial_exceptions')) : null;
+  const nowIso = new Date().toISOString();
+  const cleanCourierName = (input.courierName.trim() || 'مندوب إدكاوي').slice(0, 80);
+  const cleanAdminName = (input.adminName.trim() || 'موظف خزينة إدكاوي').slice(0, 80);
+  const cleanNotes = (input.notes ?? '').trim().slice(0, 300);
+  const cleanOrderIds = Array.isArray(input.orderIds)
+    ? input.orderIds.filter((id) => isValidFirestoreId(id)).slice(0, 100)
+    : [];
+
+  try {
+    await runWriteWithNetworkRetry(async () => {
+      await runTransaction(db, async (tx) => {
+        const walletSnap = await tx.get(walletRef);
+        const w = walletSnap.exists() ? walletSnap.data() ?? {} : {};
+        const prevCustody = Math.max(0, Number(w.collectionCustody ?? expectedAmount));
+        const prevDues = Math.max(0, Number(w.courierDues ?? 0));
+        const prevHandedOver = Math.max(0, Number(w.handedOverAmount ?? 0));
+        const prevPaidDues = Math.max(0, Number(w.totalDuesPaid ?? 0));
+        const prevDelivered = Math.max(
+          0,
+          Math.trunc(Number(w.totalOrdersDelivered ?? 0))
+        );
+
+        const nextCustody = Number(Math.max(0, prevCustody - actualAmount).toFixed(2));
+        const paidDuesClamped = Number(Math.min(prevDues, payDues).toFixed(2));
+        const nextDues = Number(Math.max(0, prevDues - paidDuesClamped).toFixed(2));
+        const nextHandedOver = Number((prevHandedOver + actualAmount).toFixed(2));
+        const nextPaidDues = Number((prevPaidDues + paidDuesClamped).toFixed(2));
+
+        tx.set(receiptRef, {
+          id: receiptRef.id,
+          receiptNumber,
+          courierId: input.courierId,
+          courierName: cleanCourierName,
+          ordersCount: cleanOrderIds.length,
+          ...(cleanOrderIds.length > 0 ? { orderIds: cleanOrderIds } : {}),
+          expectedAmount,
+          actualAmount,
+          varianceAmount,
+          courierDuesSnapshot: prevDues,
+          ...(paidDuesClamped > 0 ? { duesPaidSeparately: paidDuesClamped } : {}),
+          receivedByUid: input.adminUid,
+          receivedByName: cleanAdminName,
+          notes:
+            cleanNotes ||
+            (shortageAmount > 0
+              ? `توريد نقدي مع عجز ${shortageAmount} ج.م قيد المراجعة اليدوية`
+              : 'توريد نقدي مطابق لكشف التحصيل'),
+          createdAt: serverTimestamp(),
+        });
+
+        tx.set(walletRef, {
+          courierId: input.courierId,
+          courierName: cleanCourierName,
+          collectionCustody: nextCustody,
+          courierDues: nextDues,
+          handedOverAmount: nextHandedOver,
+          totalDuesPaid: nextPaidDues,
+          totalOrdersDelivered: prevDelivered,
+          lastHandoverAtIso: nowIso,
+          ...(paidDuesClamped > 0
+            ? { lastDuesPaidAtIso: nowIso }
+            : typeof w.lastDuesPaidAtIso === 'string'
+            ? { lastDuesPaidAtIso: w.lastDuesPaidAtIso }
+            : {}),
+          updatedAt: serverTimestamp(),
+        });
+
+        if (actualAmount > 0) {
+          tx.set(handoverTxRef, {
+            id: handoverTxRef.id,
+            type: 'cash_handover',
+            courierId: input.courierId,
+            courierName: cleanCourierName,
+            receiptId: receiptRef.id,
+            amount: actualAmount,
+            notes: `توريد نقدية لخزينة إدكاوي — إيصال ${receiptNumber} (${actualAmount} ج.م)`,
+            createdBy: input.adminUid,
+            createdAt: serverTimestamp(),
+          });
+        }
+
+        if (paidDuesClamped > 0) {
+          tx.set(duesTxRef, {
+            id: duesTxRef.id,
+            type: 'courier_payout',
+            courierId: input.courierId,
+            courierName: cleanCourierName,
+            receiptId: receiptRef.id,
+            amount: paidDuesClamped,
+            notes: `صرف مستحقات المندوب مع إيصال ${receiptNumber} (${paidDuesClamped} ج.م)`,
+            createdBy: input.adminUid,
+            createdAt: serverTimestamp(),
+          });
+        }
+
+        // If shortage exists, NEVER auto-deduct from courierDues — log exception for manual Admin review!
+        if (exceptionRef && shortageAmount > 0) {
+          tx.set(exceptionRef, {
+            id: exceptionRef.id,
+            receiptId: receiptRef.id,
+            courierId: input.courierId,
+            courierName: cleanCourierName,
+            exceptionType: 'cash_shortage',
+            disputedAmount: shortageAmount,
+            responsibleParty: 'courier',
+            holdSettlement: false,
+            status: 'pending_review',
+            description: `فرق عجز نقدي عند التوريد بمقدار ${shortageAmount} ج.م في إيصال ${receiptNumber} (المتوقع ${expectedAmount} ج.م — الفعلي ${actualAmount} ج.م). لا يوجد خصم تلقائي حتى مراجعة الإدارة.`,
+            createdBy: input.adminUid,
+            createdAt: serverTimestamp(),
+          });
+        }
+      });
+    });
+
+    if (cleanOrderIds.length > 0) {
+      const batch = writeBatch(db);
+      cleanOrderIds.slice(0, 50).forEach((oid) => {
+        batch.update(doc(db, 'orders', oid), {
+          treasuryReceiptId: receiptRef.id,
+          updatedAt: serverTimestamp(),
+        });
+      });
+      await batch.commit().catch(() => {});
+    }
+
+    if (!input.skipAuditLog) {
+      void recordAuditLogInFirestore({
+        adminId: input.adminUid,
+        adminName: cleanAdminName,
+        actionType: 'treasury_handover',
+        targetId: receiptRef.id,
+        details: `إصدار إيصال خزينة ${receiptNumber} للمندوب "${cleanCourierName}" بمبلغ ${actualAmount} ج.م (متوقع ${expectedAmount} ج.م).`,
+      });
+    }
+
+    return {
+      receiptId: receiptRef.id,
+      receiptNumber,
+      varianceAmount,
+      handoverTxId: handoverTxRef.id,
+      ...(exceptionRef ? { exceptionId: exceptionRef.id } : {}),
+    };
+  } catch (error) {
+    if (isArabicBusinessError(error)) throw error;
+    logFirestoreFailure(
+      'treasury_receipts',
+      receiptRef.id,
+      'recordTreasuryHandoverInFirestore',
+      error
+    );
+    handleFirestoreError(
+      error,
+      OperationType.WRITE,
+      `treasury_receipts/${receiptRef.id}`
+    );
+  }
+}
+
+export async function payCourierDuesInFirestore(input: {
+  courierId: string;
+  courierName: string;
+  amount: number;
+  notes?: string;
+  adminUid: string;
+  adminName: string;
+}): Promise<string> {
+  if (!isValidFirestoreId(input.courierId) || !isValidFirestoreId(input.adminUid)) {
+    throw new Error('معرف المندوب أو المدير غير صالح.');
+  }
+  const cleanAmount = Number(Number(input.amount).toFixed(2));
+  if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) {
+    throw new Error('يرجى إدخال مبلغ صرف صالح أكبر من صفر.');
+  }
+  await waitForFirestoreWarmup();
+  const walletRef = doc(db, 'driver_wallets', input.courierId);
+  const txRef = doc(collection(db, 'transactions'));
+  const nowIso = new Date().toISOString();
+  const cleanCourierName = (input.courierName.trim() || 'مندوب إدكاوي').slice(0, 80);
+
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(walletRef);
+      if (!snap.exists()) {
+        throw new Error('لا توجد محفظة مالية لهذا المندوب حتى الآن.');
+      }
+      const w = snap.data() ?? {};
+      const prevDues = Math.max(0, Number(w.courierDues ?? 0));
+      if (cleanAmount > prevDues) {
+        throw new Error(
+          `المبلغ المطلوب صرفه (${cleanAmount} ج.م) أكبر من مستحقات المندوب الحالية (${prevDues} ج.م).`
+        );
+      }
+      tx.set(walletRef, {
+        courierId: input.courierId,
+        courierName: cleanCourierName,
+        collectionCustody: Math.max(0, Number(w.collectionCustody ?? 0)),
+        courierDues: Number((prevDues - cleanAmount).toFixed(2)),
+        handedOverAmount: Math.max(0, Number(w.handedOverAmount ?? 0)),
+        totalDuesPaid: Number((Math.max(0, Number(w.totalDuesPaid ?? 0)) + cleanAmount).toFixed(2)),
+        totalOrdersDelivered: Math.max(
+          0,
+          Math.trunc(Number(w.totalOrdersDelivered ?? 0))
+        ),
+        ...(typeof w.lastHandoverAtIso === 'string'
+          ? { lastHandoverAtIso: w.lastHandoverAtIso }
+          : {}),
+        lastDuesPaidAtIso: nowIso,
+        updatedAt: serverTimestamp(),
+      });
+      tx.set(txRef, {
+        id: txRef.id,
+        type: 'courier_payout',
+        courierId: input.courierId,
+        courierName: cleanCourierName,
+        amount: cleanAmount,
+        notes:
+          (input.notes ?? '').trim().slice(0, 260) ||
+          `صرف مستحقات أجور التوصيل للمندوب ${cleanCourierName} (${cleanAmount} ج.م)`,
+        createdBy: input.adminUid,
+        createdAt: serverTimestamp(),
+      });
+    });
+
+    void recordAuditLogInFirestore({
+      adminId: input.adminUid,
+      adminName: input.adminName,
+      actionType: 'pay_courier_dues',
+      targetId: input.courierId,
+      details: `صرف مستحقات المندوب "${cleanCourierName}" بمبلغ ${cleanAmount} ج.م.`,
+    });
+
+    return txRef.id;
+  } catch (error) {
+    if (isArabicBusinessError(error)) throw error;
+    logFirestoreFailure(
+      'driver_wallets',
+      input.courierId,
+      'payCourierDuesInFirestore',
+      error
+    );
+    handleFirestoreError(
+      error,
+      OperationType.UPDATE,
+      `driver_wallets/${input.courierId}`
+    );
+  }
+}
+
+export async function generateDailyRestaurantSettlementsInFirestore(input: {
+  targetDateKey?: string;
+  storeIdFilter?: string;
+  onlyOrderIds?: string[];
+  adminUid: string;
+  adminName: string;
+}): Promise<RestaurantSettlementRecord[]> {
+  if (!isValidFirestoreId(input.adminUid)) {
+    throw new Error('يلزم صلاحيات الإدارة لإصدار كشف التسوية اليومي.');
+  }
+  await waitForFirestoreWarmup();
+  const dateKey = (input.targetDateKey?.trim() || getCairoDateKey()).slice(0, 16);
+
+  try {
+    const [ordersSnap, storesSnap, exceptionsSnap] = await Promise.all([
+      getDocs(query(collection(db, 'orders'), where('status', '==', 'delivered'))),
+      getDocs(collection(db, 'stores')),
+      getDocs(collection(db, 'financial_exceptions')),
+    ]);
+
+    const storeOwnerMap = new Map<string, string>();
+    const storeNameMap = new Map<string, string>();
+    const storeRateMap = new Map<string, number>();
+    storesSnap.docs.forEach((s) => {
+      const d = s.data() ?? {};
+      const ownerUid = String(d.ownerUid ?? d.createdBy ?? '').trim();
+      if (isValidFirestoreId(ownerUid)) storeOwnerMap.set(s.id, ownerUid);
+      storeNameMap.set(s.id, String(d.name ?? 'متجر إدكاوي'));
+      storeRateMap.set(
+        s.id,
+        normalizeCommissionRate(
+          typeof d.commissionRate === 'number'
+            ? d.commissionRate
+            : DEFAULT_EDKAWY_COMMISSION_RATE
+        )
+      );
+    });
+
+    const heldOrderIds = new Set<string>();
+    exceptionsSnap.docs.forEach((ex) => {
+      const d = ex.data() ?? {};
+      if (
+        d.status === 'pending_review' &&
+        d.holdSettlement === true &&
+        typeof d.orderId === 'string'
+      ) {
+        heldOrderIds.add(d.orderId);
+      }
+    });
+
+    const parsedOrders = ordersSnap.docs.map(parseOrderSnapshotDoc);
+    const eligible = parsedOrders.filter((o) => {
+      if (o.isFinancialSettled || o.settlementId) return false;
+      if (heldOrderIds.has(o.id)) return false;
+      if (input.storeIdFilter && o.storeId !== input.storeIdFilter) return false;
+      if (input.onlyOrderIds && !input.onlyOrderIds.includes(o.id)) return false;
+      if (!input.onlyOrderIds && o.isTestSimulation) return false;
+      const oDateKey = getCairoDateKey(o.createdAtIso);
+      return oDateKey === dateKey;
+    });
+
+    if (eligible.length === 0) {
+      return [];
+    }
+
+    const grouped = new Map<string, OrderRecord[]>();
+    for (const o of eligible) {
+      const list = grouped.get(o.storeId) ?? [];
+      list.push(o);
+      grouped.set(o.storeId, list);
+    }
+
+    const createdBatches: RestaurantSettlementRecord[] = [];
+    const nowIso = new Date().toISOString();
+
+    for (const [storeId, storeOrders] of grouped.entries()) {
+      const storeName =
+        storeNameMap.get(storeId) || storeOrders[0]?.storeName || 'متجر إدكاوي';
+      const storeOwnerId =
+        storeOwnerMap.get(storeId) || storeOrders[0]?.storeOwnerId;
+      const defaultRate =
+        storeRateMap.get(storeId) ?? DEFAULT_EDKAWY_COMMISSION_RATE;
+
+      let grossProductsSales = 0;
+      let edkawyCommission = 0;
+      let restaurantNetPayable = 0;
+      let deliveryFeesTotal = 0;
+
+      for (const ord of storeOrders) {
+        const snap = getOrderFinancialSnapshot(ord, defaultRate);
+        grossProductsSales += ord.subtotal;
+        edkawyCommission += snap.commissionAmount;
+        restaurantNetPayable += snap.restaurantNet;
+        deliveryFeesTotal += snap.courierDeliveryCompensation;
+      }
+
+      grossProductsSales = Number(grossProductsSales.toFixed(2));
+      edkawyCommission = Number(edkawyCommission.toFixed(2));
+      restaurantNetPayable = Number(restaurantNetPayable.toFixed(2));
+      deliveryFeesTotal = Number(deliveryFeesTotal.toFixed(2));
+
+      const settlementId = `settlement_${storeId}_${dateKey}_${Date.now().toString(36)}`.slice(
+        0,
+        120
+      );
+      const orderIds = storeOrders.map((o) => o.id).slice(0, 150);
+
+      const docData: Record<string, unknown> = {
+        id: settlementId,
+        storeId,
+        ...(storeOwnerId && isValidFirestoreId(storeOwnerId)
+          ? { storeOwnerId }
+          : {}),
+        storeName: storeName.slice(0, 100),
+        settlementDateKey: dateKey,
+        cutoffLabel: '12:00 منتصف الليل (توقيت القاهرة)',
+        ordersCount: orderIds.length,
+        orderIds,
+        grossProductsSales,
+        commissionRate: defaultRate,
+        edkawyCommission,
+        restaurantNetPayable,
+        deliveryFeesTotal,
+        status: 'pending_review',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'restaurant_settlements', settlementId), docData);
+      for (const oid of orderIds) {
+        batch.update(doc(db, 'orders', oid), {
+          settlementId,
+          updatedAt: serverTimestamp(),
+        });
+      }
+      await batch.commit();
+
+      createdBatches.push({
+        id: settlementId,
+        storeId,
+        storeOwnerId,
+        storeName,
+        settlementDateKey: dateKey,
+        cutoffLabel: '12:00 منتصف الليل (توقيت القاهرة)',
+        ordersCount: orderIds.length,
+        orderIds,
+        grossProductsSales,
+        commissionRate: defaultRate,
+        edkawyCommission,
+        restaurantNetPayable,
+        deliveryFeesTotal,
+        status: 'pending_review',
+        createdAtIso: nowIso,
+        updatedAtIso: nowIso,
+      });
+    }
+
+    return createdBatches;
+  } catch (error) {
+    if (isArabicBusinessError(error)) throw error;
+    logFirestoreFailure(
+      'restaurant_settlements',
+      dateKey,
+      'generateDailyRestaurantSettlementsInFirestore',
+      error
+    );
+    handleFirestoreError(error, OperationType.WRITE, 'restaurant_settlements');
+  }
+}
+
+export async function markRestaurantSettlementPaidInFirestore(input: {
+  settlementId: string;
+  paymentMethod: RestaurantSettlementMethod;
+  transferReference?: string;
+  notes?: string;
+  adminUid: string;
+  adminName: string;
+  skipAuditLog?: boolean;
+}): Promise<{ txId: string }> {
+  if (
+    !isValidFirestoreId(input.settlementId) ||
+    !isValidFirestoreId(input.adminUid)
+  ) {
+    throw new Error('معرف التسوية غير صالح.');
+  }
+  await waitForFirestoreWarmup();
+  const sRef = doc(db, 'restaurant_settlements', input.settlementId);
+  const txRef = doc(collection(db, 'transactions'));
+  const nowIso = new Date().toISOString();
+
+  try {
+    let orderIdsToSettle: string[] = [];
+    let resolvedStoreName = '';
+    let resolvedNetAmount = 0;
+
+    await runTransaction(db, async (tx) => {
+      const sSnap = await tx.get(sRef);
+      if (!sSnap.exists()) {
+        throw new Error('دفعة التسوية غير موجودة.');
+      }
+      const sData = sSnap.data() ?? {};
+      if (sData.status === 'paid') {
+        throw new Error('تم دفع وإغلاق هذه التسوية مسبقاً.');
+      }
+      resolvedStoreName = String(sData.storeName ?? 'متجر إدكاوي');
+      resolvedNetAmount = Math.max(0, Number(sData.restaurantNetPayable ?? 0));
+      orderIdsToSettle = Array.isArray(sData.orderIds)
+        ? (sData.orderIds as unknown[]).filter(
+            (id): id is string => typeof id === 'string' && isValidFirestoreId(id)
+          )
+        : [];
+
+      tx.update(sRef, {
+        status: 'paid',
+        paymentMethod: input.paymentMethod,
+        ...(input.transferReference?.trim()
+          ? { transferReference: input.transferReference.trim().slice(0, 80) }
+          : {}),
+        ...(input.notes?.trim()
+          ? { notes: input.notes.trim().slice(0, 300) }
+          : {}),
+        paidAtIso: nowIso,
+        paidByUid: input.adminUid,
+        paidByName: (input.adminName.trim() || 'مدير النظام').slice(0, 80),
+        updatedAt: serverTimestamp(),
+      });
+
+      tx.set(txRef, {
+        id: txRef.id,
+        type: 'restaurant_settlement',
+        storeId: String(sData.storeId ?? ''),
+        ...(typeof sData.storeOwnerId === 'string' &&
+        isValidFirestoreId(sData.storeOwnerId)
+          ? { storeOwnerId: sData.storeOwnerId }
+          : {}),
+        storeName: resolvedStoreName.slice(0, 80),
+        settlementId: input.settlementId,
+        amount: resolvedNetAmount,
+        commissionAmount: Math.max(0, Number(sData.edkawyCommission ?? 0)),
+        restaurantNetAmount: resolvedNetAmount,
+        notes: `صرف تسوية يومية للمطعم "${resolvedStoreName}" (${resolvedNetAmount} ج.م)${
+          input.transferReference?.trim()
+            ? ` — مرجع: ${input.transferReference.trim().slice(0, 40)}`
+            : ''
+        }`,
+        createdBy: input.adminUid,
+        createdAt: serverTimestamp(),
+      });
+    });
+
+    if (orderIdsToSettle.length > 0) {
+      const batch = writeBatch(db);
+      orderIdsToSettle.slice(0, 150).forEach((oid) => {
+        batch.update(doc(db, 'orders', oid), {
+          settlementId: input.settlementId,
+          isFinancialSettled: true,
+          updatedAt: serverTimestamp(),
+        });
+      });
+      await batch.commit().catch(() => {});
+    }
+
+    if (!input.skipAuditLog) {
+      void recordAuditLogInFirestore({
+        adminId: input.adminUid,
+        adminName: input.adminName,
+        actionType: 'settle_restaurant',
+        targetId: input.settlementId,
+        details: `سداد التسوية اليومية لمتجر "${resolvedStoreName}" بمبلغ ${resolvedNetAmount} ج.م (${input.paymentMethod}).`,
+      });
+    }
+
+    return { txId: txRef.id };
+  } catch (error) {
+    if (isArabicBusinessError(error)) throw error;
+    logFirestoreFailure(
+      'restaurant_settlements',
+      input.settlementId,
+      'markRestaurantSettlementPaidInFirestore',
+      error
+    );
+    handleFirestoreError(
+      error,
+      OperationType.UPDATE,
+      `restaurant_settlements/${input.settlementId}`
+    );
+  }
+}
+
+export async function createFinancialExceptionInFirestore(input: {
+  exceptionType: FinancialExceptionType;
+  disputedAmount: number;
+  description: string;
+  responsibleParty?: ExceptionResponsibleParty;
+  holdSettlement?: boolean;
+  orderId?: string;
+  storeId?: string;
+  storeOwnerId?: string;
+  storeName?: string;
+  courierId?: string;
+  courierName?: string;
+  actorUid: string;
+}): Promise<string> {
+  if (!isValidFirestoreId(input.actorUid)) {
+    throw new Error('يلزم تسجيل الدخول لتسجيل حالة استثنائية.');
+  }
+  const cleanDesc = input.description.trim().slice(0, 400);
+  if (cleanDesc.length < 4) {
+    throw new Error('يرجى كتابة وصف واضح للحالة أو النزاع المالي.');
+  }
+  const cleanAmount = Math.max(0, Number(input.disputedAmount));
+
+  await waitForFirestoreWarmup();
+  const exRef = doc(collection(db, 'financial_exceptions'));
+
+  try {
+    await setDoc(exRef, {
+      id: exRef.id,
+      exceptionType: input.exceptionType,
+      disputedAmount: cleanAmount,
+      ...(input.responsibleParty
+        ? { responsibleParty: input.responsibleParty }
+        : {}),
+      holdSettlement: Boolean(input.holdSettlement),
+      status: 'pending_review',
+      description: cleanDesc,
+      ...(input.orderId && isValidFirestoreId(input.orderId)
+        ? { orderId: input.orderId }
+        : {}),
+      ...(input.storeId && isValidFirestoreId(input.storeId)
+        ? { storeId: input.storeId }
+        : {}),
+      ...(input.storeOwnerId && isValidFirestoreId(input.storeOwnerId)
+        ? { storeOwnerId: input.storeOwnerId }
+        : {}),
+      ...(input.storeName?.trim()
+        ? { storeName: input.storeName.trim().slice(0, 80) }
+        : {}),
+      ...(input.courierId && isValidFirestoreId(input.courierId)
+        ? { courierId: input.courierId }
+        : {}),
+      ...(input.courierName?.trim()
+        ? { courierName: input.courierName.trim().slice(0, 80) }
+        : {}),
+      createdBy: input.actorUid,
+      createdAt: serverTimestamp(),
+    });
+    return exRef.id;
+  } catch (error) {
+    logFirestoreFailure(
+      'financial_exceptions',
+      exRef.id,
+      'createFinancialExceptionInFirestore',
+      error
+    );
+    handleFirestoreError(error, OperationType.CREATE, 'financial_exceptions');
+  }
+}
+
+export async function resolveFinancialExceptionByAdminInFirestore(input: {
+  exceptionId: string;
+  decision: 'resolved_no_deduction' | 'resolved_with_adjustment';
+  responsibleParty: ExceptionResponsibleParty;
+  adjustedAmount?: number;
+  resolutionNote: string;
+  adminUid: string;
+  adminName: string;
+}): Promise<void> {
+  if (
+    !isValidFirestoreId(input.exceptionId) ||
+    !isValidFirestoreId(input.adminUid)
+  ) {
+    throw new Error('معرف الحالة الاستثنائية غير صالح.');
+  }
+  const cleanNote = input.resolutionNote.trim().slice(0, 400);
+  if (cleanNote.length < 3) {
+    throw new Error('يرجى إدخال قرار وملاحظات المراجعة اليدوية.');
+  }
+  const cleanAdjustment = Math.max(0, Number(input.adjustedAmount ?? 0));
+
+  await waitForFirestoreWarmup();
+  const exRef = doc(db, 'financial_exceptions', input.exceptionId);
+  const nowIso = new Date().toISOString();
+
+  try {
+    let targetSummary = '';
+    await runTransaction(db, async (tx) => {
+      const exSnap = await tx.get(exRef);
+      if (!exSnap.exists()) {
+        throw new Error('الحالة الاستثنائية غير موجودة.');
+      }
+      const exData = exSnap.data() ?? {};
+      const courierId =
+        typeof exData.courierId === 'string' && isValidFirestoreId(exData.courierId)
+          ? exData.courierId
+          : undefined;
+      const walletRef =
+        courierId &&
+        input.decision === 'resolved_with_adjustment' &&
+        input.responsibleParty === 'courier' &&
+        cleanAdjustment > 0
+          ? doc(db, 'driver_wallets', courierId)
+          : null;
+      const walletSnap = walletRef ? await tx.get(walletRef) : null;
+
+      targetSummary = String(
+        exData.storeName || exData.courierName || exData.orderId || input.exceptionId
+      );
+
+      tx.update(exRef, {
+        status: input.decision,
+        responsibleParty: input.responsibleParty,
+        holdSettlement: false,
+        adminResolutionNote: cleanNote,
+        resolvedByUid: input.adminUid,
+        resolvedByName: (input.adminName.trim() || 'مدير النظام').slice(0, 80),
+        resolvedAtIso: nowIso,
+      });
+
+      if (walletRef && walletSnap?.exists() && cleanAdjustment > 0) {
+        const w = walletSnap.data() ?? {};
+        const prevDues = Math.max(0, Number(w.courierDues ?? 0));
+        tx.set(walletRef, {
+          courierId: courierId!,
+          courierName: String(w.courierName ?? exData.courierName ?? 'مندوب إدكاوي'),
+          collectionCustody: Math.max(0, Number(w.collectionCustody ?? 0)),
+          courierDues: Number(Math.max(0, prevDues - cleanAdjustment).toFixed(2)),
+          handedOverAmount: Math.max(0, Number(w.handedOverAmount ?? 0)),
+          totalDuesPaid: Math.max(0, Number(w.totalDuesPaid ?? 0)),
+          totalOrdersDelivered: Math.max(
+            0,
+            Math.trunc(Number(w.totalOrdersDelivered ?? 0))
+          ),
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      if (input.decision === 'resolved_with_adjustment' && cleanAdjustment > 0) {
+        const txRef = doc(collection(db, 'transactions'));
+        tx.set(txRef, {
+          id: txRef.id,
+          type: 'exception_adjustment',
+          ...(typeof exData.orderId === 'string' ? { orderId: exData.orderId } : {}),
+          ...(typeof exData.storeId === 'string' ? { storeId: exData.storeId } : {}),
+          ...(typeof exData.storeOwnerId === 'string'
+            ? { storeOwnerId: exData.storeOwnerId }
+            : {}),
+          ...(typeof exData.storeName === 'string'
+            ? { storeName: exData.storeName }
+            : {}),
+          ...(courierId ? { courierId } : {}),
+          ...(typeof exData.courierName === 'string'
+            ? { courierName: exData.courierName }
+            : {}),
+          amount: cleanAdjustment,
+          notes: `تسوية مالية بقرار إداري يدوي (${input.responsibleParty}): ${cleanNote}`.slice(
+            0,
+            300
+          ),
+          createdBy: input.adminUid,
+          createdAt: serverTimestamp(),
+        });
+      }
+    });
+
+    void recordAuditLogInFirestore({
+      adminId: input.adminUid,
+      adminName: input.adminName,
+      actionType: 'resolve_financial_exception',
+      targetId: input.exceptionId,
+      details: `مراجعة الحالة (${targetSummary}) — القرار: ${
+        input.decision === 'resolved_no_deduction'
+          ? 'إغلاق بدون خصم'
+          : `تسوية مالية (${cleanAdjustment} ج.م على ${input.responsibleParty})`
+      }.`,
+    });
+  } catch (error) {
+    if (isArabicBusinessError(error)) throw error;
+    logFirestoreFailure(
+      'financial_exceptions',
+      input.exceptionId,
+      'resolveFinancialExceptionByAdminInFirestore',
+      error
+    );
+    handleFirestoreError(
+      error,
+      OperationType.UPDATE,
+      `financial_exceptions/${input.exceptionId}`
+    );
+  }
+}
+
+export async function updateStoreCommissionRateByAdminInFirestore(input: {
+  adminUid: string;
+  adminName?: string;
+  storeId: string;
+  storeName: string;
+  commissionRatePercent: number;
+}): Promise<void> {
+  if (!isValidFirestoreId(input.storeId) || !isValidFirestoreId(input.adminUid)) {
+    throw new Error('معرف المتجر غير صالح.');
+  }
+  const pct = Number(input.commissionRatePercent);
+  if (!Number.isFinite(pct) || pct < 0 || pct > 50) {
+    throw new Error('نسبة عمولة إدكاوي يجب أن تكون بين 0% و 50%.');
+  }
+  const normalizedRate = normalizeCommissionRate(pct / 100);
+  await waitForFirestoreWarmup();
+  try {
+    await updateDoc(doc(db, 'stores', input.storeId), {
+      commissionRate: normalizedRate,
+    });
+    void recordAuditLogInFirestore({
+      adminId: input.adminUid,
+      adminName: input.adminName,
+      actionType: 'update_store_commission',
+      targetId: input.storeId,
+      details: `تعديل نسبة عمولة إدكاوي لمتجر "${input.storeName}" إلى ${pct}% (صافي المتجر ${100 - pct}%).`,
+    });
+  } catch (error) {
+    logFirestoreFailure(
+      'stores',
+      input.storeId,
+      'updateStoreCommissionRateByAdminInFirestore',
+      error
+    );
+    handleFirestoreError(error, OperationType.UPDATE, `stores/${input.storeId}`);
+  }
+}
+
+export async function updateStoreDetailsByAdminInFirestore(input: {
+  adminUid: string;
+  adminName?: string;
+  storeId: string;
+  updates: {
+    name?: string;
+    category?: StoreCategory;
+    neighborhood?: string;
+    description?: string;
+    ownerName?: string;
+    phone?: string;
+    deliveryFee?: number;
+    deliveryTimeMinutes?: number;
+    prepTimeMinutes?: number;
+    minOrderAmount?: number;
+    commercialRegisterNumber?: string;
+    taxCertificateNumber?: string;
+    isActive?: boolean;
+    isOpen?: boolean;
+    pausedReason?: string;
+    suspended?: boolean;
+  };
+}): Promise<void> {
+  if (!isValidFirestoreId(input.storeId) || !isValidFirestoreId(input.adminUid)) {
+    throw new Error('معرف المتجر غير صالح.');
+  }
+  const u = input.updates;
+  const patch: Record<string, unknown> = {};
+  if (u.name?.trim()) patch.name = u.name.trim().slice(0, 80);
+  if (u.category) {
+    patch.category = u.category;
+    patch.categoryId = resolveCategoryIdForStoreCategory(u.category);
+    patch.isHomeFood = u.category === 'أكل بيتي';
+  }
+  if (u.neighborhood?.trim()) patch.neighborhood = u.neighborhood.trim().slice(0, 80);
+  if (u.description?.trim()) patch.description = u.description.trim().slice(0, 280);
+  if (typeof u.ownerName === 'string') patch.ownerName = u.ownerName.trim().slice(0, 80);
+  if (typeof u.phone === 'string') patch.phone = u.phone.trim().slice(0, 20);
+  if (typeof u.deliveryFee === 'number') {
+    const cleanFee = Math.trunc(u.deliveryFee);
+    if (cleanFee < MIN_COURIER_DELIVERY_FEE_EGP || cleanFee > 250) {
+      throw new Error(
+        `رسوم التوصيل يجب أن تكون بين ${MIN_COURIER_DELIVERY_FEE_EGP} و 250 ج.م.`
+      );
+    }
+    patch.deliveryFee = cleanFee;
+  }
+  if (typeof u.deliveryTimeMinutes === 'number') {
+    patch.deliveryTimeMinutes = Math.min(120, Math.max(10, Math.trunc(u.deliveryTimeMinutes)));
+  }
+  if (typeof u.prepTimeMinutes === 'number') {
+    patch.prepTimeMinutes = Math.min(180, Math.max(5, Math.trunc(u.prepTimeMinutes)));
+  }
+  if (typeof u.minOrderAmount === 'number') {
+    patch.minOrderAmount = Math.min(5000, Math.max(0, Math.trunc(u.minOrderAmount)));
+  }
+  if (typeof u.commercialRegisterNumber === 'string' && u.commercialRegisterNumber.trim()) {
+    patch.commercialRegisterNumber = u.commercialRegisterNumber.trim().slice(0, 40);
+  }
+  if (typeof u.taxCertificateNumber === 'string' && u.taxCertificateNumber.trim()) {
+    patch.taxCertificateNumber = u.taxCertificateNumber.trim().slice(0, 40);
+  }
+  if (typeof u.isActive === 'boolean') patch.isActive = u.isActive;
+  if (typeof u.isOpen === 'boolean') patch.isOpen = u.isOpen;
+  if (typeof u.pausedReason === 'string') patch.pausedReason = u.pausedReason.trim().slice(0, 240);
+  if (typeof u.suspended === 'boolean') {
+    patch.suspended = u.suspended;
+    if (u.suspended) {
+      patch.isActive = false;
+      patch.isOpen = false;
+    }
+  }
+
+  if (Object.keys(patch).length === 0) return;
+
+  await waitForFirestoreWarmup();
+  try {
+    await updateDoc(doc(db, 'stores', input.storeId), patch);
+    void recordAuditLogInFirestore({
+      adminId: input.adminUid,
+      adminName: input.adminName,
+      actionType: 'update_store_details',
+      targetId: input.storeId,
+      details: `تحديث بيانات/حالة المتجر (${String(patch.name ?? input.storeId)}).`,
+    });
+  } catch (error) {
+    logFirestoreFailure(
+      'stores',
+      input.storeId,
+      'updateStoreDetailsByAdminInFirestore',
+      error
+    );
+    handleFirestoreError(error, OperationType.UPDATE, `stores/${input.storeId}`);
+  }
+}
+
 

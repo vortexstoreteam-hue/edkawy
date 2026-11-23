@@ -317,7 +317,7 @@ export function StoresView({
       className="max-w-7xl mx-auto p-6 pb-28 space-y-8 edkawi-page-enter"
     >
       {(pullOffset > 12 || isRefreshing) && (
-        <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#FF6B00] py-1">
+        <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#FF7100] py-1">
           <RefreshCw
             className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
           />
@@ -336,7 +336,7 @@ export function StoresView({
           aria-label="أحدث النشاط المباشر في إدكو"
           className="rounded-2xl bg-[#1E293B] border border-[#334155] px-4 py-2.5 flex items-center gap-3 overflow-x-auto no-scrollbar"
         >
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF6B00] shrink-0">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF7100] shrink-0">
             <Radio className="w-4 h-4 animate-pulse" />
             <span>الآن في إدكو:</span>
           </span>
@@ -346,7 +346,7 @@ export function StoresView({
                 key={ev.id}
                 className="inline-flex items-center gap-1.5 text-[#94A3B8]"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF7100]" />
                 <span className="text-[#F8FAFC] font-medium">
                   {ev.text || ev.textAr}
                 </span>
@@ -359,17 +359,17 @@ export function StoresView({
         </div>
       )}
       {/* Section 1: Hero & Search */}
-      <section className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#1E293B] via-[#1E293B] to-[#0F172A] border border-[#334155] text-[#F8FAFC] p-6 shadow-xl">
+      <section className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#1E293B] via-[#1E293B] to-[#10192D] border border-[#334155] text-[#F8FAFC] p-6 shadow-xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-7 space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               {userName && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-2xl bg-[#0F172A] border border-[#334155] text-xs sm:text-sm font-bold text-[#F8FAFC]">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-2xl bg-[#10192D] border border-[#334155] text-xs sm:text-sm font-bold text-[#F8FAFC]">
                   <span>مرحباً،</span>
-                  <span className="text-[#FF6B00]">{userName}</span>
+                  <span className="text-[#FF7100]">{userName}</span>
                 </span>
               )}
-              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#FF6B00]">
+              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#FF7100]">
                 <MapPin className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>تطبيق إدكاوي · توصيل سريع داخل مدينة إدكو</span>
               </div>
@@ -379,7 +379,7 @@ export function StoresView({
               مطاعم ومتاجر وصيدليات إدكو تصلك لحد باب البيت
             </h1>
 
-            <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-2 flex items-center gap-2 flex-wrap sm:flex-nowrap relative">
+            <div className="rounded-2xl bg-[#10192D] border border-[#334155] p-2 flex items-center gap-2 flex-wrap sm:flex-nowrap relative">
               <div className="relative flex-1 min-w-[200px]">
                 <label htmlFor="store-search" className="sr-only">
                   ابحث عن متجر أو صيدلية أو وجبة في إدكو
@@ -398,7 +398,7 @@ export function StoresView({
                   }
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="ابحث عن مطعم، صيدلية، سوبر ماركت، أو حي..."
-                  className="w-full pr-10 pl-10 py-3 rounded-xl bg-[#1E293B] border border-transparent focus:border-[#FF6B00] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8] focus:outline-none"
+                  className="w-full pr-10 pl-10 py-3 rounded-xl bg-[#1E293B] border border-transparent focus:border-[#FF7100] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8] focus:outline-none"
                 />
                 <button
                   type="button"
@@ -407,7 +407,7 @@ export function StoresView({
                   className={`absolute left-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition cursor-pointer ${
                     isListening
                       ? 'bg-rose-600 text-white animate-pulse'
-                      : 'text-[#94A3B8] hover:text-[#FF6B00]'
+                      : 'text-[#94A3B8] hover:text-[#FF7100]'
                   }`}
                 >
                   {isListening ? (
@@ -430,7 +430,7 @@ export function StoresView({
                             setIsSearchFocused(false);
                             onOpenStoreMenu(hit.store);
                           }}
-                          className="w-full px-4 py-3 text-right hover:bg-[#0F172A] flex items-center justify-between gap-3 cursor-pointer"
+                          className="w-full px-4 py-3 text-right hover:bg-[#10192D] flex items-center justify-between gap-3 cursor-pointer"
                         >
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-[#F8FAFC] truncate">
@@ -440,7 +440,7 @@ export function StoresView({
                               {hit.subLabel}
                             </p>
                           </div>
-                          <ArrowLeft className="w-4 h-4 text-[#FF6B00] shrink-0" />
+                          <ArrowLeft className="w-4 h-4 text-[#FF7100] shrink-0" />
                         </button>
                       ))}
                     </div>
@@ -452,7 +452,7 @@ export function StoresView({
                   type="button"
                   onClick={onOpenAiChat}
                   title="مساعد إدكاوي الذكي لاقتراح الوجبات"
-                  className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Bot className="w-4 h-4" />
                   <span>محتار تاكل إيه؟</span>
@@ -464,9 +464,9 @@ export function StoresView({
                   type="button"
                   onClick={onOpenVisualSearch}
                   title="البحث بالصور في مطاعم إدكو"
-                  className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                 >
-                  <Camera className="w-4 h-4 text-[#FF6B00]" aria-hidden="true" />
+                  <Camera className="w-4 h-4 text-[#FF7100]" aria-hidden="true" />
                   <span className="hidden sm:inline">بحث بالصور</span>
                 </button>
               )}
@@ -475,9 +475,9 @@ export function StoresView({
 
           {/* Right Highlight Card: Edkawy Pharmacy Prescription System */}
           <div className="lg:col-span-5">
-            <div className="rounded-2xl bg-[#0F172A] border border-[#334155] p-5 space-y-4">
+            <div className="rounded-2xl bg-[#10192D] border border-[#334155] p-5 space-y-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="inline-flex items-center gap-2 text-xs font-bold text-[#FF6B00]">
+                <div className="inline-flex items-center gap-2 text-xs font-bold text-[#FF7100]">
                   <Pill className="w-4 h-4" />
                   <span>نظام صيدليات إدكاوي</span>
                 </div>
@@ -499,7 +499,7 @@ export function StoresView({
                   const el = document.getElementById('stores-heading');
                   el?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full min-h-[46px] px-4 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                className="w-full min-h-[46px] px-4 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-colors"
               >
                 <Pill className="w-4 h-4" />
                 <span>عرض صيدليات إدكو</span>
@@ -526,7 +526,7 @@ export function StoresView({
         {onOpenErrandService && (
           <div className="lg:col-span-5 rounded-2xl bg-[#1E293B] text-[#F8FAFC] border border-[#334155] p-4 sm:p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-[#FF6B00] text-white flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-2xl bg-[#FF7100] text-white flex items-center justify-center shrink-0">
                 <Bike className="w-6 h-6" />
               </div>
               <div className="min-w-0">
@@ -541,7 +541,7 @@ export function StoresView({
             <button
               type="button"
               onClick={onOpenErrandService}
-              className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
+              className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 cursor-pointer"
             >
               اطلب مشوار
             </button>
@@ -563,7 +563,7 @@ export function StoresView({
           <div className="grid grid-cols-1 md:grid-cols-12 items-stretch">
             <div className="md:col-span-7 p-6 flex flex-col justify-between gap-4">
               <div className="space-y-2">
-                <p className="text-xs font-bold text-[#FF6B00]">
+                <p className="text-xs font-bold text-[#FF7100]">
                   {currentAd.badgeText}
                   {currentAd.storeName ? ` · ${currentAd.storeName}` : ''}
                 </p>
@@ -579,7 +579,7 @@ export function StoresView({
                 <button
                   type="button"
                   onClick={() => handleAdAction(currentAd)}
-                  className="min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
+                  className="min-h-[46px] px-5 py-2.5 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
                 >
                   <span>{currentAd.ctaLabel || 'اطلب الآن'}</span>
                   <ArrowLeft className="w-4 h-4" />
@@ -595,7 +595,7 @@ export function StoresView({
                         )
                       }
                       aria-label="العرض السابق"
-                      className="min-h-[40px] min-w-[40px] rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] flex items-center justify-center cursor-pointer"
+                      className="min-h-[40px] min-w-[40px] rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] flex items-center justify-center cursor-pointer"
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -608,7 +608,7 @@ export function StoresView({
                           aria-label={`انتقل للعرض ${idx + 1}`}
                           className={`h-2 rounded-full transition-all cursor-pointer ${
                             idx === activeAdIdx
-                              ? 'w-5 bg-[#FF6B00]'
+                              ? 'w-5 bg-[#FF7100]'
                               : 'w-2 bg-[#334155] hover:bg-[#94A3B8]'
                           }`}
                         />
@@ -620,7 +620,7 @@ export function StoresView({
                         setActiveAdIdx((prev) => (prev + 1) % ads.length)
                       }
                       aria-label="العرض التالي"
-                      className="min-h-[40px] min-w-[40px] rounded-2xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] flex items-center justify-center cursor-pointer"
+                      className="min-h-[40px] min-w-[40px] rounded-2xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] flex items-center justify-center cursor-pointer"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
@@ -629,7 +629,7 @@ export function StoresView({
               </div>
             </div>
 
-            <div className="md:col-span-5 relative h-52 sm:h-64 md:h-auto md:min-h-[240px] bg-[#0F172A] overflow-hidden">
+            <div className="md:col-span-5 relative h-52 sm:h-64 md:h-auto md:min-h-[240px] bg-[#10192D] overflow-hidden">
               <ResilientImage
                 src={currentAd.imageUrl || ''}
                 alt={currentAd.title}
@@ -649,7 +649,7 @@ export function StoresView({
       {activeCampaigns.length > 0 && (
         <section aria-label="الفعاليات والتحديات النشطة" className="space-y-4">
           <div className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-[#FF6B00]" />
+            <Flame className="w-5 h-5 text-[#FF7100]" />
             <h2 className="text-2xl font-bold text-[#F8FAFC]">
               فعاليات وتحديات إدكاوي النشطة
             </h2>
@@ -661,14 +661,14 @@ export function StoresView({
                 key={camp.id}
                 className="rounded-2xl bg-[#1E293B] border border-[#334155] overflow-hidden flex flex-col justify-between"
               >
-                <div className="h-36 w-full bg-[#0F172A] relative">
+                <div className="h-36 w-full bg-[#10192D] relative">
                   <ResilientImage
                     src={camp.imageUrl || ''}
                     alt={camp.title}
                     fallbackLabel={camp.title}
                     className="w-full h-full object-cover"
                   />
-                  <span className="absolute top-3 right-3 px-2.5 py-1 rounded-xl bg-[#0F172A]/90 border border-[#334155] text-[#FF6B00] text-[11px] font-bold">
+                  <span className="absolute top-3 right-3 px-2.5 py-1 rounded-xl bg-[#10192D]/90 border border-[#334155] text-[#FF7100] text-[11px] font-bold">
                     {camp.badgeText}
                   </span>
                 </div>
@@ -679,7 +679,7 @@ export function StoresView({
                   <p className="text-xs text-[#94A3B8] leading-relaxed">
                     {camp.subtitle}
                   </p>
-                  <div className="pt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[#FF6B00]">
+                  <div className="pt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[#FF7100]">
                     {camp.multiplier && camp.multiplier > 1 && (
                       <span>مضاعفة النقاط ×{camp.multiplier}</span>
                     )}
@@ -702,7 +702,7 @@ export function StoresView({
         <section aria-label="صندوق المفاجآت" className="space-y-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Gift className="w-5 h-5 text-[#FF6B00]" />
+              <Gift className="w-5 h-5 text-[#FF7100]" />
               <h2 className="text-2xl font-bold text-[#F8FAFC]">
                 صندوق المفاجآت بخصم حصري
               </h2>
@@ -730,7 +730,7 @@ export function StoresView({
                     className="w-24 h-24 rounded-2xl object-cover shrink-0"
                   />
                   <div className="flex-1 min-w-0 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#FF6B00]">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#FF7100]">
                       <Sparkles className="w-3.5 h-3.5" />
                       <span className="truncate">{parentStore.name}</span>
                     </div>
@@ -738,7 +738,7 @@ export function StoresView({
                       {box.name}
                     </h3>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-base font-extrabold text-[#FF6B00] tabular-nums">
+                      <span className="text-base font-extrabold text-[#FF7100] tabular-nums">
                         {box.price} ج.م
                       </span>
                       {box.originalValueEgp &&
@@ -758,7 +758,7 @@ export function StoresView({
                           onOpenStoreMenu(parentStore);
                         }
                       }}
-                      className="px-3.5 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white text-xs font-bold cursor-pointer"
+                      className="px-3.5 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white text-xs font-bold cursor-pointer"
                     >
                       {outOfStock ? 'نفدت الكمية' : 'احجز الصندوق الآن'}
                     </button>
@@ -776,7 +776,7 @@ export function StoresView({
         <section aria-label="الأكثر طلباً في إدكو" className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-[#283548] border border-[#334155] text-[#FF6B00] flex items-center justify-center">
+              <div className="w-9 h-9 rounded-2xl bg-[#283548] border border-[#334155] text-[#FF7100] flex items-center justify-center">
                 <Flame className="w-5 h-5" />
               </div>
               <div>
@@ -821,23 +821,23 @@ export function StoresView({
                 onClick={() => {
                   if (item.store) onOpenStoreMenu(item.store);
                 }}
-                className="group relative rounded-2xl border border-[#334155] bg-[#1E293B] p-4 hover:border-[#FF6B00]/60 transition-all cursor-pointer flex flex-col justify-between gap-3"
+                className="group relative rounded-2xl border border-[#334155] bg-[#1E293B] p-4 hover:border-[#FF7100]/60 transition-all cursor-pointer flex flex-col justify-between gap-3"
               >
                 <div className="space-y-2.5">
-                  <div className="relative h-32 w-full rounded-2xl bg-[#0F172A] overflow-hidden">
+                  <div className="relative h-32 w-full rounded-2xl bg-[#10192D] overflow-hidden">
                     <ResilientImage
                       src={item.imageUrl || ''}
                       alt={item.name}
                       fallbackLabel={item.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-lg bg-[#0F172A]/90 border border-[#334155] text-[#FF6B00] text-[10px] font-bold">
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-lg bg-[#10192D]/90 border border-[#334155] text-[#FF7100] text-[10px] font-bold">
                       الأكثر مبيعاً
                     </span>
                   </div>
 
                   <div>
-                    <p className="text-[11px] font-bold text-[#FF6B00] truncate">
+                    <p className="text-[11px] font-bold text-[#FF7100] truncate">
                       {item.storeName}
                     </p>
                     <h3 className="text-base font-bold text-[#F8FAFC] truncate">
@@ -847,10 +847,10 @@ export function StoresView({
                 </div>
 
                 <div className="pt-2 border-t border-[#334155] flex items-center justify-between">
-                  <span className="text-sm font-extrabold text-[#FF6B00] tabular-nums">
+                  <span className="text-sm font-extrabold text-[#FF7100] tabular-nums">
                     {item.price} ج.م
                   </span>
-                  <span className="px-3 py-1.5 rounded-xl bg-[#FF6B00] text-white text-xs font-bold inline-flex items-center gap-1">
+                  <span className="px-3 py-1.5 rounded-xl bg-[#FF7100] text-white text-xs font-bold inline-flex items-center gap-1">
                     <span>اطلب</span>
                     <ArrowLeft className="w-3.5 h-3.5" />
                   </span>
@@ -875,10 +875,10 @@ export function StoresView({
           <button
             type="button"
             onClick={handleManualRefresh}
-            className="min-h-[40px] px-3.5 py-2 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer"
+            className="min-h-[40px] px-3.5 py-2 rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100] text-xs font-bold text-[#F8FAFC] inline-flex items-center gap-1.5 cursor-pointer"
           >
             <RefreshCw
-              className={`w-3.5 h-3.5 text-[#FF6B00] ${
+              className={`w-3.5 h-3.5 text-[#FF7100] ${
                 isRefreshing ? 'animate-spin' : ''
               }`}
             />
@@ -907,8 +907,8 @@ export function StoresView({
                   <div
                     className={`w-16 h-16 rounded-full flex items-center justify-center transition shadow-md ${
                       active
-                        ? 'bg-[#FF6B00] text-white ring-4 ring-[#FF6B00]/30 scale-105'
-                        : 'bg-[#283548] border border-[#334155] text-[#FF6B00] group-hover:border-[#FF6B00]'
+                        ? 'bg-[#FF7100] text-white ring-4 ring-[#FF7100]/30 scale-105'
+                        : 'bg-[#283548] border border-[#334155] text-[#FF7100] group-hover:border-[#FF7100]'
                     }`}
                   >
                     {cat === 'الكل' ? (
@@ -934,7 +934,7 @@ export function StoresView({
                     )}
                   </div>
                   {isComingSoon && (
-                    <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#FF6B00] text-white text-[9px] font-extrabold whitespace-nowrap shadow">
+                    <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#FF7100] text-white text-[9px] font-extrabold whitespace-nowrap shadow">
                       قريباً
                     </span>
                   )}
@@ -942,8 +942,8 @@ export function StoresView({
                 <span
                   className={`text-xs font-bold transition text-center max-w-[84px] truncate ${
                     active
-                      ? 'text-[#FF6B00]'
-                      : 'text-[#F8FAFC] group-hover:text-[#FF6B00]'
+                      ? 'text-[#FF7100]'
+                      : 'text-[#F8FAFC] group-hover:text-[#FF7100]'
                   }`}
                 >
                   {cat}
@@ -981,7 +981,7 @@ export function StoresView({
                   onClick={() => setSelectedSubCategory(sub)}
                   className={`px-3.5 py-2 text-xs font-bold rounded-2xl transition cursor-pointer whitespace-nowrap ${
                     isSubActive
-                      ? 'bg-[#FF6B00] text-white shadow-sm'
+                      ? 'bg-[#FF7100] text-white shadow-sm'
                       : 'bg-[#1E293B] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
@@ -998,7 +998,7 @@ export function StoresView({
               onClick={() => setSortBy(sortBy === 'rating' ? 'default' : 'rating')}
               className={`px-3.5 py-2 text-xs font-bold rounded-2xl border transition cursor-pointer flex items-center gap-1.5 ${
                 sortBy === 'rating'
-                  ? 'bg-[#FF6B00] border-[#FF6B00] text-white'
+                  ? 'bg-[#FF7100] border-[#FF7100] text-white'
                   : 'bg-[#1E293B] border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]'
               }`}
             >
@@ -1013,9 +1013,9 @@ export function StoresView({
         </div>
 
         {sortBy === 'rating' && !isTopRatedUnlocked && (
-          <div className="rounded-2xl bg-[#1E293B] border border-[#FF6B00]/40 p-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="rounded-2xl bg-[#1E293B] border border-[#FF7100]/40 p-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/15 text-[#FF6B00] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-[#FF7100]/15 text-[#FF7100] flex items-center justify-center shrink-0">
                 <Lock className="w-5 h-5" />
               </div>
               <div>
@@ -1024,7 +1024,7 @@ export function StoresView({
                 </p>
                 <p className="text-xs text-[#94A3B8]">
                   محتاج تطلب بـ{' '}
-                  <span className="font-mono font-bold text-[#FF6B00]">
+                  <span className="font-mono font-bold text-[#FF7100]">
                     {Math.max(1, Math.ceil(100 - customerTotalSpent))}
                   </span>{' '}
                   ج.م كمان عشان تفتح الترتيب بأعلى التقييمات
@@ -1034,7 +1034,7 @@ export function StoresView({
             <button
               type="button"
               onClick={() => setSortBy('default')}
-              className="px-4 py-2 rounded-2xl bg-[#0F172A] border border-[#334155] text-xs font-bold text-[#F8FAFC] hover:border-[#FF6B00] cursor-pointer"
+              className="px-4 py-2 rounded-2xl bg-[#10192D] border border-[#334155] text-xs font-bold text-[#F8FAFC] hover:border-[#FF7100] cursor-pointer"
             >
               عرض الترتيب الافتراضي
             </button>
@@ -1092,7 +1092,7 @@ export function StoresView({
               return (
                 <article
                   key={store.id}
-                  className="relative rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF6B00]/60 transition-colors overflow-hidden flex flex-col justify-between shadow-lg"
+                  className="relative rounded-2xl bg-[#1E293B] border border-[#334155] hover:border-[#FF7100]/60 transition-colors overflow-hidden flex flex-col justify-between shadow-lg"
                 >
                   {onToggleFavoriteStore && (
                     <button
@@ -1106,7 +1106,7 @@ export function StoresView({
                           ? `إزالة ${store.name} من المفضلة`
                           : `إضافة ${store.name} إلى المفضلة`
                       }
-                      className="absolute top-3.5 left-3.5 z-20 min-h-[42px] min-w-[42px] rounded-full bg-[#0F172A]/85 border border-[#334155] backdrop-blur-md shadow-md flex items-center justify-center hover:scale-105 transition-transform cursor-pointer"
+                      className="absolute top-3.5 left-3.5 z-20 min-h-[42px] min-w-[42px] rounded-full bg-[#10192D]/85 border border-[#334155] backdrop-blur-md shadow-md flex items-center justify-center hover:scale-105 transition-transform cursor-pointer"
                     >
                       <Heart
                         className={`w-5 h-5 ${
@@ -1125,7 +1125,7 @@ export function StoresView({
                     className="text-right w-full flex-1 flex flex-col justify-between cursor-pointer group focus:outline-none"
                   >
                     <div className="w-full">
-                      <div className="relative h-56 sm:h-60 w-full bg-[#0F172A] overflow-hidden">
+                      <div className="relative h-56 sm:h-60 w-full bg-[#10192D] overflow-hidden">
                         <ResilientImage
                           src={store.imageUrl || ''}
                           alt={store.name}
@@ -1137,7 +1137,7 @@ export function StoresView({
 
                         <div
                           aria-hidden="true"
-                          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0F172A]/90 via-black/20 to-transparent"
+                          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#10192D]/90 via-black/20 to-transparent"
                         />
 
                         {isPharmacy && (
@@ -1149,9 +1149,9 @@ export function StoresView({
 
                         <div className="absolute bottom-3.5 inset-x-4 flex items-center justify-between gap-2">
                           {isOpen ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0F172A]/90 border border-[#334155] text-[#F8FAFC] text-xs font-bold">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#10192D]/90 border border-[#334155] text-[#F8FAFC] text-xs font-bold">
                               <Clock
-                                className="w-3.5 h-3.5 text-[#FF6B00]"
+                                className="w-3.5 h-3.5 text-[#FF7100]"
                                 aria-hidden="true"
                               />
                               <span>
@@ -1177,9 +1177,9 @@ export function StoresView({
                             </span>
                           )}
 
-                          <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#0F172A]/90 border border-[#334155] text-[#F8FAFC] text-xs font-bold">
+                          <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#10192D]/90 border border-[#334155] text-[#F8FAFC] text-xs font-bold">
                             <Star
-                              className="w-3.5 h-3.5 fill-[#FF6B00] text-[#FF6B00]"
+                              className="w-3.5 h-3.5 fill-[#FF7100] text-[#FF7100]"
                               aria-hidden="true"
                             />
                             <span className="font-mono tabular-nums">
@@ -1196,7 +1196,7 @@ export function StoresView({
                       </div>
 
                       <div className="p-6 pb-4">
-                        <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#FF6B00] transition-colors leading-snug">
+                        <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#FF7100] transition-colors leading-snug">
                           {store.name}
                         </h3>
                         <p className="text-sm text-[#94A3B8] mt-1">
@@ -1206,7 +1206,7 @@ export function StoresView({
                             <>
                               {' '}
                               ·{' '}
-                              <span className="font-semibold text-[#FF6B00]">
+                              <span className="font-semibold text-[#FF7100]">
                                 أكل بيتي
                               </span>
                             </>
@@ -1236,13 +1236,13 @@ export function StoresView({
                             مغلق حالياً
                           </span>
                         ) : storeCartCount > 0 ? (
-                          <span className="font-bold text-[#FF6B00] tabular-nums">
+                          <span className="font-bold text-[#FF7100] tabular-nums">
                             في السلة ({storeCartCount})
                           </span>
                         ) : (
                           <>
                             <Truck
-                              className="w-4 h-4 text-[#FF6B00] shrink-0"
+                              className="w-4 h-4 text-[#FF7100] shrink-0"
                               aria-hidden="true"
                             />
                             <span>
@@ -1258,7 +1258,7 @@ export function StoresView({
                         )}
                       </span>
 
-                      <span className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                      <span className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
                         <span>
                           {isPharmacy
                             ? 'إرسال روشتة'

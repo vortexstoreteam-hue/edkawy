@@ -221,7 +221,7 @@ export const CustomerOrders: React.FC<CustomerOrdersProps> = ({
         );
       default:
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-2xl text-xs font-bold bg-[#0F172A] border border-[#334155] text-[#F8FAFC]">
+          <span className="inline-flex items-center px-3 py-1 rounded-2xl text-xs font-bold bg-[#10192D] border border-[#334155] text-[#F8FAFC]">
             {getOrderStatusLabel(status)}
           </span>
         );
@@ -248,7 +248,7 @@ export const CustomerOrders: React.FC<CustomerOrdersProps> = ({
             onClick={() => setFilter('all')}
             className={`px-3.5 py-2 rounded-2xl transition-all cursor-pointer whitespace-nowrap ${
               filter === 'all'
-                ? 'bg-[#FF6B00] text-white shadow-sm'
+                ? 'bg-[#FF7100] text-white shadow-sm'
                 : 'text-[#94A3B8] hover:text-[#F8FAFC]'
             }`}
           >
@@ -259,7 +259,7 @@ export const CustomerOrders: React.FC<CustomerOrdersProps> = ({
             onClick={() => setFilter('active')}
             className={`px-3.5 py-2 rounded-2xl transition-all cursor-pointer whitespace-nowrap ${
               filter === 'active'
-                ? 'bg-[#FF6B00] text-white shadow-sm'
+                ? 'bg-[#FF7100] text-white shadow-sm'
                 : 'text-[#94A3B8] hover:text-[#F8FAFC]'
             }`}
           >
@@ -293,7 +293,7 @@ export const CustomerOrders: React.FC<CustomerOrdersProps> = ({
       {/* Loading State */}
       {isLoading && (
         <div className="py-16 text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-[#FF6B00] animate-spin mx-auto" />
+          <Loader2 className="w-8 h-8 text-[#FF7100] animate-spin mx-auto" />
           <p className="text-sm font-semibold text-[#94A3B8]">
             جارٍ جلب وتحديث طلباتك من السحابة...
           </p>
@@ -374,9 +374,9 @@ export const CustomerOrders: React.FC<CustomerOrdersProps> = ({
                     {order.items.map((it, idx) => (
                       <span
                         key={idx}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#0F172A] border border-[#334155] text-xs text-[#F8FAFC]"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#10192D] border border-[#334155] text-xs text-[#F8FAFC]"
                       >
-                        <span className="font-bold text-[#FF6B00] tabular-nums">
+                        <span className="font-bold text-[#FF7100] tabular-nums">
                           {it.quantity}×
                         </span>
                         <span>{it.name}</span>
@@ -396,7 +396,7 @@ export const CustomerOrders: React.FC<CustomerOrdersProps> = ({
                     <span className="text-xs text-[#94A3B8]">
                       إجمالي الطلب:
                     </span>
-                    <span className="text-lg font-extrabold text-[#FF6B00] tabular-nums">
+                    <span className="text-lg font-extrabold text-[#FF7100] tabular-nums">
                       {order.totalAmount} ج.م
                     </span>
                     {order.deliveryFee > 0 && (
@@ -412,7 +412,7 @@ export const CustomerOrders: React.FC<CustomerOrdersProps> = ({
                       <button
                         type="button"
                         onClick={() => onTrackOrder(order.id)}
-                        className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        className="min-h-[42px] px-4 py-2 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
                       >
                         <Truck className="w-4 h-4" />
                         <span>تتبع الطلب لحظياً</span>
@@ -462,9 +462,9 @@ export const CustomerOrders: React.FC<CustomerOrdersProps> = ({
                       <button
                         type="button"
                         onClick={() => onReorder(order)}
-                        className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#0F172A] hover:border-[#FF6B00] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                        className="min-h-[42px] px-4 py-2 rounded-2xl border border-[#334155] bg-[#10192D] hover:border-[#FF7100] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
                       >
-                        <RotateCcw className="w-3.5 h-3.5 text-[#FF6B00]" />
+                        <RotateCcw className="w-3.5 h-3.5 text-[#FF7100]" />
                         <span>إعادة الطلب</span>
                       </button>
                     )}

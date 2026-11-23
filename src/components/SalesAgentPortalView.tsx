@@ -297,8 +297,8 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
           {
             label: 'عمولاتك المحققة (ج.م)',
             data: entries.map((e) => Math.round(e.commissionsEgp * 100) / 100),
-            borderColor: '#FF6B00',
-            backgroundColor: 'rgba(255, 107, 0, 0.16)',
+            borderColor: '#FF7100',
+            backgroundColor: 'rgba(255, 113, 0, 0.16)',
             tension: 0.32,
             fill: true,
           },
@@ -560,7 +560,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
   return (
     <div
       dir="rtl"
-      className="min-h-screen bg-[#0F172A] text-[#F8FAFC] flex flex-col lg:flex-row"
+      className="min-h-screen bg-[#10192D] text-[#F8FAFC] flex flex-col lg:flex-row"
     >
       {/* Right Sidebar Navigation (RTL) */}
       <aside className="w-full lg:w-72 shrink-0 bg-[#1E293B] text-[#F8FAFC] border-b lg:border-b-0 lg:border-l border-[#334155] flex flex-col justify-between p-5 lg:min-h-screen">
@@ -569,7 +569,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
             <AdkawyLogo variant="navbar" />
           </div>
 
-          <div className="rounded-2xl bg-[#0F172A]/80 border border-[#334155] p-4 space-y-1.5">
+          <div className="rounded-2xl bg-[#10192D]/80 border border-[#334155] p-4 space-y-1.5">
             <p className="text-xs text-[#94A3B8]">بوابة مسؤولي المبيعات</p>
             <p className="text-base font-bold text-[#F8FAFC] truncate">
               {resolvedName}
@@ -581,7 +581,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
               {resolvedEmail}
             </p>
             {referralCode && (
-              <p className="text-xs text-[#FF6B00] font-mono font-bold pt-1 tabular-nums">
+              <p className="text-xs text-[#FF7100] font-mono font-bold pt-1 tabular-nums">
                 كود الإحالة: {referralCode} · العمولة {commissionRate}%
               </p>
             )}
@@ -624,7 +624,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   onClick={() => setActiveTab(item.id)}
                   className={`min-h-[44px] px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-2.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                     active
-                      ? 'bg-[#FF6B00] text-white'
+                      ? 'bg-[#FF7100] text-white'
                       : 'text-[#94A3B8] hover:bg-white/10 hover:text-[#F8FAFC]'
                   }`}
                 >
@@ -643,7 +643,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
               onClick={() => onOpenLegalModal('privacy')}
               className="min-h-[42px] px-3.5 py-2 rounded-xl text-xs font-semibold text-[#94A3B8] hover:bg-white/10 hover:text-[#F8FAFC] inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
             >
-              <Scale className="w-4 h-4 text-[#FF6B00]" />
+              <Scale className="w-4 h-4 text-[#FF7100]" />
               <span>الشروط والخصوصية</span>
             </button>
           )}
@@ -684,7 +684,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                 setCreatedInviteUrl(null);
                 setIsInviteModalOpen(true);
               }}
-              className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+              className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>إنشاء دعوة جديدة</span>
@@ -733,7 +733,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
 
         {loadingProfile ? (
           <div className="rounded-2xl bg-[#1E293B] border border-[#334155] p-12 flex items-center justify-center gap-3 text-sm font-semibold text-[#94A3B8]">
-            <Loader2 className="w-5 h-5 animate-spin text-[#FF6B00]" />
+            <Loader2 className="w-5 h-5 animate-spin text-[#FF7100]" />
             <span>جارٍ تحميل بيانات بوابة المبيعات من Firestore...</span>
           </div>
         ) : activeTab === 'overview' ? (
@@ -741,7 +741,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
             {/* Referral Link & Code Strip */}
             <section className="rounded-2xl bg-[#1E293B] text-[#F8FAFC] p-6 border border-[#334155] flex flex-col lg:flex-row lg:items-center justify-between gap-5">
               <div className="space-y-1.5">
-                <p className="text-xs font-semibold text-[#FF6B00]">
+                <p className="text-xs font-semibold text-[#FF7100]">
                   كود ورابط الإحالة الخاص بك لاستقطاب المتاجر والعملاء
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
@@ -775,7 +775,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                       window.setTimeout(() => setCopiedRefCode(false), 2000);
                     })
                   }
-                  className="min-h-[42px] px-4 py-2 rounded-xl bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                  className="min-h-[42px] px-4 py-2 rounded-xl bg-[#10192D] border border-[#334155] hover:border-[#FF7100] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
                 >
                   {copiedRefCode ? (
                     <Check className="w-4 h-4 text-emerald-400" />
@@ -794,7 +794,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                       window.setTimeout(() => setCopiedRefLink(false), 2000);
                     })
                   }
-                  className="min-h-[42px] px-4 py-2 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                  className="min-h-[42px] px-4 py-2 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
                 >
                   {copiedRefLink ? (
                     <Check className="w-4 h-4 text-white" />
@@ -858,7 +858,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                 <p className="text-xs font-semibold text-[#94A3B8]">
                   إجمالي العمولات المحققة
                 </p>
-                <p className="text-3xl font-bold font-mono tabular-nums text-[#FF6B00]">
+                <p className="text-3xl font-bold font-mono tabular-nums text-[#FF7100]">
                   {totalEarnedCommissionsEgp.toFixed(2)}{' '}
                   <span className="text-sm font-semibold">ج.م</span>
                 </p>
@@ -874,7 +874,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-bold text-[#F8FAFC] flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-[#FF6B00]" />
+                    <TrendingUp className="w-5 h-5 text-[#FF7100]" />
                     <span>مؤشر نمو المبيعات والعمولات الشهري</span>
                   </h2>
                   <p className="text-xs text-[#94A3B8] mt-0.5">
@@ -916,7 +916,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   />
                 </div>
               ) : (
-                <div className="rounded-2xl bg-[#0F172A]/80 border border-[#334155] p-8 text-center space-y-2">
+                <div className="rounded-2xl bg-[#10192D]/80 border border-[#334155] p-8 text-center space-y-2">
                   <p className="text-sm font-bold text-[#F8FAFC]">
                     لا توجد عمولات مسجلة بعد لعرض المنحنى الشهري
                   </p>
@@ -937,11 +937,11 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   value={inviteSearch}
                   onChange={(e) => setInviteSearch(e.target.value)}
                   placeholder="ابحث بالبريد الإلكتروني المدعو..."
-                  className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+                  className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
                 />
               </div>
 
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#0F172A] border border-[#334155] overflow-x-auto">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#10192D] border border-[#334155] overflow-x-auto">
                 {(
                   [
                     { id: 'all', label: 'الكل' },
@@ -956,7 +956,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                     onClick={() => setInviteTypeFilter(tab.id)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer ${
                       inviteTypeFilter === tab.id
-                        ? 'bg-[#FF6B00] text-white'
+                        ? 'bg-[#FF7100] text-white'
                         : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                     }`}
                   >
@@ -967,7 +967,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
             </div>
 
             {filteredInvitations.length === 0 ? (
-              <div className="rounded-2xl bg-[#0F172A]/80 border border-[#334155] p-10 text-center space-y-2">
+              <div className="rounded-2xl bg-[#10192D]/80 border border-[#334155] p-10 text-center space-y-2">
                 <p className="text-sm font-bold text-[#F8FAFC]">
                   لا توجد دعوات مطابقة حالياً
                 </p>
@@ -1028,7 +1028,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                                     );
                                   })
                                 }
-                                className="min-h-[36px] px-2.5 py-1 rounded-lg border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1 hover:border-[#FF6B00] cursor-pointer whitespace-nowrap shrink-0"
+                                className="min-h-[36px] px-2.5 py-1 rounded-lg border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1 hover:border-[#FF7100] cursor-pointer whitespace-nowrap shrink-0"
                               >
                                 {copiedInviteId === inv.id ? (
                                   <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -1047,9 +1047,9 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                                   type="button"
                                   disabled={busyInviteId === inv.id}
                                   onClick={() => handleResendInvitation(inv)}
-                                  className="min-h-[36px] px-2.5 py-1 rounded-lg border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1 hover:border-[#FF6B00] cursor-pointer whitespace-nowrap shrink-0"
+                                  className="min-h-[36px] px-2.5 py-1 rounded-lg border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-bold inline-flex items-center gap-1 hover:border-[#FF7100] cursor-pointer whitespace-nowrap shrink-0"
                                 >
-                                  <RefreshCw className="w-3.5 h-3.5 text-[#FF6B00]" />
+                                  <RefreshCw className="w-3.5 h-3.5 text-[#FF7100]" />
                                   <span>إعادة إرسال</span>
                                 </button>
                               )}
@@ -1083,11 +1083,11 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   value={referralSearch}
                   onChange={(e) => setReferralSearch(e.target.value)}
                   placeholder="ابحث باسم المتجر أو الحساب..."
-                  className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
+                  className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-sm text-[#F8FAFC] placeholder:text-[#94A3B8]"
                 />
               </div>
 
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#0F172A] border border-[#334155] overflow-x-auto">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#10192D] border border-[#334155] overflow-x-auto">
                 {(
                   [
                     { id: 'all', label: 'الكل' },
@@ -1102,7 +1102,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                     onClick={() => setReferralTypeFilter(tab.id)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer ${
                       referralTypeFilter === tab.id
-                        ? 'bg-[#FF6B00] text-white'
+                        ? 'bg-[#FF7100] text-white'
                         : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                     }`}
                   >
@@ -1113,7 +1113,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
             </div>
 
             {filteredReferrals.length === 0 ? (
-              <div className="rounded-2xl bg-[#0F172A]/80 border border-[#334155] p-10 text-center space-y-2">
+              <div className="rounded-2xl bg-[#10192D]/80 border border-[#334155] p-10 text-center space-y-2">
                 <p className="text-sm font-bold text-[#F8FAFC]">
                   لم تُسجّل حسابات تحت كود إحالتك بعد
                 </p>
@@ -1167,16 +1167,16 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                         <td className="py-3.5 px-3 font-mono tabular-nums text-[#F8FAFC]">
                           {Math.round(ref.totalSalesVolumeEgp)} ج.م
                         </td>
-                        <td className="py-3.5 px-3 font-mono tabular-nums font-bold text-[#FF6B00]">
+                        <td className="py-3.5 px-3 font-mono tabular-nums font-bold text-[#FF7100]">
                           {Number(ref.totalCommissionsEgp || 0).toFixed(2)} ج.م
                         </td>
                         <td className="py-3.5 px-3">
                           <button
                             type="button"
                             onClick={() => setSelectedReferral(ref)}
-                            className="min-h-[36px] px-3 py-1.5 rounded-lg border border-[#334155] bg-[#0F172A] text-[#F8FAFC] hover:border-[#FF6B00] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                            className="min-h-[36px] px-3 py-1.5 rounded-lg border border-[#334155] bg-[#10192D] text-[#F8FAFC] hover:border-[#FF7100] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
                           >
-                            <Eye className="w-3.5 h-3.5 text-[#FF6B00]" />
+                            <Eye className="w-3.5 h-3.5 text-[#FF7100]" />
                             <span>عرض التفاصيل</span>
                           </button>
                         </td>
@@ -1195,7 +1195,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                 <p className="text-xs font-semibold text-[#94A3B8]">
                   الرصيد المتاح للسحب الفوري
                 </p>
-                <p className="text-3xl font-bold font-mono tabular-nums text-[#FF6B00]">
+                <p className="text-3xl font-bold font-mono tabular-nums text-[#FF7100]">
                   {availableBalance.toFixed(2)}{' '}
                   <span className="text-sm text-[#F8FAFC]">ج.م</span>
                 </p>
@@ -1206,7 +1206,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   type="button"
                   onClick={() => setIsPayoutModalOpen(true)}
                   disabled={availableBalance < 100}
-                  className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-45 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-45 text-white text-xs sm:text-sm font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <ArrowUpLeft className="w-4 h-4" />
                   <span>
@@ -1232,10 +1232,10 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   type="button"
                   disabled={settlingEscrow}
                   onClick={handleSettleEscrow}
-                  className="w-full min-h-[44px] px-4 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] hover:border-[#FF6B00] text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full min-h-[44px] px-4 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] hover:border-[#FF7100] text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <RefreshCw
-                    className={`w-4 h-4 text-[#FF6B00] ${
+                    className={`w-4 h-4 text-[#FF7100] ${
                       settlingEscrow ? 'animate-spin' : ''
                     }`}
                   />
@@ -1380,7 +1380,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                           <td className="py-3 px-3 font-mono tabular-nums text-[#94A3B8]">
                             {com.commissionRatePercent}%
                           </td>
-                          <td className="py-3 px-3 font-mono tabular-nums font-bold text-[#FF6B00]">
+                          <td className="py-3 px-3 font-mono tabular-nums font-bold text-[#FF7100]">
                             +{com.amountEgp.toFixed(2)} ج.م
                           </td>
                           <td className="py-3 px-3 text-xs font-bold">
@@ -1441,7 +1441,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsInviteModalOpen(false)}
-                className="p-2 rounded-xl text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC] cursor-pointer"
+                className="p-2 rounded-xl text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1460,7 +1460,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#334155] space-y-2">
+                <div className="p-3.5 rounded-xl bg-[#10192D] border border-[#334155] space-y-2">
                   <p
                     dir="ltr"
                     className="text-xs font-mono break-all text-left text-[#F8FAFC]"
@@ -1475,7 +1475,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                         window.setTimeout(() => setCopiedInviteId(null), 2000);
                       })
                     }
-                    className="w-full min-h-[42px] px-4 py-2 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full min-h-[42px] px-4 py-2 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     {copiedInviteId === 'modal_new' ? (
                       <Check className="w-4 h-4" />
@@ -1497,7 +1497,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                       setCreatedInviteUrl(null);
                       setIsInviteModalOpen(false);
                     }}
-                    className="min-h-[42px] px-5 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-bold cursor-pointer"
+                    className="min-h-[42px] px-5 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-bold cursor-pointer"
                   >
                     إغلاق
                   </button>
@@ -1518,7 +1518,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       placeholder="owner@example.com"
-                      className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm font-mono text-left"
+                      className="w-full min-h-[44px] pr-10 pl-3.5 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm font-mono text-left"
                     />
                   </div>
                 </div>
@@ -1534,7 +1534,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                         e.target.value as 'store' | 'customer' | 'courier'
                       )
                     }
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm"
+                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm"
                   >
                     <option value="store">متجر / مطعم / صيدلية</option>
                     <option value="customer">عميل</option>
@@ -1550,14 +1550,14 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsInviteModalOpen(false)}
-                    className="min-h-[42px] px-4 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-bold cursor-pointer"
+                    className="min-h-[42px] px-4 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-bold cursor-pointer"
                   >
                     إلغاء
                   </button>
                   <button
                     type="submit"
                     disabled={creatingInvite}
-                    className="min-h-[44px] px-6 py-2 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                    className="min-h-[44px] px-6 py-2 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
                   >
                     {creatingInvite ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1602,28 +1602,28 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedReferral(null)}
-                className="p-2 rounded-xl text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC] cursor-pointer"
+                className="p-2 rounded-xl text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-[#0F172A] border border-[#334155] p-3.5">
+              <div className="rounded-xl bg-[#10192D] border border-[#334155] p-3.5">
                 <p className="text-[11px] text-[#94A3B8]">الطلبات المكتملة</p>
                 <p className="text-xl font-bold font-mono tabular-nums text-[#F8FAFC] mt-0.5">
                   {selectedReferral.completedOrdersCount}
                 </p>
               </div>
-              <div className="rounded-xl bg-[#0F172A] border border-[#334155] p-3.5">
+              <div className="rounded-xl bg-[#10192D] border border-[#334155] p-3.5">
                 <p className="text-[11px] text-[#94A3B8]">حجم المبيعات</p>
                 <p className="text-xl font-bold font-mono tabular-nums text-[#F8FAFC] mt-0.5">
                   {Math.round(selectedReferral.totalSalesVolumeEgp)} ج.م
                 </p>
               </div>
-              <div className="rounded-xl bg-[#0F172A] border border-[#334155] p-3.5">
+              <div className="rounded-xl bg-[#10192D] border border-[#334155] p-3.5">
                 <p className="text-[11px] text-[#94A3B8]">إجمالي عمولاتك</p>
-                <p className="text-xl font-bold font-mono tabular-nums text-[#FF6B00] mt-0.5">
+                <p className="text-xl font-bold font-mono tabular-nums text-[#FF7100] mt-0.5">
                   {Number(selectedReferral.totalCommissionsEgp || 0).toFixed(2)}{' '}
                   ج.م
                 </p>
@@ -1642,13 +1642,13 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                 selectedReferralCommissions.map((c) => (
                   <div
                     key={c.id}
-                    className="py-2.5 px-3 rounded-xl bg-[#0F172A] border border-[#334155] flex items-center justify-between text-xs"
+                    className="py-2.5 px-3 rounded-xl bg-[#10192D] border border-[#334155] flex items-center justify-between text-xs"
                   >
                     <span className="font-mono tabular-nums text-[#94A3B8]">
                       {new Date(c.createdAtIso).toLocaleDateString('ar-EG')} ·
                       قيمة الطلب {c.orderTotalEgp} ج.م
                     </span>
-                    <span className="font-mono tabular-nums font-bold text-[#FF6B00]">
+                    <span className="font-mono tabular-nums font-bold text-[#FF7100]">
                       +{c.amountEgp.toFixed(2)} ج.م
                     </span>
                   </div>
@@ -1675,16 +1675,16 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsPayoutModalOpen(false)}
-                className="p-2 rounded-xl text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC] cursor-pointer"
+                className="p-2 rounded-xl text-[#94A3B8] hover:bg-[#10192D] hover:text-[#F8FAFC] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSubmitPayout} className="space-y-4">
-              <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#334155] text-xs flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-[#10192D] border border-[#334155] text-xs flex items-center justify-between">
                 <span className="text-[#94A3B8]">الرصيد المتاح حالياً:</span>
-                <span className="font-mono font-bold text-base text-[#FF6B00] tabular-nums">
+                <span className="font-mono font-bold text-base text-[#FF7100] tabular-nums">
                   {availableBalance.toFixed(2)} ج.م
                 </span>
               </div>
@@ -1702,7 +1702,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   required
                   value={payoutAmount}
                   onChange={(e) => setPayoutAmount(e.target.value)}
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm font-mono tabular-nums text-left"
                 />
               </div>
 
@@ -1715,7 +1715,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                   onChange={(e) =>
                     setPayoutMethod(e.target.value as PayoutMethod)
                   }
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-sm"
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-sm"
                 >
                   <option value="vodafone_cash">فودافون كاش (Vodafone Cash)</option>
                   <option value="instapay">إنستاباي (InstaPay)</option>
@@ -1739,7 +1739,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                       ? '01012345678'
                       : 'username@instapay'
                   }
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm font-mono text-left"
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] placeholder:text-[#94A3B8] text-sm font-mono text-left"
                 />
               </div>
 
@@ -1747,14 +1747,14 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsPayoutModalOpen(false)}
-                  className="min-h-[42px] px-4 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-bold cursor-pointer"
+                  className="min-h-[42px] px-4 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-bold cursor-pointer"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={submittingPayout}
-                  className="min-h-[44px] px-6 py-2 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="min-h-[44px] px-6 py-2 rounded-xl bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-60 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   {submittingPayout && (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1789,7 +1789,7 @@ export const SalesAgentPortalView: React.FC<SalesAgentPortalViewProps> = ({
                 type="button"
                 disabled={deletingAccount}
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="min-h-[42px] px-4 py-2 rounded-xl border border-[#334155] bg-[#0F172A] text-[#F8FAFC] text-xs font-bold cursor-pointer"
+                className="min-h-[42px] px-4 py-2 rounded-xl border border-[#334155] bg-[#10192D] text-[#F8FAFC] text-xs font-bold cursor-pointer"
               >
                 تراجع
               </button>

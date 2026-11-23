@@ -157,9 +157,9 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] flex items-center justify-center font-['Cairo',sans-serif] dir-rtl" dir="rtl">
+      <div className="min-h-screen bg-[#10192D] text-[#F8FAFC] flex items-center justify-center font-['Cairo',sans-serif] dir-rtl" dir="rtl">
         <div className="text-center space-y-3">
-          <div className="w-12 h-12 border-4 border-[#FF6B00] border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-12 h-12 border-4 border-[#FF7100] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm text-[#94A3B8]">جاري تحميل غرفة سلة الشلة ({roomCode})...</p>
         </div>
       </div>
@@ -168,12 +168,12 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
 
   if (!cart) {
     return (
-      <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] flex flex-col items-center justify-center p-4 font-['Cairo',sans-serif] dir-rtl" dir="rtl">
+      <div className="min-h-screen bg-[#10192D] text-[#F8FAFC] flex flex-col items-center justify-center p-4 font-['Cairo',sans-serif] dir-rtl" dir="rtl">
         <div className="bg-[#1E293B] border border-[#334155] rounded-2xl p-6 text-center max-w-md space-y-4">
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
           <h2 className="text-xl font-bold">لم يتم العثور على الغرفة!</h2>
           <p className="text-sm text-[#94A3B8]">
-            رمز الغرفة <span className="font-mono text-[#FF6B00] font-bold">{roomCode}</span> غير صحيح أو انتهت صلاحيته.
+            رمز الغرفة <span className="font-mono text-[#FF7100] font-bold">{roomCode}</span> غير صحيح أو انتهت صلاحيته.
           </p>
           {errorMsg && (
             <p className="text-xs text-rose-400 bg-rose-950/40 border border-rose-500/30 rounded-xl p-2.5">
@@ -182,7 +182,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
           )}
           <button
             onClick={onBackToHome}
-            className="w-full py-3 bg-[#FF6B00] text-white font-bold rounded-xl shadow-lg shadow-[#FF6B00]/20 text-sm cursor-pointer"
+            className="w-full py-3 bg-[#FF7100] text-white font-bold rounded-xl shadow-lg shadow-[#FF7100]/20 text-sm cursor-pointer"
           >
             العودة للرئيسية
           </button>
@@ -194,17 +194,17 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
   const isHost = Boolean(myUid) && cart.hostUid === myUid;
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-[#F8FAFC] p-4 flex flex-col font-['Cairo',sans-serif] dir-rtl" dir="rtl">
+    <div className="min-h-screen bg-[#10192D] text-[#F8FAFC] p-4 flex flex-col font-['Cairo',sans-serif] dir-rtl" dir="rtl">
       {/* Top Header */}
       <div className="bg-[#1E293B] border border-[#334155] rounded-2xl p-4 mb-4 shadow-md flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#FF6B00]/20 text-[#FF6B00] flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-[#FF7100]/20 text-[#FF7100] flex items-center justify-center font-bold">
             <Users className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-base font-bold text-[#F8FAFC]">سلة الشلة - {cart.storeName}</h1>
-              <span className="bg-[#FF6B00]/20 text-[#FF6B00] text-xs font-mono font-bold px-2 py-0.5 rounded-lg border border-[#FF6B00]/30">
+              <span className="bg-[#FF7100]/20 text-[#FF7100] text-xs font-mono font-bold px-2 py-0.5 rounded-lg border border-[#FF7100]/30">
                 {cart.roomCode}
               </span>
             </div>
@@ -217,7 +217,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
             <button
               type="button"
               onClick={() => onOpenStoreMenu(cart.storeId, cart.id)}
-              className="flex items-center gap-1.5 text-xs bg-[#FF6B00] hover:bg-[#E55F00] text-white font-bold px-3.5 py-2 rounded-xl transition cursor-pointer"
+              className="flex items-center gap-1.5 text-xs bg-[#FF7100] hover:bg-[#E66600] text-white font-bold px-3.5 py-2 rounded-xl transition cursor-pointer"
             >
               <Store className="w-4 h-4" />
               <span>أضف أصنافاً من المنيو</span>
@@ -225,7 +225,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
           )}
           <button
             onClick={handleCopyLink}
-            className="flex items-center gap-1.5 text-xs bg-[#0F172A] hover:bg-[#0F172A]/80 border border-[#334155] text-[#94A3B8] px-3 py-2 rounded-xl transition cursor-pointer"
+            className="flex items-center gap-1.5 text-xs bg-[#10192D] hover:bg-[#10192D]/80 border border-[#334155] text-[#94A3B8] px-3 py-2 rounded-xl transition cursor-pointer"
             title="نسخ الرابط"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -233,7 +233,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
           </button>
           <button
             onClick={onBackToHome}
-            className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] bg-[#0F172A] border border-[#334155] px-3 py-2 rounded-xl transition cursor-pointer"
+            className="text-xs text-[#94A3B8] hover:text-[#F8FAFC] bg-[#10192D] border border-[#334155] px-3 py-2 rounded-xl transition cursor-pointer"
           >
             خروج
           </button>
@@ -253,12 +253,12 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
         <div className="lg:col-span-7 flex flex-col bg-[#1E293B] border border-[#334155] rounded-2xl p-4 shadow-xl space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-[#334155]">
             <div className="flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-[#FF6B00]" />
+              <ShoppingBag className="w-5 h-5 text-[#FF7100]" />
               <h2 className="text-sm font-bold text-[#F8FAFC]">محتويات السلة الجماعية ({cart.items.length})</h2>
             </div>
             <button
               onClick={() => setShowSplitBill(!showSplitBill)}
-              className="flex items-center gap-1.5 text-xs bg-[#FF6B00]/10 hover:bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/30 px-3 py-1.5 rounded-xl transition font-medium cursor-pointer"
+              className="flex items-center gap-1.5 text-xs bg-[#FF7100]/10 hover:bg-[#FF7100]/20 text-[#FF7100] border border-[#FF7100]/30 px-3 py-1.5 rounded-xl transition font-medium cursor-pointer"
             >
               <Calculator className="w-3.5 h-3.5" />
               <span>تقسيم الحساب</span>
@@ -276,7 +276,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenStoreMenu(cart.storeId, cart.id)}
-                    className="px-5 py-2.5 rounded-xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-[#FF7100] hover:bg-[#E66600] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer"
                   >
                     <Store className="w-4 h-4" />
                     <span>تصفح قائمة {cart.storeName} وإضافة أصناف</span>
@@ -294,7 +294,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
                 return (
                   <div
                     key={item.entryId}
-                    className="bg-[#0F172A] border border-[#334155] rounded-xl p-3 flex items-center justify-between gap-3 shadow-sm"
+                    className="bg-[#10192D] border border-[#334155] rounded-xl p-3 flex items-center justify-between gap-3 shadow-sm"
                   >
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -303,7 +303,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
                           طلب {item.participantName}
                         </span>
                       </div>
-                      <div className="text-xs text-[#FF6B00] font-mono font-bold tabular-nums">
+                      <div className="text-xs text-[#FF7100] font-mono font-bold tabular-nums">
                         {item.price} ج.م × {item.quantity} = {item.price * item.quantity} ج.م
                       </div>
                     </div>
@@ -317,7 +317,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
                               disabled={isBusy}
                               onClick={() => void handleChangeEntryQty(item.entryId, 1)}
                               aria-label={`زيادة ${item.name}`}
-                              className="w-7 h-7 rounded-lg bg-[#FF6B00] hover:bg-[#E55F00] disabled:opacity-50 text-white flex items-center justify-center cursor-pointer"
+                              className="w-7 h-7 rounded-lg bg-[#FF7100] hover:bg-[#E66600] disabled:opacity-50 text-white flex items-center justify-center cursor-pointer"
                             >
                               <Plus className="w-3.5 h-3.5" />
                             </button>
@@ -329,7 +329,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
                               disabled={isBusy}
                               onClick={() => void handleChangeEntryQty(item.entryId, -1)}
                               aria-label={`إنقاص ${item.name}`}
-                              className="w-7 h-7 rounded-lg bg-[#0F172A] border border-[#334155] hover:border-[#FF6B00] disabled:opacity-50 text-[#F8FAFC] flex items-center justify-center cursor-pointer"
+                              className="w-7 h-7 rounded-lg bg-[#10192D] border border-[#334155] hover:border-[#FF7100] disabled:opacity-50 text-[#F8FAFC] flex items-center justify-center cursor-pointer"
                             >
                               <Minus className="w-3.5 h-3.5" />
                             </button>
@@ -372,14 +372,14 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
             </div>
             <div className="flex justify-between text-sm font-bold text-[#F8FAFC] pt-1 border-t border-[#334155]/60">
               <span>الإجمالي الكلي:</span>
-              <span className="font-mono text-[#FF6B00] text-base">{totalAmount} ج.م</span>
+              <span className="font-mono text-[#FF7100] text-base">{totalAmount} ج.م</span>
             </div>
 
             {isHost && cart.status === 'open' && (
               <button
                 onClick={() => onProceedToCheckout && onProceedToCheckout(cart)}
                 disabled={cart.items.length === 0}
-                className="w-full mt-2 py-3 bg-[#FF6B00] hover:bg-[#FF6B00]/90 disabled:opacity-40 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#FF6B00]/20 cursor-pointer"
+                className="w-full mt-2 py-3 bg-[#FF7100] hover:bg-[#FF7100]/90 disabled:opacity-40 text-white font-bold rounded-xl transition duration-200 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#FF7100]/20 cursor-pointer"
               >
                 <span>متابعة إتمام الطلب كمسؤول الغرفة</span>
                 <ArrowRight className="w-4 h-4 transform rotate-180" />
@@ -395,7 +395,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
             <div className="flex flex-col h-full space-y-3">
               <div className="flex items-center justify-between pb-3 border-b border-[#334155]">
                 <div className="flex items-center gap-2 text-sm font-bold text-[#F8FAFC]">
-                  <Calculator className="w-4 h-4 text-[#FF6B00]" />
+                  <Calculator className="w-4 h-4 text-[#FF7100]" />
                   <span>حساب كل فرد (Split Bill)</span>
                 </div>
                 <button
@@ -413,11 +413,11 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
                   splitBreakdown.map((member) => (
                     <div
                       key={member.uid}
-                      className="bg-[#0F172A] border border-[#334155] rounded-xl p-3 space-y-1.5"
+                      className="bg-[#10192D] border border-[#334155] rounded-xl p-3 space-y-1.5"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-[#F8FAFC]">{member.name}</span>
-                        <span className="text-xs font-mono font-bold text-[#FF6B00]">
+                        <span className="text-xs font-mono font-bold text-[#FF7100]">
                           {member.totalOwed} ج.م
                         </span>
                       </div>
@@ -435,7 +435,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
             <div className="flex flex-col h-full space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-[#334155]">
                 <div className="flex items-center gap-2 text-sm font-bold text-[#F8FAFC]">
-                  <MessageSquare className="w-4 h-4 text-[#FF6B00]" />
+                  <MessageSquare className="w-4 h-4 text-[#FF7100]" />
                   <span>شات الغرفة اللحظي</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-[#94A3B8]">
@@ -448,7 +448,7 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
               <div className="flex-1 overflow-y-auto space-y-2.5 max-h-[340px] pr-1 text-xs">
                 {(!cart.chatMessages || cart.chatMessages.length === 0) ? (
                   <div className="text-center py-10 text-[#94A3B8] space-y-1">
-                    <Sparkles className="w-6 h-6 mx-auto text-[#FF6B00]/40" />
+                    <Sparkles className="w-6 h-6 mx-auto text-[#FF7100]/40" />
                     <p>دردش مع أصحابك ونسقوا الطلب مع بعض!</p>
                   </div>
                 ) : (
@@ -463,8 +463,8 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
                         <div
                           className={`rounded-2xl px-3 py-2 max-w-[85%] break-words ${
                             isMe
-                              ? 'bg-[#FF6B00] text-white rounded-bl-sm'
-                              : 'bg-[#0F172A] border border-[#334155] text-[#F8FAFC] rounded-br-sm'
+                              ? 'bg-[#FF7100] text-white rounded-bl-sm'
+                              : 'bg-[#10192D] border border-[#334155] text-[#F8FAFC] rounded-br-sm'
                           }`}
                         >
                           {msg.text}
@@ -482,12 +482,12 @@ export const GroupOrderRoomView: React.FC<GroupOrderRoomViewProps> = ({
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="اكتب رسالة لأصحابك..."
-                  className="flex-1 bg-[#0F172A] border border-[#334155] focus:border-[#FF6B00] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] outline-none transition"
+                  className="flex-1 bg-[#10192D] border border-[#334155] focus:border-[#FF7100] rounded-xl px-3 py-2 text-xs text-[#F8FAFC] outline-none transition"
                 />
                 <button
                   type="submit"
                   disabled={!chatInput.trim()}
-                  className="bg-[#FF6B00] hover:bg-[#FF6B00]/90 disabled:opacity-40 text-white p-2.5 rounded-xl transition"
+                  className="bg-[#FF7100] hover:bg-[#FF7100]/90 disabled:opacity-40 text-white p-2.5 rounded-xl transition"
                 >
                   <Send className="w-4 h-4 transform rotate-180" />
                 </button>

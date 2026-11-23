@@ -44,21 +44,26 @@ import {
   listenToAdminOrders,
   listenToAdminStores,
   listenToAllAvailableProducts,
+  listenToAllDriverWallets,
   listenToAllSupportTicketsForAdmin,
   listenToAssignedSupportTickets,
   listenToBlockedEntitiesForAdmin,
+  listenToCourierDriverWallet,
   listenToCourierOrdersAndDispatch,
   listenToCustomerDirectory,
   listenToCustomerOrders,
   listenToCustomerReviews,
   listenToCustomerWalletTopups,
   listenToCustomerWalletTransactions,
+  listenToFinancialExceptions,
+  listenToFinancialTransactions,
   listenToLiveEvents,
   listenToAdminWalletTopups,
   listenToMerchantOrders,
   listenToMerchantStoreProducts,
   listenToMerchantStores,
   listenToMysteryBoxProducts,
+  listenToRestaurantSettlements,
   listenToSharedCart,
   listenToSingleBlockedStatus,
   listenToSingleCourier,
@@ -67,6 +72,7 @@ import {
   listenToStoreReviews,
   listenToStores,
   listenToSystemMaintenanceConfig,
+  listenToTreasuryReceipts,
   listenToUserNotifications,
   listenToUserProfile,
   loginAnonymously,
@@ -147,7 +153,10 @@ import {
   CourierRecord,
   CustomErrandOrderInput,
   CustomerDirectoryEntry,
+  DriverWalletRecord,
   FirebaseConnectionHealthResult,
+  FinancialExceptionRecord,
+  FinancialTransactionRecord,
   LegalSectionKey,
   LiveEventRecord,
   MenuItem,
@@ -159,6 +168,7 @@ import {
   PortalRole,
   ProductRecord,
   QaSimulationReport,
+  RestaurantSettlementRecord,
   ReviewRecord,
   ReviewSubmitInput,
   SavedAddressItem,
@@ -169,6 +179,7 @@ import {
   StoreRecord,
   SupportTicketRecord,
   SystemMaintenanceConfig,
+  TreasuryReceiptRecord,
   UserProfileRecord,
   WalletTopupRequestRecord,
   WalletTransactionRecord,
@@ -248,6 +259,26 @@ function OptionalMapsProvider({ children }: { children: ReactNode }) {
   );
 }
 
+function extractInviteParamsFromLocation(): {
+  token: string | null;
+  referralCode: string | null;
+} {
+  if (typeof window === 'undefined') {
+    return { token: null, referralCode: null };
+  }
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const rawToken = params.get('token') || params.get('inviteToken');
+    const rawRef = params.get('ref');
+    return {
+      token: rawToken && rawToken.trim() ? rawToken.trim() : null,
+      referralCode: rawRef && rawRef.trim() ? rawRef.trim() : null,
+    };
+  } catch {
+    return { token: null, referralCode: null };
+  }
+}
+
 function EdkawiWorkspace() {
   const isAutostartUrl = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -283,6 +314,14 @@ function EdkawiWorkspace() {
     typeof window !== 'undefined' ? window.location.pathname : '/'
   );
 
+  // Invitation Token & Referral State (?token=UUID or ?inviteToken=UUID, ?ref=AGENT-XXXX)
+  const [pendingInviteToken, setPendingInviteToken] = useState<string | null>(
+    () => extractInviteParamsFromLocation().token
+  );
+  const [pendingRefCode, setPendingRefCode] = useState<string | null>(
+    () => extractInviteParamsFromLocation().referralCode
+  );
+
   function navigateToPath(nextPath: string) {
     if (typeof window === 'undefined') return;
     if (window.location.pathname !== nextPath) {
@@ -295,6 +334,12 @@ function EdkawiWorkspace() {
   useEffect(() => {
     const handlePopState = () => {
       setCurrentPath(window.location.pathname);
+      const extracted = extractInviteParamsFromLocation();
+      setPendingInviteToken(extracted.token);
+      if (extracted.referralCode) {
+        setPendingRefCode(extracted.referralCode);
+        savePendingSessionReferralCode(extracted.referralCode);
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -305,7 +350,13 @@ function EdkawiWorkspace() {
     if (!authReady || !roleReady || pendingAuthTransition || !user || user.isAnonymous) {
       return;
     }
-    if (currentPath === '/join' || currentPath.startsWith('/group/')) {
+    if (
+      pendingInviteToken ||
+      currentPath === '/register' ||
+      currentPath === '/invite' ||
+      currentPath === '/join' ||
+      currentPath.startsWith('/group/')
+    ) {
       return;
     }
     if (activePortal === 'admin') {
@@ -330,7 +381,7 @@ function EdkawiWorkspace() {
         navigateToPath('/');
       }
     }
-  }, [authReady, roleReady, pendingAuthTransition, user, activePortal, currentPath]);
+  }, [authReady, roleReady, pendingAuthTransition, user, activePortal, currentPath, pendingInviteToken]);
 
   // User Profile, Onboarding, Notifications & Reviews State
   const [userProfile, setUserProfile] = useState<UserProfileRecord | null>(
@@ -385,6 +436,32 @@ function EdkawiWorkspace() {
   >([]);
   const [adminWalletTopups, setAdminWalletTopups] = useState<
     WalletTopupRequestRecord[]
+  >([]);
+  const [adminDriverWallets, setAdminDriverWallets] = useState<
+    DriverWalletRecord[]
+  >([]);
+  const [adminFinancialTransactions, setAdminFinancialTransactions] = useState<
+    FinancialTransactionRecord[]
+  >([]);
+  const [adminTreasuryReceipts, setAdminTreasuryReceipts] = useState<
+    TreasuryReceiptRecord[]
+  >([]);
+  const [adminRestaurantSettlements, setAdminRestaurantSettlements] = useState<
+    RestaurantSettlementRecord[]
+  >([]);
+  const [adminFinancialExceptions, setAdminFinancialExceptions] = useState<
+    FinancialExceptionRecord[]
+  >([]);
+  const [courierDriverWallet, setCourierDriverWallet] =
+    useState<DriverWalletRecord | null>(null);
+  const [courierTreasuryReceipts, setCourierTreasuryReceipts] = useState<
+    TreasuryReceiptRecord[]
+  >([]);
+  const [storeFinancialTransactions, setStoreFinancialTransactions] = useState<
+    FinancialTransactionRecord[]
+  >([]);
+  const [storeRestaurantSettlements, setStoreRestaurantSettlements] = useState<
+    RestaurantSettlementRecord[]
   >([]);
 
   const [isVisualSearchOpen, setIsVisualSearchOpen] = useState(false);
@@ -502,9 +579,6 @@ function EdkawiWorkspace() {
   const [isAddStoreOpen, setIsAddStoreOpen] = useState(false);
   const [noticeBanner, setNoticeBanner] = useState<string | null>(null);
 
-  // Invitation Token State (?token=UUID or ?inviteToken=UUID)
-  const [pendingInviteToken, setPendingInviteToken] = useState<string | null>(null);
-
   // Maintenance Mode, Account Blocking & Legal Center Modal State
   const [maintenanceConfig, setMaintenanceConfig] =
     useState<SystemMaintenanceConfig>({
@@ -528,23 +602,12 @@ function EdkawiWorkspace() {
     section: LegalSectionKey;
   }>({ isOpen: false, section: 'terms' });
 
-  // URL Parameters Parsing on Mount (?ref=AGENT-XXXX, ?inviteToken=UUID, ?token=UUID)
+  // Persist URL referral code (?ref=AGENT-XXXX) on initial load & updates
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const ref = params.get('ref');
-      if (ref && ref.trim()) {
-        savePendingSessionReferralCode(ref.trim());
-      }
-      const token = params.get('token') || params.get('inviteToken');
-      if (token && token.trim()) {
-        setPendingInviteToken(token.trim());
-      }
-    } catch {
-      // Ignore in restricted environment
+    if (pendingRefCode) {
+      savePendingSessionReferralCode(pendingRefCode);
     }
-  }, []);
+  }, [pendingRefCode]);
 
   // Subscribe to live Edko Zones & Super App Categories
   useEffect(() => {
@@ -584,7 +647,7 @@ function EdkawiWorkspace() {
       window.removeEventListener('gmp-quota-exceeded', handleQuotaEvent);
   }, []);
 
-  // Enforce exclusive Dark Mode (#0F172A) on <html>
+  // Enforce exclusive Dark Mode (#10192D) on <html>
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.dataset.theme = 'dark';
@@ -631,7 +694,7 @@ function EdkawiWorkspace() {
 
   // Support ?autostart=1 skip-intro customer journey
   useEffect(() => {
-    if (!isAutostartUrl || !authReady || user || autostartPreviewSession) {
+    if (!isAutostartUrl || !authReady || user || autostartPreviewSession || pendingInviteToken) {
       return;
     }
 
@@ -650,7 +713,7 @@ function EdkawiWorkspace() {
     return () => {
       cancelled = true;
     };
-  }, [isAutostartUrl, authReady, user, autostartPreviewSession]);
+  }, [isAutostartUrl, authReady, user, autostartPreviewSession, pendingInviteToken]);
 
   // Listen to authenticated UserProfileRecord, Role-Targeted Notifications, and Customer Reviews
   useEffect(() => {
@@ -783,6 +846,15 @@ function EdkawiWorkspace() {
         setCustomerWalletTopups([]);
         setCustomerWalletTransactions([]);
         setAdminWalletTopups([]);
+        setAdminDriverWallets([]);
+        setAdminFinancialTransactions([]);
+        setAdminTreasuryReceipts([]);
+        setAdminRestaurantSettlements([]);
+        setAdminFinancialExceptions([]);
+        setCourierDriverWallet(null);
+        setCourierTreasuryReceipts([]);
+        setStoreFinancialTransactions([]);
+        setStoreRestaurantSettlements([]);
       }
       return;
     }
@@ -896,9 +968,20 @@ function EdkawiWorkspace() {
         }
       );
 
+      const unsubStoreTx = listenToFinancialTransactions(
+        setStoreFinancialTransactions,
+        { storeOwnerId: user.uid }
+      );
+      const unsubStoreSettlements = listenToRestaurantSettlements(
+        setStoreRestaurantSettlements,
+        user.uid
+      );
+
       return () => {
         unsubStores();
         unsubOrders();
+        unsubStoreTx();
+        unsubStoreSettlements();
       };
     }
 
@@ -927,10 +1010,21 @@ function EdkawiWorkspace() {
         }
       );
 
+      const unsubDriverWallet = listenToCourierDriverWallet(
+        user.uid,
+        setCourierDriverWallet
+      );
+      const unsubDriverReceipts = listenToTreasuryReceipts(
+        setCourierTreasuryReceipts,
+        user.uid
+      );
+
       setIsLoadingOrders(false);
       return () => {
         unsubCourier();
         unsubStores();
+        unsubDriverWallet();
+        unsubDriverReceipts();
       };
     }
 
@@ -1052,6 +1146,20 @@ function EdkawiWorkspace() {
       setAdminWalletTopups(items);
     });
 
+    const unsubAdminDriverWallets = listenToAllDriverWallets(setAdminDriverWallets);
+    const unsubAdminFinancialTx = listenToFinancialTransactions(
+      setAdminFinancialTransactions
+    );
+    const unsubAdminTreasuryReceipts = listenToTreasuryReceipts(
+      setAdminTreasuryReceipts
+    );
+    const unsubAdminSettlements = listenToRestaurantSettlements(
+      setAdminRestaurantSettlements
+    );
+    const unsubAdminExceptions = listenToFinancialExceptions(
+      setAdminFinancialExceptions
+    );
+
     return () => {
       unsubAdminStores();
       unsubAdminOrders();
@@ -1068,6 +1176,11 @@ function EdkawiWorkspace() {
       unsubAdminAuditLogs();
       unsubAdminAllProducts();
       unsubAdminWalletTopups();
+      unsubAdminDriverWallets();
+      unsubAdminFinancialTx();
+      unsubAdminTreasuryReceipts();
+      unsubAdminSettlements();
+      unsubAdminExceptions();
     };
   }, [
     authReady,
@@ -1486,11 +1599,11 @@ function EdkawiWorkspace() {
         url.searchParams.delete('token');
         url.searchParams.delete('inviteToken');
         url.searchParams.delete('type');
-        if (url.pathname === '/register') {
+        if (url.pathname === '/register' || url.pathname === '/invite') {
           url.pathname = '/';
         }
         window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
-        if (currentPath === '/register') {
+        if (currentPath === '/register' || currentPath === '/invite') {
           setCurrentPath('/');
         }
       } catch {
@@ -2809,6 +2922,15 @@ function EdkawiWorkspace() {
     setCustomerWalletTopups([]);
     setCustomerWalletTransactions([]);
     setAdminWalletTopups([]);
+    setAdminDriverWallets([]);
+    setAdminFinancialTransactions([]);
+    setAdminTreasuryReceipts([]);
+    setAdminRestaurantSettlements([]);
+    setAdminFinancialExceptions([]);
+    setCourierDriverWallet(null);
+    setCourierTreasuryReceipts([]);
+    setStoreFinancialTransactions([]);
+    setStoreRestaurantSettlements([]);
     setAccountInitialSection('addresses');
     setActivePortal('customer');
     setActiveView('stores');
@@ -2828,6 +2950,120 @@ function EdkawiWorkspace() {
         isLoading={true}
         statusText="جارٍ التحقق من الجلسة ومزامنة بيانات إدكو الحية..."
       />
+    );
+  }
+
+  // Top-Priority Route Interception: Invitation Registration (/register?token=..., /invite?token=..., ?token=...)
+  // Runs before MaintenanceModeScreen, /join, BlockedAccountScreen, and portal views so invite links NEVER land on the wrong screen.
+  if (pendingInviteToken) {
+    if (!user || user.isAnonymous || autostartPreviewSession) {
+      return (
+        <div
+          id="top"
+          className="min-h-screen flex flex-col bg-[#10192D] text-[#F8FAFC]"
+        >
+          <Toaster
+            position="top-center"
+            reverseOrder={false}
+            toastOptions={{
+              duration: 3500,
+              style: {
+                background: '#1E293B',
+                color: '#F8FAFC',
+                borderRadius: '16px',
+                fontFamily: 'Cairo, sans-serif',
+                fontSize: '13px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+              },
+            }}
+          />
+          <main className="flex-1 w-full min-w-0">
+            <AuthScreen
+              onAuthTransitionStart={handleAuthTransitionStart}
+              onAuthTransitionEnd={(resolvedRole, needsProfileCompletion) => {
+                if (
+                  resolvedRole === 'admin' ||
+                  resolvedRole === 'support_agent' ||
+                  resolvedRole === 'operations'
+                ) {
+                  setForceAdminLoginInMaintenance(false);
+                }
+                handleAuthTransitionEnd(resolvedRole, needsProfileCompletion);
+              }}
+              onFallbackGuestPreview={handleEnterGuestPreviewFallback}
+              hasPendingCartForCheckout={hasPendingCartForCheckout}
+              hasPendingGroupJoin={hasPendingGroupJoin}
+              onOpenLegalModal={handleOpenLegalModal}
+              inviteToken={pendingInviteToken}
+              referralCode={pendingRefCode}
+              onClearInviteToken={handleClearInviteTokenAndUrl}
+            />
+          </main>
+          <LegalPagesModal
+            isOpen={legalModalState.isOpen}
+            initialSection={legalModalState.section}
+            onClose={() =>
+              setLegalModalState((prev) => ({ ...prev, isOpen: false }))
+            }
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div
+        dir="rtl"
+        className="min-h-screen bg-[#10192D] text-[#F8FAFC] flex items-center justify-center p-4 sm:p-6"
+      >
+        <Toaster
+          position="top-center"
+          reverseOrder={false}
+          toastOptions={{
+            duration: 3500,
+            style: {
+              background: '#1E293B',
+              color: '#F8FAFC',
+              borderRadius: '16px',
+              fontFamily: 'Cairo, sans-serif',
+              fontSize: '13px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+            },
+          }}
+        />
+        <div className="w-full max-w-lg rounded-2xl bg-[#1E293B] border border-[#334155] p-6 shadow-2xl space-y-5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-2xl bg-[#FF7100]/15 border border-[#FF7100]/30 text-[#FF7100] text-xs font-extrabold">
+            دعوة تسجيل رسمية في منصة إدكاوي
+          </div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#F8FAFC]">
+            تم فتح رابط دعوة لتفعيل حساب جديد
+          </h1>
+          <p className="text-sm text-[#94A3B8] leading-relaxed">
+            أنت مسجل الدخول حالياً بالحساب{' '}
+            <span className="font-bold text-[#F8FAFC]">
+              {userProfile?.name || user?.email || 'الحساب الحالي'}
+            </span>
+            . لفتح نموذج التسجيل وتفعيل الدعوة بدون تداخل في الصلاحيات، قم بتسجيل الخروج من الجلسة الحالية أو تجاهل الدعوة للعودة إلى لوحتك.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                void handleLogout();
+              }}
+              className="flex-1 min-h-[46px] px-5 py-3 rounded-2xl bg-[#FF7100] hover:bg-[#E66600] text-white text-sm font-extrabold cursor-pointer shadow-lg shadow-[#FF7100]/20"
+            >
+              تسجيل الخروج وفتح نموذج الدعوة الآن
+            </button>
+            <button
+              type="button"
+              onClick={handleClearInviteTokenAndUrl}
+              className="min-h-[46px] px-5 py-3 rounded-2xl bg-[#10192D] hover:bg-[#334155] border border-[#334155] text-[#F8FAFC] text-sm font-bold cursor-pointer"
+            >
+              تجاهل الدعوة والعودة لحسابي
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -2994,7 +3230,7 @@ function EdkawiWorkspace() {
   return (
     <div
       id="top"
-      className="min-h-screen flex flex-col bg-[#0F172A] text-[#F8FAFC]"
+      className="min-h-screen flex flex-col bg-[#10192D] text-[#F8FAFC]"
     >
       {/* Toast Notifications System (react-hot-toast with Arabic RTL theme) */}
       <Toaster
@@ -3084,46 +3320,10 @@ function EdkawiWorkspace() {
                 setActiveView('account');
                 window.scrollTo(0, 0);
               }}
-              className="px-3.5 py-1.5 rounded-2xl bg-[#0F172A] text-[#F8FAFC] border border-[#334155] hover:bg-[#1E293B] text-xs font-bold cursor-pointer shrink-0"
+              className="px-3.5 py-1.5 rounded-2xl bg-[#10192D] text-[#F8FAFC] border border-[#334155] hover:bg-[#1E293B] text-xs font-bold cursor-pointer shrink-0"
             >
               فتح حسابي والتواصل مع الدعم
             </button>
-          </div>
-        </div>
-      )}
-
-      {isAuthenticated && !isGuestCustomer && Boolean(pendingInviteToken) && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          dir="rtl"
-          className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
-        >
-          <div className="w-full max-w-md rounded-2xl bg-[#1E293B] border border-[#334155] p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-extrabold text-[#F8FAFC]">
-              تم رصد رابط دعوة تسجيل في إدكاوي
-            </h3>
-            <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
-              أنت مسجل الدخول حالياً بحساب ({userProfile?.name || user?.email || 'حساب حالي'}). لاستكمال تسجيل الحساب الجديد عبر رابط الدعوة، يرجى تسجيل الخروج أولاً من الجلسة الحالية.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  void handleLogout();
-                }}
-                className="flex-1 min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#FF6B00] hover:bg-[#E55F00] text-white text-xs sm:text-sm font-bold cursor-pointer"
-              >
-                تسجيل الخروج وفتح الدعوة
-              </button>
-              <button
-                type="button"
-                onClick={handleClearInviteTokenAndUrl}
-                className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#0F172A] hover:bg-[#334155] border border-[#334155] text-[#F8FAFC] text-xs sm:text-sm font-bold cursor-pointer"
-              >
-                تجاهل وإغلاق
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -3159,6 +3359,7 @@ function EdkawiWorkspace() {
             hasPendingGroupJoin={hasPendingGroupJoin}
             onOpenLegalModal={handleOpenLegalModal}
             inviteToken={pendingInviteToken}
+            referralCode={pendingRefCode}
             onClearInviteToken={handleClearInviteTokenAndUrl}
           />
         ) : activePortal === 'support_agent' ? (
@@ -3200,6 +3401,8 @@ function EdkawiWorkspace() {
             orders={portalOrders}
             isLoadingOrders={isLoadingOrders}
             storeReviews={storeReviews}
+            restaurantSettlements={storeRestaurantSettlements}
+            financialTransactions={storeFinancialTransactions}
             unreadNotificationsCount={unreadNotificationsCount}
             onOpenNotifications={() => setIsNotificationsOpen(true)}
             onAcceptOrder={handleAcceptOrderByStore}
@@ -3225,6 +3428,8 @@ function EdkawiWorkspace() {
             isLoadingCourier={isLoadingCourier}
             orders={portalOrders}
             stores={allStores}
+            driverWallet={courierDriverWallet}
+            treasuryReceipts={courierTreasuryReceipts}
             surgeEnabled={Boolean(maintenanceConfig.surgeEnabled)}
             surgeMultiplier={maintenanceConfig.surgeMultiplier ?? 1.5}
             onNotify={showNotice}
@@ -3255,6 +3460,11 @@ function EdkawiWorkspace() {
             adminWalletTopups={adminWalletTopups}
             products={allAvailableProducts}
             auditLogs={adminAuditLogs}
+            driverWallets={adminDriverWallets}
+            financialTransactions={adminFinancialTransactions}
+            treasuryReceipts={adminTreasuryReceipts}
+            restaurantSettlements={adminRestaurantSettlements}
+            financialExceptions={adminFinancialExceptions}
             broadcastHistory={adminBroadcastHistory}
             unreadNotificationsCount={unreadNotificationsCount}
             onOpenNotifications={() => setIsNotificationsOpen(true)}
@@ -3715,35 +3925,35 @@ function EdkawiWorkspace() {
               <button
                 type="button"
                 onClick={() => handleOpenLegalModal('terms')}
-                className="hover:text-[#FF6B00] cursor-pointer"
+                className="hover:text-[#FF7100] cursor-pointer"
               >
                 الشروط والأحكام
               </button>
               <button
                 type="button"
                 onClick={() => handleOpenLegalModal('privacy')}
-                className="hover:text-[#FF6B00] cursor-pointer"
+                className="hover:text-[#FF7100] cursor-pointer"
               >
                 سياسة الخصوصية وموقع GPS
               </button>
               <button
                 type="button"
                 onClick={() => handleOpenLegalModal('refund')}
-                className="hover:text-[#FF6B00] cursor-pointer"
+                className="hover:text-[#FF7100] cursor-pointer"
               >
                 سياسة الاسترجاع والدفع
               </button>
               <button
                 type="button"
                 onClick={() => handleOpenLegalModal('pharmacy')}
-                className="hover:text-[#FF6B00] cursor-pointer"
+                className="hover:text-[#FF7100] cursor-pointer"
               >
                 إخلاء مسؤولية الصيدليات
               </button>
               <button
                 type="button"
                 onClick={() => handleOpenLegalModal('partners')}
-                className="hover:text-[#FF6B00] cursor-pointer"
+                className="hover:text-[#FF7100] cursor-pointer"
               >
                 اتفاقية المتاجر والمناديب والحظر
               </button>
